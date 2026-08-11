@@ -1,16 +1,20 @@
+import { Suspense } from "react";
 import { ArticlesSection } from "@/components/home/ArticlesSection";
 import { CtaBanner } from "@/components/home/CtaBanner";
 import { Footer } from "@/components/home/Footer";
 import { LearnCards } from "@/components/home/LearnCards";
 import { ListingSection } from "@/components/home/ListingSection";
+import {
+  PremiumListingsSection,
+  PremiumListingsSectionFallback,
+} from "@/components/home/PremiumListingsSection";
 import { Navbar } from "@/components/home/Navbar";
 import { SearchHero } from "@/components/home/SearchHero";
 import { TrustBar } from "@/components/home/TrustBar";
-import {
-  latestListings,
-  popularListings,
-  premiumListings,
-} from "@/lib/listings";
+import { latestListings, popularListings } from "@/lib/listings";
+
+/** Fetch Supabase listing at request time (not build-time only) */
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
@@ -19,13 +23,9 @@ export default function Home() {
       <main>
         <SearchHero />
         <TrustBar />
-        <ListingSection
-          id="premium"
-          title="Premium Opportunities"
-          subtitle="Hand-picked listings with verified financials and serious seller intent."
-          listings={premiumListings}
-          viewAllHref="/listings?premium=true"
-        />
+        <Suspense fallback={<PremiumListingsSectionFallback />}>
+          <PremiumListingsSection />
+        </Suspense>
         <LearnCards />
         <ListingSection
           id="latest"
