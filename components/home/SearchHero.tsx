@@ -2,15 +2,20 @@
 
 import {
   ArrowRight,
-  MapPin,
   Search,
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { CategoryMultiSelect } from "@/components/home/CategoryMultiSelect";
+import { LocationSelector } from "@/components/home/LocationSelector";
 import { Button } from "@/components/ui/Button";
-import { categories, locations } from "@/lib/listings";
+import {
+  EMPTY_LOCATION,
+  POPULAR_SEARCH_CATEGORIES,
+  type LocationSelection,
+} from "@/lib/search-sample-data";
 
 type SearchTab = "buy" | "sell" | "latest";
 
@@ -20,10 +25,32 @@ const tabs: { id: SearchTab; label: string }[] = [
   { id: "latest", label: "Latest Listings" },
 ];
 
+const DEFAULT_LOCATION: LocationSelection = {
+  state: "Telangana",
+  district: "Hyderabad",
+  city: "Hyderabad",
+  locality: null,
+};
+
+const trustLabels = [
+  "Businesses across India",
+  "Trusted buyers & sellers",
+  "Secure & confidential",
+];
+
 export function SearchHero() {
   const [activeTab, setActiveTab] = useState<SearchTab>("buy");
   const [keyword, setKeyword] = useState("");
-  const [location, setLocation] = useState("Hyderabad");
+  const [location, setLocation] = useState<LocationSelection>(DEFAULT_LOCATION);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  const togglePopularCategory = useCallback((category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category],
+    );
+  }, []);
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-hero-from via-[#121a2e] to-hero-to">
@@ -78,7 +105,7 @@ export function SearchHero() {
             <Button
               href="/listings"
               size="lg"
-              className="h-12 w-full min-w-[200px] border-0 bg-white px-7 text-base font-semibold text-slate-900 shadow-lg shadow-black/20 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-white sm:w-auto"
+              className="h-12 w-full min-w-[200px] px-7 text-base font-semibold sm:w-auto"
             >
               Browse Businesses
               <ArrowRight className="h-4 w-4" aria-hidden />
@@ -87,27 +114,24 @@ export function SearchHero() {
               href="/sell"
               variant="secondary"
               size="lg"
-              className="h-12 w-full min-w-[200px] border-white/15 bg-white/[0.06] px-7 text-base font-semibold text-white shadow-none backdrop-blur-sm hover:border-white/25 hover:bg-white/10 active:bg-white/[0.14] focus-visible:ring-white/50 sm:w-auto"
+              className="h-12 w-full min-w-[200px] border-white/15 bg-white/[0.06] px-7 text-base font-semibold text-white shadow-none backdrop-blur-sm hover:border-white/25 hover:bg-white/10 hover:text-white active:bg-white/[0.14] focus-visible:ring-white/50 sm:w-auto"
             >
               List Your Business
             </Button>
           </div>
 
-          <div className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-500 sm:mt-12 [animation-delay:320ms]">
-            <span>
-              <strong className="font-semibold text-slate-300">1,200+</strong>{" "}
-              businesses listed
-            </span>
-            <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block" aria-hidden />
-            <span>
-              <strong className="font-semibold text-slate-300">350+</strong>{" "}
-              verified sellers
-            </span>
-            <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block" aria-hidden />
-            <span>
-              <strong className="font-semibold text-slate-300">150+</strong>{" "}
-              trusted brokers
-            </span>
+          <div className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm sm:mt-12 [animation-delay:320ms]">
+            {trustLabels.map((label, index) => (
+              <span key={label} className="contents">
+                <span className="font-semibold text-slate-300">{label}</span>
+                {index < trustLabels.length - 1 && (
+                  <span
+                    className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block"
+                    aria-hidden
+                  />
+                )}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -132,7 +156,7 @@ export function SearchHero() {
 
           {activeTab === "buy" && (
             <form
-              className="mt-3 grid gap-3 p-2 sm:grid-cols-[1fr_auto_auto] sm:p-3"
+              className="mt-3 space-y-3 p-2 sm:p-3"
               onSubmit={(e) => e.preventDefault()}
             >
               <label className="relative block">
@@ -150,29 +174,32 @@ export function SearchHero() {
                 />
               </label>
 
-              <label className="relative block sm:w-52">
-                <span className="sr-only">Location</span>
-                <MapPin
-                  className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted"
-                  aria-hidden
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <LocationSelector value={location} onChange={setLocation} />
+                <CategoryMultiSelect
+                  selected={selectedCategories}
+                  onChange={setSelectedCategories}
                 />
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="h-12 w-full appearance-none rounded-xl border border-border bg-white pl-12 pr-10 text-sm text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              </div>
 
-              <Button type="submit" size="lg" className="h-12 px-8">
-                Search
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <Button type="submit" size="lg" className="h-12 w-full sm:w-auto sm:px-8">
+                  Search
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Button>
+                {(location.state || selectedCategories.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocation(EMPTY_LOCATION);
+                      setSelectedCategories([]);
+                    }}
+                    className="text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm sm:mt-3"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
             </form>
           )}
 
@@ -214,15 +241,24 @@ export function SearchHero() {
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-2 pb-1 pt-3 sm:px-4">
             <div className="flex flex-wrap gap-2">
-              {categories.slice(1, 6).map((cat) => (
-                <Link
-                  key={cat}
-                  href={`/listings?category=${cat.toLowerCase()}`}
-                  className="rounded-full border border-border bg-white px-3 py-1 text-xs font-medium text-muted transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  {cat}
-                </Link>
-              ))}
+              {POPULAR_SEARCH_CATEGORIES.map((cat) => {
+                const isActive = selectedCategories.includes(cat);
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => togglePopularCategory(cat)}
+                    aria-pressed={isActive}
+                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      isActive
+                        ? "border-primary bg-primary-light text-primary"
+                        : "border-border bg-white text-muted hover:border-primary/30 hover:text-primary"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
             <Link
               href="/listings/advanced"
