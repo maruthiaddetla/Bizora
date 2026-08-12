@@ -1,4 +1,8 @@
-import { mapBusinessRowToListing } from "@/lib/repositories/businesses.mapper";
+import { mapBusinessToListing } from "@/lib/repositories/businesses.mapper";
+import {
+  FEATURED_PREMIUM_BUSINESS_SELECT,
+  type BusinessWithRelations,
+} from "@/lib/repositories/businesses.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Listing } from "@/lib/listings";
 
@@ -16,14 +20,16 @@ export async function fetchFeaturedPremiumBusiness(): Promise<FetchFeaturedPremi
   if (!supabase) {
     return {
       listing: null,
-      error: "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      error:
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
     };
   }
 
   const { data, error } = await supabase
     .from("businesses")
-    .select("*")
-    .eq("premium", true)
+    .select(FEATURED_PREMIUM_BUSINESS_SELECT)
+    .eq("status", "published")
+    .eq("is_premium", true)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -36,12 +42,15 @@ export async function fetchFeaturedPremiumBusiness(): Promise<FetchFeaturedPremi
   }
 
   if (!data) {
-    const message = "No premium business found in Supabase.";
+    const message = "No published premium business found in Supabase.";
     if (process.env.NODE_ENV === "development") {
       console.warn("[Bizora]", message);
     }
     return { listing: null, error: message };
   }
 
-  return { listing: mapBusinessRowToListing(data), error: null };
+  return {
+    listing: mapBusinessToListing(data as BusinessWithRelations),
+    error: null,
+  };
 }
