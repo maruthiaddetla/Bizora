@@ -6,20 +6,22 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Listing } from "@/lib/listings";
 
-export type FetchFeaturedPremiumResult =
-  | { listing: Listing; error: null }
-  | { listing: null; error: string };
+export type FetchPremiumBusinessesResult =
+  | { listings: Listing[]; error: null }
+  | { listings: []; error: string };
 
 /**
- * Fetches the featured premium business shown as the first card
- * on the homepage Premium Opportunities section.
+ * Fetches published premium businesses for the homepage
+ * Premium Opportunities section.
  */
-export async function fetchFeaturedPremiumBusiness(): Promise<FetchFeaturedPremiumResult> {
+export async function fetchPremiumBusinesses(
+  limit = 6,
+): Promise<FetchPremiumBusinessesResult> {
   const supabase = createSupabaseServerClient();
 
   if (!supabase) {
     return {
-      listing: null,
+      listings: [],
       error:
         "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
     };
@@ -31,26 +33,23 @@ export async function fetchFeaturedPremiumBusiness(): Promise<FetchFeaturedPremi
     .eq("status", "published")
     .eq("is_premium", true)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(limit);
 
   if (error) {
     if (process.env.NODE_ENV === "development") {
       console.warn("[Bizora] Supabase fetch failed:", error.message);
     }
-    return { listing: null, error: error.message };
+    return { listings: [], error: error.message };
   }
 
-  if (!data) {
-    const message = "No published premium business found in Supabase.";
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora]", message);
-    }
-    return { listing: null, error: message };
+  if (!data || data.length === 0) {
+    return { listings: [], error: null };
   }
 
   return {
-    listing: mapBusinessToListing(data as BusinessWithRelations),
+    listings: data.map((row) =>
+      mapBusinessToListing(row as BusinessWithRelations),
+    ),
     error: null,
   };
 }

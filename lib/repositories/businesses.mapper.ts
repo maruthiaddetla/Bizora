@@ -1,4 +1,5 @@
 import type { BusinessWithRelations } from "@/lib/repositories/businesses.types";
+import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import { formatIndianCurrency } from "@/lib/format/currency";
 import type { Listing } from "@/lib/listings";
 
@@ -17,12 +18,12 @@ function buildLocationLabel(business: BusinessWithRelations): string {
 function pickPrimaryImageUrl(business: BusinessWithRelations): string {
   const images = business.business_images ?? [];
   if (images.length === 0) {
-    return "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80";
+    return LISTING_PLACEHOLDER_IMAGE;
   }
 
   const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order);
   const primary = sorted.find((image) => image.is_primary) ?? sorted[0];
-  return primary.image_url;
+  return primary?.image_url || LISTING_PLACEHOLDER_IMAGE;
 }
 
 export function mapBusinessToListing(business: BusinessWithRelations): Listing {

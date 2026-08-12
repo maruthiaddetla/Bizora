@@ -1,6 +1,10 @@
+"use client";
+
 import { ArrowUpRight, MapPin, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import type { Listing } from "@/lib/listings";
 
 type ListingCardProps = {
@@ -10,17 +14,19 @@ type ListingCardProps = {
 
 export function ListingCard({ listing, variant = "default" }: ListingCardProps) {
   const isCompact = variant === "compact";
+  const [imageSrc, setImageSrc] = useState(listing.image);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
       <Link href={`/listings/${listing.id}`} className="relative block overflow-hidden">
         <div className={isCompact ? "aspect-[5/3]" : "aspect-[4/3]"}>
           <Image
-            src={listing.image}
+            src={imageSrc}
             alt={listing.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setImageSrc(LISTING_PLACEHOLDER_IMAGE)}
           />
         </div>
 

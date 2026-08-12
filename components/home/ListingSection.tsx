@@ -7,21 +7,46 @@ type ListingSectionProps = {
   id?: string;
   title: string;
   subtitle?: string;
-  listings: Listing[];
+  listings?: Listing[];
   viewAllHref?: string;
   variant?: "default" | "compact";
   className?: string;
+  isLoading?: boolean;
+  emptyMessage?: string;
+  errorMessage?: string;
 };
+
+function ListingCardSkeleton() {
+  return (
+    <div
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm"
+      aria-hidden
+    >
+      <div className="aspect-[4/3] animate-pulse bg-surface" />
+      <div className="space-y-3 p-4 sm:p-5">
+        <div className="h-6 w-24 animate-pulse rounded bg-surface" />
+        <div className="h-5 w-full animate-pulse rounded bg-surface" />
+        <div className="h-4 w-full animate-pulse rounded bg-surface" />
+        <div className="h-4 w-2/3 animate-pulse rounded bg-surface" />
+      </div>
+    </div>
+  );
+}
 
 export function ListingSection({
   id,
   title,
   subtitle,
-  listings,
+  listings = [],
   viewAllHref = "/listings",
   variant = "default",
   className = "",
+  isLoading = false,
+  emptyMessage,
+  errorMessage,
 }: ListingSectionProps) {
+  const skeletonCount = 6;
+
   return (
     <section
       id={id}
@@ -51,11 +76,37 @@ export function ListingSection({
           </Link>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {listings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} variant={variant} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div
+            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            aria-busy="true"
+            aria-label="Loading listings"
+          >
+            {Array.from({ length: skeletonCount }, (_, index) => (
+              <ListingCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : errorMessage ? (
+          <div
+            className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center"
+            role="alert"
+          >
+            <p className="font-medium text-red-900">
+              Unable to load premium opportunities
+            </p>
+            <p className="mt-2 text-sm text-red-700">{errorMessage}</p>
+          </div>
+        ) : listings.length === 0 && emptyMessage ? (
+          <div className="mt-8 rounded-2xl border border-border bg-surface px-6 py-12 text-center">
+            <p className="font-medium text-foreground">{emptyMessage}</p>
+          </div>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} variant={variant} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

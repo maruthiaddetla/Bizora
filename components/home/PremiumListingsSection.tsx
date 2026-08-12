@@ -1,46 +1,39 @@
 import { ListingSection } from "@/components/home/ListingSection";
-import { fetchFeaturedPremiumBusiness } from "@/lib/repositories/businesses.repository";
-import { premiumListings } from "@/lib/listings";
+import { fetchPremiumBusinesses } from "@/lib/repositories/businesses.repository";
 
-/**
- * First card: Supabase (when available).
- * Remaining cards: existing hardcoded data.
- */
+const SECTION_PROPS = {
+  id: "premium" as const,
+  title: "Premium Opportunities",
+  subtitle:
+    "Hand-picked listings with verified financials and serious seller intent.",
+  viewAllHref: "/listings?premium=true",
+};
+
 export async function PremiumListingsSection() {
-  const { listing, error } = await fetchFeaturedPremiumBusiness();
+  const { listings, error } = await fetchPremiumBusinesses(6);
 
-  const listings =
-    listing !== null
-      ? [listing, ...premiumListings.filter((item) => item.id !== listing.id).slice(0, 5)]
-      : premiumListings;
-
-  return (
-    <>
-      {error && process.env.NODE_ENV === "development" && (
-        <p className="sr-only" role="status">
-          Supabase fallback active: {error}
-        </p>
-      )}
+  if (error) {
+    return (
       <ListingSection
-        id="premium"
-        title="Premium Opportunities"
-        subtitle="Hand-picked listings with verified financials and serious seller intent."
-        listings={listings}
-        viewAllHref="/listings?premium=true"
+        {...SECTION_PROPS}
+        errorMessage={error}
       />
-    </>
-  );
+    );
+  }
+
+  if (listings.length === 0) {
+    return (
+      <ListingSection
+        {...SECTION_PROPS}
+        emptyMessage="No premium opportunities available"
+      />
+    );
+  }
+
+  return <ListingSection {...SECTION_PROPS} listings={listings} />;
 }
 
 /** Shown while the Supabase request is in flight */
 export function PremiumListingsSectionFallback() {
-  return (
-    <ListingSection
-      id="premium"
-      title="Premium Opportunities"
-      subtitle="Hand-picked listings with verified financials and serious seller intent."
-      listings={premiumListings}
-      viewAllHref="/listings?premium=true"
-    />
-  );
+  return <ListingSection {...SECTION_PROPS} isLoading />;
 }
