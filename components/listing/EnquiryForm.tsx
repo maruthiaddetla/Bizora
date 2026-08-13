@@ -110,42 +110,34 @@ export function EnquiryForm({
 
 type StickyEnquiryCardProps = {
   businessTitle: string;
-  price: string;
-  sellerName: string;
+  price?: string;
 };
 
 export function StickyEnquiryCard({
   businessTitle,
   price,
-  sellerName,
 }: StickyEnquiryCardProps) {
   return (
     <aside
       className="rounded-2xl border border-border bg-white p-6 shadow-lg shadow-black/5 lg:sticky lg:top-24"
-      aria-label="Enquiry form"
+      aria-label="Contact seller"
     >
-      <div className="border-b border-border pb-5">
-        <p className="text-2xl font-bold text-accent">{price}</p>
-        <p className="mt-1 text-sm text-muted">Asking price</p>
-      </div>
+      {price && (
+        <div className="border-b border-border pb-5">
+          <p className="text-2xl font-bold text-accent">{price}</p>
+          <p className="mt-1 text-sm text-muted">Asking price</p>
+        </div>
+      )}
 
-      <div className="py-5">
+      <div className={price ? "py-5" : "pb-5"}>
         <EnquiryForm businessTitle={businessTitle} compact />
       </div>
 
       <div className="border-t border-border pt-5">
-        <Button
-          href={`tel:+919876543210`}
-          variant="secondary"
-          size="lg"
-          className="w-full"
-        >
+        <Button href="#contact-seller" variant="secondary" size="lg" className="w-full">
           <Phone className="h-4 w-4" aria-hidden />
-          Contact Broker
+          Contact Seller
         </Button>
-        <p className="mt-3 text-center text-xs text-muted">
-          Listed by {sellerName} · Verified seller
-        </p>
       </div>
     </aside>
   );

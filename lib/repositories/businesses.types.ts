@@ -6,21 +6,7 @@ export type BusinessImageRelation = {
   is_primary: boolean;
 };
 
-export type StateRelation = {
-  name: string;
-};
-
-export type DistrictRelation = {
-  name: string;
-  state: StateRelation | null;
-};
-
-export type CityRelation = {
-  name: string;
-  district: DistrictRelation | null;
-};
-
-export type LocalityRelation = {
+export type NamedRelation = {
   name: string;
 };
 
@@ -29,24 +15,42 @@ export type CategoryRelation = {
   slug: string;
 };
 
-/** Row returned by the featured-business Supabase select with joins */
+/** Row returned by business selects with location, category, and image joins */
 export type BusinessWithRelations = BusinessRow & {
   category: CategoryRelation | null;
-  city: CityRelation | null;
-  locality: LocalityRelation | null;
+  state: NamedRelation | null;
+  district: NamedRelation | null;
+  city: NamedRelation | null;
+  locality: NamedRelation | null;
   business_images: BusinessImageRelation[] | null;
 };
 
-export const FEATURED_PREMIUM_BUSINESS_SELECT = `
+export const BUSINESS_WITH_RELATIONS_SELECT = `
   *,
   category:categories ( name, slug ),
-  city:cities (
-    name,
-    district:districts (
-      name,
-      state:states ( name )
-    )
-  ),
+  state:states ( name ),
+  district:districts ( name ),
+  city:cities ( name ),
   locality:localities ( name ),
   business_images ( image_url, sort_order, is_primary )
 `;
+
+export type BusinessDetailView = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  location: string;
+  category: string | null;
+  categoryId: string | null;
+  askingPrice: string | undefined;
+  annualRevenue: string | undefined;
+  annualProfit: string | undefined;
+  ebitda: string | undefined;
+  establishedYear: number | null;
+  employees: number | null;
+  reasonForSale: string | null;
+  images: string[];
+  isPremium: boolean;
+  isVerified: boolean;
+};

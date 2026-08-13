@@ -12,14 +12,13 @@ export default function ListingNotFound() {
           404
         </p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Listing not found
+          Business not found
         </h1>
         <p className="mt-4 max-w-md text-muted">
-          This business listing may have been sold or removed. Browse active
-          listings to find your next opportunity.
+          This listing is unavailable. It may have been sold or removed.
         </p>
-        <Button href="/listings" size="lg" className="mt-8">
-          Browse listings
+        <Button href="/" size="lg" className="mt-8">
+          Browse Businesses
         </Button>
         <Link
           href="/"

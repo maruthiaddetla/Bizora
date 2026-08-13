@@ -17,10 +17,7 @@ export function formatIndianCurrency(
 
   if (abs >= CRORE) {
     const crores = amount / CRORE;
-    const formatted =
-      crores % 1 === 0
-        ? crores.toFixed(0)
-        : crores.toFixed(1).replace(/\.0$/, "");
+    const formatted = crores.toFixed(2).replace(/\.?0+$/, "");
     return `₹${formatted} Cr`;
   }
 
