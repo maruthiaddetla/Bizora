@@ -7,15 +7,21 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { CategoryMultiSelect } from "@/components/home/CategoryMultiSelect";
-import { LocationSelector } from "@/components/home/LocationSelector";
-import { Button } from "@/components/ui/Button";
 import {
   EMPTY_LOCATION,
-  POPULAR_SEARCH_CATEGORIES,
+  LocationSelector,
   type LocationSelection,
-} from "@/lib/search-sample-data";
+} from "@/components/home/LocationSelector";
+import { Button } from "@/components/ui/Button";
+import type { CategoryOption } from "@/lib/repositories/categories.repository";
+import type { LocationOption } from "@/lib/repositories/locations.repository";
+import {
+  buildSearchHref,
+  type BusinessSearchFilters,
+} from "@/lib/search/params";
 
 type SearchTab = "buy" | "sell" | "latest";
 
@@ -25,12 +31,23 @@ const tabs: { id: SearchTab; label: string }[] = [
   { id: "latest", label: "Latest Listings" },
 ];
 
-const DEFAULT_LOCATION: LocationSelection = {
-  state: "Telangana",
-  district: "Hyderabad",
-  city: "Hyderabad",
-  locality: null,
-};
+/** Preferred popular chip slugs when present in active categories. */
+const POPULAR_CATEGORY_SLUGS = [
+  "restaurant",
+  "manufacturing",
+  "it-technology",
+  "food-hospitality",
+  "saas",
+] as const;
+
+function resolvePopularCategories(categories: CategoryOption[]): CategoryOption[] {
+  const bySlug = new Map(categories.map((category) => [category.slug, category]));
+  const preferred = POPULAR_CATEGORY_SLUGS.map((slug) => bySlug.get(slug)).filter(
+    (category): category is CategoryOption => category != null,
+  );
+  if (preferred.length > 0) return preferred.slice(0, 5);
+  return categories.slice(0, 5);
+}
 
 const trustLabels = [
   "Businesses across India",
@@ -38,47 +55,51 @@ const trustLabels = [
   "Secure & confidential",
 ];
 
-export function SearchHero() {
+type SearchHeroProps = {
+  categories: CategoryOption[];
+  states: LocationOption[];
+};
+
+export function SearchHero({ categories, states }: SearchHeroProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SearchTab>("buy");
   const [keyword, setKeyword] = useState("");
-  const [location, setLocation] = useState<LocationSelection>(DEFAULT_LOCATION);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [location, setLocation] = useState<LocationSelection>(EMPTY_LOCATION);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
-  const togglePopularCategory = useCallback((category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category],
-    );
-  }, []);
+  const popularCategories = resolvePopularCategories(categories);
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const filters: BusinessSearchFilters = {
+      q: keyword.trim() || undefined,
+      categoryIds:
+        selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
+      stateId: location.stateId ?? undefined,
+      districtId: location.districtId ?? undefined,
+      cityId: location.cityId ?? undefined,
+      localityId: location.localityId ?? undefined,
+      page: 1,
+    };
+
+    router.push(buildSearchHref(filters));
+  }
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-hero-from via-[#121a2e] to-hero-to">
-      {/* Animated gradient wash */}
-      <div
-        aria-hidden
-        className="animate-gradient-shift pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-accent/10"
-      />
+    <section className="relative bg-gradient-to-br from-hero-from via-[#121a2e] to-hero-to">
+      {/* Decorative layers are clipped here so hero content (dropdowns) can overflow */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Animated gradient wash */}
+        <div className="animate-gradient-shift absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-accent/10" />
 
-      {/* Grid texture */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-80"
-      />
+        {/* Grid texture */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-80" />
 
-      {/* Floating orbs */}
-      <div
-        aria-hidden
-        className="animate-float pointer-events-none absolute -right-20 top-10 h-[28rem] w-[28rem] rounded-full bg-primary/20 blur-[100px]"
-      />
-      <div
-        aria-hidden
-        className="animate-float-delayed pointer-events-none absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-accent/15 blur-[90px]"
-      />
-      <div
-        aria-hidden
-        className="animate-pulse-glow pointer-events-none absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-500/10 blur-[80px]"
-      />
+        {/* Floating orbs */}
+        <div className="animate-float absolute -right-20 top-10 h-[28rem] w-[28rem] rounded-full bg-primary/20 blur-[100px]" />
+        <div className="animate-float-delayed absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-accent/15 blur-[90px]" />
+        <div className="animate-pulse-glow absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-500/10 blur-[80px]" />
+      </div>
 
       <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-24 lg:pt-20">
         {/* Hero copy */}
@@ -136,7 +157,7 @@ export function SearchHero() {
         </div>
 
         {/* Search card */}
-        <div className="animate-fade-up mx-auto mt-14 max-w-4xl rounded-2xl border border-white/10 bg-white p-2 shadow-2xl shadow-black/30 sm:mt-16 sm:rounded-3xl sm:p-3 lg:mt-20 [animation-delay:400ms]">
+        <div className="animate-fade-up relative z-20 mx-auto mt-14 max-w-4xl rounded-2xl border border-white/10 bg-white p-2 shadow-2xl shadow-black/30 sm:mt-16 sm:rounded-3xl sm:p-3 lg:mt-20 [animation-delay:400ms]">
           <div className="flex gap-1 overflow-x-auto rounded-xl bg-surface p-1 sm:gap-2">
             {tabs.map((tab) => (
               <button
@@ -157,7 +178,7 @@ export function SearchHero() {
           {activeTab === "buy" && (
             <form
               className="mt-3 space-y-3 p-2 sm:p-3"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleSearchSubmit}
             >
               <label className="relative block">
                 <span className="sr-only">Search keywords</span>
@@ -175,10 +196,15 @@ export function SearchHero() {
               </label>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <LocationSelector value={location} onChange={setLocation} />
+                <LocationSelector
+                  states={states}
+                  value={location}
+                  onChange={setLocation}
+                />
                 <CategoryMultiSelect
-                  selected={selectedCategories}
-                  onChange={setSelectedCategories}
+                  options={categories}
+                  selectedIds={selectedCategoryIds}
+                  onChange={setSelectedCategoryIds}
                 />
               </div>
 
@@ -187,14 +213,14 @@ export function SearchHero() {
                   Search
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Button>
-                {(location.state || selectedCategories.length > 0) && (
+                {(location.stateId || selectedCategoryIds.length > 0) && (
                   <button
                     type="button"
                     onClick={() => {
                       setLocation(EMPTY_LOCATION);
-                      setSelectedCategories([]);
+                      setSelectedCategoryIds([]);
                     }}
-                    className="text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm sm:mt-3"
+                    className="rounded-sm text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:mt-3"
                   >
                     Clear filters
                   </button>
@@ -241,28 +267,22 @@ export function SearchHero() {
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-2 pb-1 pt-3 sm:px-4">
             <div className="flex flex-wrap gap-2">
-              {POPULAR_SEARCH_CATEGORIES.map((cat) => {
-                const isActive = selectedCategories.includes(cat);
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => togglePopularCategory(cat)}
-                    aria-pressed={isActive}
-                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      isActive
-                        ? "border-primary bg-primary-light text-primary"
-                        : "border-border bg-white text-muted hover:border-primary/30 hover:text-primary"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
+              {popularCategories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={buildSearchHref({
+                    categoryIds: [category.id],
+                    page: 1,
+                  })}
+                  className="rounded-full border border-border bg-white px-3 py-1 text-xs font-medium text-muted transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {category.name}
+                </Link>
+              ))}
             </div>
             <Link
-              href="/listings/advanced"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
+              href="/listings"
+              className="inline-flex items-center gap-1.5 rounded-sm text-xs font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
               Advanced Search

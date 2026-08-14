@@ -7,6 +7,10 @@ import {
   type BusinessDetailView,
   type BusinessWithRelations,
 } from "@/lib/repositories/businesses.types";
+import {
+  resolveSearchFilters,
+  type BusinessSearchFilters,
+} from "@/lib/search/params";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Listing } from "@/lib/listings";
 
@@ -15,6 +19,9 @@ const UUID_PATTERN =
 
 const PUBLIC_FETCH_ERROR =
   "We couldn't load this listing right now. Please try again shortly.";
+
+const SEARCH_FETCH_ERROR =
+  "We couldn't load listings right now. Please try again shortly.";
 
 export type FetchPremiumBusinessesResult =
   | { listings: Listing[]; error: null }
@@ -25,8 +32,58 @@ export type FetchBusinessByIdResult =
   | { business: null; error: null }
   | { business: null; error: string };
 
+export type FetchBusinessesResult =
+  | {
+      listings: Listing[];
+      total: number;
+      hasMore: boolean;
+      page: number;
+      pageSize: number;
+      error: null;
+    }
+  | {
+      listings: [];
+      total: 0;
+      hasMore: false;
+      page: number;
+      pageSize: number;
+      error: string;
+    };
+
 function isUuid(value: string): boolean {
   return UUID_PATTERN.test(value);
+}
+
+/** Escape characters that break PostgREST filter strings. */
+function escapeIlikeValue(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+    .replace(/,/g, " ");
+}
+
+function mostSpecificLocationFilter(filters: {
+  stateId?: string;
+  districtId?: string;
+  cityId?: string;
+  localityId?: string;
+}):
+  | { column: "locality_id" | "city_id" | "district_id" | "state_id"; id: string }
+  | null {
+  if (filters.localityId) {
+    return { column: "locality_id", id: filters.localityId };
+  }
+  if (filters.cityId) {
+    return { column: "city_id", id: filters.cityId };
+  }
+  if (filters.districtId) {
+    return { column: "district_id", id: filters.districtId };
+  }
+  if (filters.stateId) {
+    return { column: "state_id", id: filters.stateId };
+  }
+  return null;
 }
 
 /**
@@ -144,4 +201,90 @@ export async function fetchSimilarBusinesses(
   }
 
   return data.map((row) => mapBusinessToListing(row as BusinessWithRelations));
+}
+
+/**
+ * Search/browse published businesses for the buyer listings experience.
+ * Draft, pending, and sold listings are never returned.
+ */
+export async function fetchBusinesses(
+  filters: BusinessSearchFilters = {},
+): Promise<FetchBusinessesResult> {
+  const resolved = resolveSearchFilters(filters);
+  const { page, pageSize } = resolved;
+  const emptyError = (error: string): FetchBusinessesResult => ({
+    listings: [],
+    total: 0,
+    hasMore: false,
+    page,
+    pageSize,
+    error,
+  });
+
+  const supabase = createSupabaseServerClient();
+
+  if (!supabase) {
+    return emptyError(SEARCH_FETCH_ERROR);
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from("businesses")
+    .select(BUSINESS_WITH_RELATIONS_SELECT, { count: "exact" })
+    .eq("status", "published");
+
+  if (resolved.q) {
+    const escaped = escapeIlikeValue(resolved.q);
+    query = query.or(
+      `title.ilike.%${escaped}%,description.ilike.%${escaped}%`,
+    );
+  }
+
+  if (resolved.categoryIds && resolved.categoryIds.length > 0) {
+    const validCategoryIds = resolved.categoryIds.filter(isUuid);
+    if (validCategoryIds.length > 0) {
+      query = query.in("category_id", validCategoryIds);
+    }
+  }
+
+  const location = mostSpecificLocationFilter(resolved);
+  if (location) {
+    query = query.eq(location.column, location.id);
+  }
+
+  if (resolved.minPrice != null) {
+    query = query.gte("asking_price", resolved.minPrice);
+  }
+
+  if (resolved.maxPrice != null) {
+    query = query.lte("asking_price", resolved.maxPrice);
+  }
+
+  const { data, error, count } = await query
+    .order("is_premium", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] fetchBusinesses failed:", error.message);
+    }
+    return emptyError(SEARCH_FETCH_ERROR);
+  }
+
+  const total = count ?? 0;
+  const listings = (data ?? []).map((row) =>
+    mapBusinessToListing(row as BusinessWithRelations),
+  );
+
+  return {
+    listings,
+    total,
+    hasMore: from + listings.length < total,
+    page,
+    pageSize,
+    error: null,
+  };
 }

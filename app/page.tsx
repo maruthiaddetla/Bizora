@@ -12,16 +12,23 @@ import { Navbar } from "@/components/home/Navbar";
 import { SearchHero } from "@/components/home/SearchHero";
 import { TrustBar } from "@/components/home/TrustBar";
 import { latestListings, popularListings } from "@/lib/listings";
+import { fetchActiveCategories } from "@/lib/repositories/categories.repository";
+import { fetchStates } from "@/lib/repositories/locations.repository";
 
 /** Fetch Supabase listing at request time (not build-time only) */
 export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
+  const [categories, states] = await Promise.all([
+    fetchActiveCategories(),
+    fetchStates(),
+  ]);
+
   return (
     <>
       <Navbar />
       <main>
-        <SearchHero />
+        <SearchHero categories={categories} states={states} />
         <TrustBar />
         <Suspense fallback={<PremiumListingsSectionFallback />}>
           <PremiumListingsSection />

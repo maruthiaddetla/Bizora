@@ -9,41 +9,44 @@ import {
 } from "@/lib/repositories/locations.actions";
 import type { LocationOption } from "@/lib/repositories/locations.repository";
 
-export type LocationSelection = {
+export type LocationFilterValue = {
   stateId: string | null;
   districtId: string | null;
   cityId: string | null;
   localityId: string | null;
 };
 
-export const EMPTY_LOCATION: LocationSelection = {
-  stateId: null,
-  districtId: null,
-  cityId: null,
-  localityId: null,
-};
-
-type LocationSelectorProps = {
+type LocationFilterSelectProps = {
   states: LocationOption[];
-  value: LocationSelection;
-  onChange: (value: LocationSelection) => void;
+  initialDistricts?: LocationOption[];
+  initialCities?: LocationOption[];
+  initialLocalities?: LocationOption[];
+  value: LocationFilterValue;
+  onChange: (value: LocationFilterValue) => void;
 };
 
 const selectClass =
   "h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export function LocationSelector({
+/** UUID-based cascading location selector (State → District → City → Locality). */
+export function LocationFilterSelect({
   states,
+  initialDistricts = [],
+  initialCities = [],
+  initialLocalities = [],
   value,
   onChange,
-}: LocationSelectorProps) {
+}: LocationFilterSelectProps) {
   const [open, setOpen] = useState(false);
-  const [districts, setDistricts] = useState<LocationOption[]>([]);
-  const [cities, setCities] = useState<LocationOption[]>([]);
-  const [localities, setLocalities] = useState<LocationOption[]>([]);
+  const [districts, setDistricts] = useState(initialDistricts);
+  const [cities, setCities] = useState(initialCities);
+  const [localities, setLocalities] = useState(initialLocalities);
   const [isPending, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
+
+  // Parent remounts this component when URL filters change (via key),
+  // so initial* props seed state once — no sync effects needed.
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -69,12 +72,13 @@ export function LocationSelector({
   }
 
   function handleStateChange(stateId: string) {
-    onChange({
+    const next: LocationFilterValue = {
       stateId: stateId || null,
       districtId: null,
       cityId: null,
       localityId: null,
-    });
+    };
+    onChange(next);
     setCities([]);
     setLocalities([]);
 
@@ -128,7 +132,12 @@ export function LocationSelector({
   }
 
   function handleClear() {
-    onChange(EMPTY_LOCATION);
+    onChange({
+      stateId: null,
+      districtId: null,
+      cityId: null,
+      localityId: null,
+    });
     setDistricts([]);
     setCities([]);
     setLocalities([]);
