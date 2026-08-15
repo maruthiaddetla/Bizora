@@ -10,7 +10,7 @@ export type CategoryOption = {
  * Active categories for buyer search filters.
  */
 export async function fetchActiveCategories(): Promise<CategoryOption[]> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase
@@ -34,7 +34,7 @@ export async function fetchCategoriesByIds(
 ): Promise<CategoryOption[]> {
   if (ids.length === 0) return [];
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase

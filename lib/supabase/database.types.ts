@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -6,11 +6,48 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type BusinessStatus = "draft" | "pending" | "published" | "sold";
+export type BusinessStatus =
+  | "draft"
+  | "pending"
+  | "published"
+  | "rejected"
+  | "sold";
+
+export type ProfileRole = "buyer" | "seller" | "broker" | "admin";
 
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          role: ProfileRole;
+          full_name: string | null;
+          phone: string | null;
+          company_name: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          role?: ProfileRole;
+          full_name?: string | null;
+          phone?: string | null;
+          company_name?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          role?: ProfileRole;
+          full_name?: string | null;
+          phone?: string | null;
+          company_name?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       states: {
         Row: {
           id: string;
@@ -172,6 +209,10 @@ export type Database = {
           status: BusinessStatus;
           is_premium: boolean;
           is_verified: boolean;
+          rejection_reason: string | null;
+          submitted_at: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -196,6 +237,10 @@ export type Database = {
           status?: BusinessStatus;
           is_premium?: boolean;
           is_verified?: boolean;
+          rejection_reason?: string | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -220,10 +265,26 @@ export type Database = {
           status?: BusinessStatus;
           is_premium?: boolean;
           is_verified?: boolean;
+          rejection_reason?: string | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "businesses_seller_id_fkey";
+            columns: ["seller_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "businesses_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "businesses_category_id_fkey";
             columns: ["category_id"];
@@ -292,10 +353,20 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_business_owner: {
+        Args: { p_business_id: string };
+        Returns: boolean;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
 };
 
 export type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
+export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];

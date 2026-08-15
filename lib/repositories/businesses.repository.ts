@@ -93,7 +93,7 @@ function mostSpecificLocationFilter(filters: {
 export async function fetchPremiumBusinesses(
   limit = 6,
 ): Promise<FetchPremiumBusinessesResult> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
     return {
@@ -141,7 +141,7 @@ export async function fetchBusinessById(
     return { business: null, error: null };
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
     return { business: null, error: PUBLIC_FETCH_ERROR };
@@ -181,7 +181,7 @@ export async function fetchSimilarBusinesses(
 ): Promise<Listing[]> {
   if (!categoryId) return [];
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase
@@ -221,7 +221,7 @@ export async function fetchBusinesses(
     error,
   });
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
     return emptyError(SEARCH_FETCH_ERROR);

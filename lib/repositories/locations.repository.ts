@@ -6,7 +6,7 @@ export type LocationOption = {
 };
 
 export async function fetchStates(): Promise<LocationOption[]> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase
@@ -27,7 +27,7 @@ export async function fetchStates(): Promise<LocationOption[]> {
 export async function fetchDistricts(stateId: string): Promise<LocationOption[]> {
   if (!stateId) return [];
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase
@@ -49,7 +49,7 @@ export async function fetchDistricts(stateId: string): Promise<LocationOption[]>
 export async function fetchCities(districtId: string): Promise<LocationOption[]> {
   if (!districtId) return [];
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase
@@ -71,7 +71,7 @@ export async function fetchCities(districtId: string): Promise<LocationOption[]>
 export async function fetchLocalities(cityId: string): Promise<LocationOption[]> {
   if (!cityId) return [];
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
 
   const { data, error } = await supabase
@@ -96,7 +96,7 @@ export async function fetchLocationNameById(
 ): Promise<string | undefined> {
   if (!id) return undefined;
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return undefined;
 
   const { data, error } = await supabase
