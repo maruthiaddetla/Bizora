@@ -362,6 +362,10 @@ export type Database = {
         Args: { p_business_id: string };
         Returns: boolean;
       };
+      promote_to_seller: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

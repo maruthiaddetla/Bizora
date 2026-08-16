@@ -4,10 +4,11 @@ export type CategoryOption = {
   id: string;
   name: string;
   slug: string;
+  parentId?: string | null;
 };
 
 /**
- * Active categories for buyer search filters.
+ * Active categories for buyer search filters and seller forms.
  */
 export async function fetchActiveCategories(): Promise<CategoryOption[]> {
   const supabase = await createSupabaseServerClient();
@@ -15,7 +16,7 @@ export async function fetchActiveCategories(): Promise<CategoryOption[]> {
 
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, slug")
+    .select("id, name, slug, parent_id")
     .eq("is_active", true)
     .order("name", { ascending: true });
 
@@ -26,7 +27,12 @@ export async function fetchActiveCategories(): Promise<CategoryOption[]> {
     return [];
   }
 
-  return data;
+  return data.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    parentId: row.parent_id,
+  }));
 }
 
 export async function fetchCategoriesByIds(

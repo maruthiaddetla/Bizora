@@ -1,11 +1,14 @@
 import {
   mapBusinessToDetail,
   mapBusinessToListing,
+  mapBusinessToSellerListing,
 } from "@/lib/repositories/businesses.mapper";
 import {
   BUSINESS_WITH_RELATIONS_SELECT,
   type BusinessDetailView,
   type BusinessWithRelations,
+  type SellerListingSummary,
+  type SellerListingView,
 } from "@/lib/repositories/businesses.types";
 import {
   resolveSearchFilters,
@@ -287,4 +290,142 @@ export async function fetchBusinesses(
     pageSize,
     error: null,
   };
+}
+
+const SELLER_FETCH_ERROR =
+  "We couldn't load your listings right now. Please try again shortly.";
+
+export type FetchMyBusinessesResult =
+  | {
+      listings: SellerListingView[];
+      summary: SellerListingSummary;
+      error: null;
+    }
+  | {
+      listings: [];
+      summary: SellerListingSummary;
+      error: string;
+    };
+
+function emptySellerSummary(): SellerListingSummary {
+  return {
+    total: 0,
+    draft: 0,
+    pending: 0,
+    published: 0,
+    rejected: 0,
+    sold: 0,
+  };
+}
+
+function buildSellerSummary(listings: SellerListingView[]): SellerListingSummary {
+  const summary = emptySellerSummary();
+  summary.total = listings.length;
+
+  for (const listing of listings) {
+    if (listing.status === "draft") summary.draft += 1;
+    else if (listing.status === "pending") summary.pending += 1;
+    else if (listing.status === "published") summary.published += 1;
+    else if (listing.status === "rejected") summary.rejected += 1;
+    else if (listing.status === "sold") summary.sold += 1;
+  }
+
+  return summary;
+}
+
+/**
+ * Seller dashboard listings for the authenticated owner only.
+ * Ownership is enforced in the query (seller_id = sellerId) and by RLS.
+ */
+export async function fetchMyBusinesses(
+  sellerId: string,
+): Promise<FetchMyBusinessesResult> {
+  const emptySummary = emptySellerSummary();
+
+  if (!isUuid(sellerId)) {
+    return {
+      listings: [],
+      summary: emptySummary,
+      error: SELLER_FETCH_ERROR,
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return {
+      listings: [],
+      summary: emptySummary,
+      error: SELLER_FETCH_ERROR,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(BUSINESS_WITH_RELATIONS_SELECT)
+    .eq("seller_id", sellerId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] fetchMyBusinesses failed:", error.message);
+    }
+    return {
+      listings: [],
+      summary: emptySummary,
+      error: SELLER_FETCH_ERROR,
+    };
+  }
+
+  const listings = (data ?? []).map((row) =>
+    mapBusinessToSellerListing(row as BusinessWithRelations),
+  );
+
+  return {
+    listings,
+    summary: buildSellerSummary(listings),
+    error: null,
+  };
+}
+
+export type OwnedBusinessResult =
+  | { business: BusinessWithRelations; error: null }
+  | { business: null; error: null }
+  | { business: null; error: string };
+
+/**
+ * Fetch a listing owned by sellerId (any status). RLS remains the boundary.
+ */
+export async function fetchOwnedBusinessById(
+  businessId: string,
+  sellerId: string,
+): Promise<OwnedBusinessResult> {
+  if (!isUuid(businessId) || !isUuid(sellerId)) {
+    return { business: null, error: null };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return { business: null, error: PUBLIC_FETCH_ERROR };
+  }
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(BUSINESS_WITH_RELATIONS_SELECT)
+    .eq("id", businessId)
+    .eq("seller_id", sellerId)
+    .maybeSingle();
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] fetchOwnedBusinessById failed:", error.message);
+    }
+    return { business: null, error: PUBLIC_FETCH_ERROR };
+  }
+
+  if (!data) {
+    return { business: null, error: null };
+  }
+
+  return { business: data as BusinessWithRelations, error: null };
 }

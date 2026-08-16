@@ -54,3 +54,25 @@ export type BusinessDetailView = {
   isPremium: boolean;
   isVerified: boolean;
 };
+
+/** Seller dashboard listing row — separate from public Listing. */
+export type SellerListingView = {
+  id: string;
+  title: string;
+  price: string | undefined;
+  location: string;
+  category: string;
+  image: string;
+  status: BusinessRow["status"];
+  rejectionReason: string | null;
+  updatedAt: string;
+};
+
+export type SellerListingSummary = {
+  total: number;
+  draft: number;
+  pending: number;
+  published: number;
+  rejected: number;
+  sold: number;
+};

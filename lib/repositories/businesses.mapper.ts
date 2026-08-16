@@ -1,6 +1,7 @@
 import type {
   BusinessDetailView,
   BusinessWithRelations,
+  SellerListingView,
 } from "@/lib/repositories/businesses.types";
 import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import { formatIndianCurrency, toNumber } from "@/lib/format/currency";
@@ -71,5 +72,23 @@ export function mapBusinessToDetail(
     images: getSortedImageUrls(business),
     isPremium: business.is_premium,
     isVerified: business.is_verified,
+  };
+}
+
+export function mapBusinessToSellerListing(
+  business: BusinessWithRelations,
+): SellerListingView {
+  const images = getSortedImageUrls(business);
+
+  return {
+    id: business.id,
+    title: business.title,
+    price: formatIndianCurrency(toNumber(business.asking_price)),
+    location: buildLocationLabel(business),
+    category: business.category?.name ?? "Business",
+    image: images[0],
+    status: business.status,
+    rejectionReason: business.rejection_reason,
+    updatedAt: business.updated_at,
   };
 }

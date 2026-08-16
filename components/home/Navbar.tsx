@@ -4,7 +4,9 @@ import { getCurrentUser } from "@/lib/auth/session";
 export async function Navbar() {
   const user = await getCurrentUser();
   const isAuthenticated = Boolean(user);
-  const postListingHref = isAuthenticated ? "/sell" : "/sign-in?next=/sell";
+  const postListingHref = isAuthenticated
+    ? "/dashboard/listings/new"
+    : "/sign-in?next=/dashboard/listings/new";
 
   return (
     <NavbarClient

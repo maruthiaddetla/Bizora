@@ -1,0 +1,186 @@
+-- Phase 4C-2A verification queries
+-- Run in Supabase SQL editor after applying migration 004.
+-- Replace placeholders with real UUIDs from your project.
+-- These are documentation/tests — mark PASS only after executing.
+
+-- ============================================================================
+-- Setup notes
+-- ============================================================================
+-- 1. Apply: supabase/migrations/004_listing_integrity_and_seller_promotion.sql
+-- 2. Use two authenticated users (Seller A and Seller B) via the app or JWT claims.
+-- 3. Seed businesses must remain seller_id IS NULL (do not reassign).
+
+-- ---------------------------------------------------------------------------
+-- 1. Seller can create own draft
+-- Expect: insert succeeds with status = draft and seller_id = auth.uid()
+-- ---------------------------------------------------------------------------
+-- (App path) Sign in as Seller A → /dashboard/listings/new → Save Draft
+-- (SQL check after create)
+-- select id, seller_id, status, title
+-- from public.businesses
+-- where seller_id = '<seller_a_id>'
+-- order by created_at desc
+-- limit 5;
+
+-- ---------------------------------------------------------------------------
+-- 2. seller_id always equals auth.uid()
+-- Expect: exception when inserting with another seller_id
+-- ---------------------------------------------------------------------------
+-- As Seller A (JWT set):
+-- insert into public.businesses (title, slug, seller_id, status)
+-- values ('Hijack attempt', 'hijack-attempt-' || gen_random_uuid()::text, '<seller_b_id>', 'draft');
+-- Expected: ERROR seller_id must equal the authenticated user
+
+-- ---------------------------------------------------------------------------
+-- 3. Seller cannot create a published listing
+-- Expect: exception
+-- ---------------------------------------------------------------------------
+-- insert into public.businesses (title, slug, seller_id, status)
+-- values ('Published attempt', 'published-attempt-' || gen_random_uuid()::text, auth.uid(), 'published');
+-- Expected: ERROR new listings must start as draft
+
+-- ---------------------------------------------------------------------------
+-- 4. Seller cannot set is_premium
+-- Expect: exception
+-- ---------------------------------------------------------------------------
+-- insert into public.businesses (title, slug, seller_id, status, is_premium)
+-- values ('Premium attempt', 'premium-attempt-' || gen_random_uuid()::text, auth.uid(), 'draft', true);
+-- Expected: ERROR sellers cannot set is_premium
+
+-- ---------------------------------------------------------------------------
+-- 5. Seller cannot set is_verified
+-- Expect: exception
+-- ---------------------------------------------------------------------------
+-- insert into public.businesses (title, slug, seller_id, status, is_verified)
+-- values ('Verified attempt', 'verified-attempt-' || gen_random_uuid()::text, auth.uid(), 'draft', true);
+-- Expected: ERROR sellers cannot set is_verified
+
+-- ---------------------------------------------------------------------------
+-- 6. Seller cannot change seller_id
+-- Expect: exception on update
+-- ---------------------------------------------------------------------------
+-- update public.businesses
+-- set seller_id = '<seller_b_id>'
+-- where id = '<seller_a_listing_id>';
+-- Expected: ERROR sellers cannot change seller_id
+
+-- ---------------------------------------------------------------------------
+-- 7. Seller cannot update another seller's draft
+-- Expect: 0 rows / RLS denial
+-- ---------------------------------------------------------------------------
+-- As Seller B:
+-- update public.businesses
+-- set title = 'Stolen title'
+-- where id = '<seller_a_draft_id>';
+-- Expected: 0 rows updated
+
+-- ---------------------------------------------------------------------------
+-- 8. Seller cannot submit another seller's listing
+-- Expect: 0 rows / app returns access error
+-- ---------------------------------------------------------------------------
+-- As Seller B:
+-- update public.businesses
+-- set status = 'pending', submitted_at = now()
+-- where id = '<seller_a_draft_id>';
+-- Expected: 0 rows updated
+
+-- ---------------------------------------------------------------------------
+-- 9. Draft/rejected can be edited
+-- Expect: title update succeeds for draft and rejected owned rows
+-- ---------------------------------------------------------------------------
+-- update public.businesses
+-- set title = title || ' (edited)'
+-- where id = '<owned_draft_or_rejected_id>'
+--   and seller_id = auth.uid()
+--   and status in ('draft', 'rejected');
+-- Expected: 1 row updated
+
+-- ---------------------------------------------------------------------------
+-- 10. Published remains public
+-- Expect: anon can select published rows
+-- ---------------------------------------------------------------------------
+-- set role anon;
+-- select count(*) from public.businesses where status = 'published';
+-- Expected: count > 0 (seed data)
+-- reset role;
+
+-- ---------------------------------------------------------------------------
+-- 11. Draft remains hidden from anonymous users
+-- Expect: anon cannot see draft rows
+-- ---------------------------------------------------------------------------
+-- set role anon;
+-- select count(*) from public.businesses where status = 'draft';
+-- Expected: 0
+-- reset role;
+
+-- ---------------------------------------------------------------------------
+-- 12. Invalid location hierarchy is rejected
+-- Expect: exception from businesses_location_integrity
+-- ---------------------------------------------------------------------------
+-- -- Pick a district that does NOT belong to the chosen state
+-- update public.businesses
+-- set status = 'pending',
+--     state_id = '<state_id>',
+--     district_id = '<district_from_other_state>',
+--     city_id = '<city_under_that_district>',
+--     asking_price = 1000000,
+--     description = repeat('x', 60),
+--     category_id = '<active_category_id>',
+--     submitted_at = now()
+-- where id = '<owned_draft_id>'
+--   and seller_id = auth.uid();
+-- Expected: ERROR district does not belong to the selected state
+--
+-- -- Incomplete location on pending also fails
+-- update public.businesses
+-- set status = 'pending',
+--     state_id = '<state_id>',
+--     district_id = null,
+--     city_id = null,
+--     submitted_at = now()
+-- where id = '<owned_draft_id>';
+-- Expected: ERROR district is required for pending listings
+
+-- ---------------------------------------------------------------------------
+-- 13. Role promotion can only become seller
+-- Expect: buyer → seller via promote_to_seller(); other roles unchanged
+-- ---------------------------------------------------------------------------
+-- select public.promote_to_seller();
+-- select role from public.profiles where id = auth.uid();
+-- Expected: role = 'seller' if previously buyer; unchanged if already seller/broker/admin
+
+-- ---------------------------------------------------------------------------
+-- 14. User cannot promote themselves to admin
+-- Expect: exception / no change
+-- ---------------------------------------------------------------------------
+-- update public.profiles set role = 'admin' where id = auth.uid();
+-- Expected: ERROR users cannot change their own role
+--
+-- -- Direct RPC cannot escalate beyond seller
+-- -- (promote_to_seller only sets role = 'seller' where role = 'buyer')
+
+-- ---------------------------------------------------------------------------
+-- Seed integrity (must remain true)
+-- ---------------------------------------------------------------------------
+-- select count(*) as unowned_seed_listings
+-- from public.businesses
+-- where seller_id is null;
+-- Expected: 25 (unchanged by Phase 4C-2A)
+
+-- ---------------------------------------------------------------------------
+-- Execution log (fill in after running)
+-- ---------------------------------------------------------------------------
+-- [ ] 1 create own draft — NOT RUN IN AGENT
+-- [ ] 2 seller_id = auth.uid() — NOT RUN IN AGENT
+-- [ ] 3 cannot create published — NOT RUN IN AGENT
+-- [ ] 4 cannot set is_premium — NOT RUN IN AGENT
+-- [ ] 5 cannot set is_verified — NOT RUN IN AGENT
+-- [ ] 6 cannot change seller_id — NOT RUN IN AGENT
+-- [ ] 7 cannot update another seller draft — NOT RUN IN AGENT
+-- [ ] 8 cannot submit another seller listing — NOT RUN IN AGENT
+-- [ ] 9 draft/rejected editable — NOT RUN IN AGENT
+-- [ ] 10 published public — NOT RUN IN AGENT
+-- [ ] 11 draft hidden from anon — NOT RUN IN AGENT
+-- [ ] 12 invalid location rejected — NOT RUN IN AGENT
+-- [ ] 13 promote to seller only — NOT RUN IN AGENT
+-- [ ] 14 cannot self-promote to admin — NOT RUN IN AGENT

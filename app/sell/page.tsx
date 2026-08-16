@@ -7,11 +7,11 @@ import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Sell a Business — Bizora",
-  description: "Seller listing tools are coming soon on Bizora.",
+  description: "Sell your business on Bizora and connect with genuine buyers.",
 };
 
 export default async function SellPage() {
-  const { profile } = await requireUser("/sell");
+  await requireUser("/sell");
 
   return (
     <>
@@ -19,27 +19,29 @@ export default async function SellPage() {
       <main className="flex-1 bg-surface">
         <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-            <p className="text-sm font-medium text-primary">Coming next</p>
+            <p className="text-sm font-medium text-primary">Seller tools</p>
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Seller listing tools
+              Sell your business on Bizora
             </h1>
             <p className="mt-3 text-muted">
-              You&apos;re signed in
-              {profile?.full_name ? ` as ${profile.full_name}` : ""}. Creating and
-              managing business listings will be available in the next phase.
+              Create a listing with your business details, save a draft, and
+              submit it for review when you&apos;re ready.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button href="/listings" size="md">
-                Browse businesses
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button href="/dashboard/listings/new" size="md">
+                Create Your Listing
               </Button>
-              <Button href="/" variant="secondary" size="md">
-                Back to homepage
+              <Button href="/dashboard" variant="secondary" size="md">
+                Go to Dashboard
               </Button>
             </div>
             <p className="mt-6 text-sm text-muted">
-              Need help?{" "}
-              <Link href="/contact" className="font-medium text-primary hover:text-primary-hover">
-                Contact us
+              Prefer browsing first?{" "}
+              <Link
+                href="/listings"
+                className="font-medium text-primary hover:text-primary-hover"
+              >
+                View businesses for sale
               </Link>
             </p>
           </div>
