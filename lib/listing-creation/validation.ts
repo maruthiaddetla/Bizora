@@ -196,7 +196,11 @@ export function validateDraftFields(
 export async function validateSubmitFields(
   fields: ParsedListingFields,
   baseErrors: ListingFieldErrors,
-  options?: { requirePrimaryImage?: boolean; hasPrimaryImage?: boolean },
+  options?: {
+    requirePrimaryImage?: boolean;
+    hasPrimaryImage?: boolean;
+    imageCount?: number;
+  },
 ): Promise<ListingFieldErrors> {
   const errors = { ...baseErrors };
 
@@ -262,8 +266,13 @@ export async function validateSubmitFields(
     }
   }
 
-  if (options?.requirePrimaryImage && !options.hasPrimaryImage) {
-    errors.images = "Please add at least one primary image.";
+  if (options?.requirePrimaryImage) {
+    const imageCount = options.imageCount ?? 0;
+    if (imageCount < 1) {
+      errors.images = "Please upload at least one business photo.";
+    } else if (!options.hasPrimaryImage) {
+      errors.images = "Please select a primary business photo.";
+    }
   }
 
   return errors;

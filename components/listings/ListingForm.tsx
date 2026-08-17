@@ -13,8 +13,10 @@ import {
   ListingLocationFields,
   type ListingLocationValue,
 } from "@/components/listings/ListingLocationFields";
+import { BusinessPhotosManager } from "@/components/listings/BusinessPhotosManager";
 import { Button } from "@/components/ui/Button";
 import type { ListingFormDefaults } from "@/components/listings/ListingFormDefaults";
+import type { BusinessImageView } from "@/lib/business-images/actions";
 
 export type { ListingFormDefaults };
 
@@ -27,6 +29,7 @@ type ListingFormProps = {
   initialLocalities?: LocationOption[];
   defaults?: ListingFormDefaults;
   rejectionReason?: string | null;
+  initialImages?: BusinessImageView[];
 };
 
 const inputClass =
@@ -69,6 +72,7 @@ export function ListingForm({
   initialLocalities = [],
   defaults,
   rejectionReason,
+  initialImages = [],
 }: ListingFormProps) {
   const action =
     mode === "create" ? createListingFormAction : updateListingFormAction;
@@ -406,11 +410,26 @@ export function ListingForm({
         </div>
       </Section>
 
-      <div className="rounded-2xl border border-dashed border-border bg-surface/60 px-4 py-3 text-sm text-muted">
-        Photos come in the next phase. You can save a draft and submit text
-        details for review now; a primary image will be required before final
-        go-live later.
-      </div>
+      <Section
+        title="Business Photos"
+        description="Add photos that show the premises, products, or operations."
+      >
+        {mode === "create" || !defaults?.listingId ? (
+          <div className="rounded-xl border border-dashed border-border bg-surface/60 px-4 py-6 text-sm text-muted">
+            Save a draft first to unlock photo uploads. After saving, you&apos;ll
+            return to the edit page where you can add up to 8 photos and choose a
+            primary image before submitting for review.
+          </div>
+        ) : (
+          <>
+            <BusinessPhotosManager
+              businessId={defaults.listingId}
+              initialImages={initialImages}
+            />
+            <FieldError message={fieldErrors.images} />
+          </>
+        )}
+      </Section>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button
@@ -428,7 +447,12 @@ export function ListingForm({
           name="intent"
           value="submit"
           size="md"
-          disabled={pending}
+          disabled={pending || mode === "create"}
+          title={
+            mode === "create"
+              ? "Save a draft and upload photos before submitting"
+              : undefined
+          }
         >
           {pending ? "Working…" : "Submit for Review"}
         </Button>

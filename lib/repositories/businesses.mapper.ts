@@ -3,6 +3,7 @@ import type {
   BusinessWithRelations,
   SellerListingView,
 } from "@/lib/repositories/businesses.types";
+import { resolveBusinessImageDisplayUrl } from "@/lib/business-images/resolve-url";
 import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import { formatIndianCurrency, toNumber } from "@/lib/format/currency";
 import type { Listing } from "@/lib/listings";
@@ -23,21 +24,32 @@ export function buildLocationLabel(business: BusinessWithRelations): string {
   return unique.length > 0 ? unique.join(", ") : "India";
 }
 
-export function getSortedImageUrls(business: BusinessWithRelations): string[] {
-  const images = [...(business.business_images ?? [])].sort((a, b) => {
+export function getSortedImageRows(business: BusinessWithRelations) {
+  return [...(business.business_images ?? [])].sort((a, b) => {
     if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
     return a.sort_order - b.sort_order;
   });
+}
 
-  const urls = images
-    .map((image) => image.image_url)
-    .filter((url): url is string => Boolean(url));
+/**
+ * Resolve display URLs (external or signed Storage URLs).
+ * Falls back to placeholder when none resolve.
+ */
+export async function getSortedImageUrls(
+  business: BusinessWithRelations,
+): Promise<string[]> {
+  const rows = getSortedImageRows(business);
+  const urls = (
+    await Promise.all(rows.map((image) => resolveBusinessImageDisplayUrl(image)))
+  ).filter((url): url is string => Boolean(url));
 
   return urls.length > 0 ? urls : [LISTING_PLACEHOLDER_IMAGE];
 }
 
-export function mapBusinessToListing(business: BusinessWithRelations): Listing {
-  const images = getSortedImageUrls(business);
+export async function mapBusinessToListing(
+  business: BusinessWithRelations,
+): Promise<Listing> {
+  const images = await getSortedImageUrls(business);
 
   return {
     id: business.id,
@@ -51,9 +63,11 @@ export function mapBusinessToListing(business: BusinessWithRelations): Listing {
   };
 }
 
-export function mapBusinessToDetail(
+export async function mapBusinessToDetail(
   business: BusinessWithRelations,
-): BusinessDetailView {
+): Promise<BusinessDetailView> {
+  const images = await getSortedImageUrls(business);
+
   return {
     id: business.id,
     slug: business.slug,
@@ -69,16 +83,16 @@ export function mapBusinessToDetail(
     establishedYear: business.established_year,
     employees: business.employees,
     reasonForSale: business.reason_for_sale,
-    images: getSortedImageUrls(business),
+    images,
     isPremium: business.is_premium,
     isVerified: business.is_verified,
   };
 }
 
-export function mapBusinessToSellerListing(
+export async function mapBusinessToSellerListing(
   business: BusinessWithRelations,
-): SellerListingView {
-  const images = getSortedImageUrls(business);
+): Promise<SellerListingView> {
+  const images = await getSortedImageUrls(business);
 
   return {
     id: business.id,

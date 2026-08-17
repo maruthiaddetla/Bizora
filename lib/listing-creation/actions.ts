@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { getBusinessImageSubmitState } from "@/lib/business-images/actions";
 import { requireUser } from "@/lib/auth/session";
 import { generateUniqueSlug } from "@/lib/listing-creation/slug";
 import {
@@ -329,10 +330,11 @@ export async function submitListingForReview(
     };
   }
 
+  const imageState = await getBusinessImageSubmitState(listingId);
   const fieldErrors = await validateSubmitFields(fields, parseErrors, {
-    // Phase 4C-2B: set requirePrimaryImage: true and pass hasPrimaryImage
-    requirePrimaryImage: false,
-    hasPrimaryImage: false,
+    requirePrimaryImage: true,
+    hasPrimaryImage: imageState.hasPrimary,
+    imageCount: imageState.imageCount,
   });
 
   if (hasFieldErrors(fieldErrors)) {
@@ -411,13 +413,16 @@ export async function createListingFormAction(
   // Pre-validate submit rules before creating so the user keeps form state on errors
   const { fields, errors: parseErrors } = parseListingFormInput(input);
   const submitErrors = await validateSubmitFields(fields, parseErrors, {
-    requirePrimaryImage: false,
+    requirePrimaryImage: true,
     hasPrimaryImage: false,
+    imageCount: 0,
   });
   if (hasFieldErrors(submitErrors)) {
     return {
       ok: false,
-      message: "Please complete the required fields before submitting.",
+      message:
+        submitErrors.images ??
+        "Please complete the required fields before submitting. Save a draft first to upload photos.",
       fieldErrors: submitErrors,
       intent,
     };

@@ -1,7 +1,9 @@
 import type { BusinessRow } from "@/lib/supabase/database.types";
 
 export type BusinessImageRelation = {
+  id?: string;
   image_url: string;
+  storage_path?: string | null;
   sort_order: number;
   is_primary: boolean;
 };
@@ -32,7 +34,7 @@ export const BUSINESS_WITH_RELATIONS_SELECT = `
   district:districts ( name ),
   city:cities ( name ),
   locality:localities ( name ),
-  business_images ( image_url, sort_order, is_primary )
+  business_images ( id, image_url, storage_path, sort_order, is_primary )
 `;
 
 export type BusinessDetailView = {

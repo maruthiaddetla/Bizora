@@ -126,8 +126,8 @@ export async function fetchPremiumBusinesses(
   }
 
   return {
-    listings: data.map((row) =>
-      mapBusinessToListing(row as BusinessWithRelations),
+    listings: await Promise.all(
+      data.map((row) => mapBusinessToListing(row as BusinessWithRelations)),
     ),
     error: null,
   };
@@ -169,7 +169,7 @@ export async function fetchBusinessById(
   }
 
   return {
-    business: mapBusinessToDetail(data as BusinessWithRelations),
+    business: await mapBusinessToDetail(data as BusinessWithRelations),
     error: null,
   };
 }
@@ -203,7 +203,9 @@ export async function fetchSimilarBusinesses(
     return [];
   }
 
-  return data.map((row) => mapBusinessToListing(row as BusinessWithRelations));
+  return Promise.all(
+    data.map((row) => mapBusinessToListing(row as BusinessWithRelations)),
+  );
 }
 
 /**
@@ -278,8 +280,10 @@ export async function fetchBusinesses(
   }
 
   const total = count ?? 0;
-  const listings = (data ?? []).map((row) =>
-    mapBusinessToListing(row as BusinessWithRelations),
+  const listings = await Promise.all(
+    (data ?? []).map((row) =>
+      mapBusinessToListing(row as BusinessWithRelations),
+    ),
   );
 
   return {
@@ -377,8 +381,10 @@ export async function fetchMyBusinesses(
     };
   }
 
-  const listings = (data ?? []).map((row) =>
-    mapBusinessToSellerListing(row as BusinessWithRelations),
+  const listings = await Promise.all(
+    (data ?? []).map((row) =>
+      mapBusinessToSellerListing(row as BusinessWithRelations),
+    ),
   );
 
   return {

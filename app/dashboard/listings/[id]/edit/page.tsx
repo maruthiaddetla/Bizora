@@ -7,6 +7,7 @@ import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/lib/auth/session";
 import { listingDefaultsFromRow } from "@/lib/listing-creation/form-defaults";
+import { listBusinessImagesForOwner } from "@/lib/business-images/actions";
 import { fetchOwnedBusinessById } from "@/lib/repositories/businesses.repository";
 import { fetchActiveCategories } from "@/lib/repositories/categories.repository";
 import {
@@ -95,15 +96,22 @@ export default async function EditListingPage({
     );
   }
 
-  const [categories, states, districts, cities, localities] = await Promise.all([
-    fetchActiveCategories(),
-    fetchStates(),
-    business.state_id ? fetchDistricts(business.state_id) : Promise.resolve([]),
-    business.district_id
-      ? fetchCities(business.district_id)
-      : Promise.resolve([]),
-    business.city_id ? fetchLocalities(business.city_id) : Promise.resolve([]),
-  ]);
+  const [categories, states, districts, cities, localities, imagesResult] =
+    await Promise.all([
+      fetchActiveCategories(),
+      fetchStates(),
+      business.state_id ? fetchDistricts(business.state_id) : Promise.resolve([]),
+      business.district_id
+        ? fetchCities(business.district_id)
+        : Promise.resolve([]),
+      business.city_id
+        ? fetchLocalities(business.city_id)
+        : Promise.resolve([]),
+      listBusinessImagesForOwner(business.id),
+    ]);
+
+  const initialImages =
+    imagesResult.ok && imagesResult.images ? imagesResult.images : [];
 
   return (
     <>
@@ -125,7 +133,7 @@ export default async function EditListingPage({
               Edit listing
             </h1>
             <p className="mt-2 text-sm text-muted sm:text-base">
-              Update your draft and submit for review when ready.
+              Update your draft, add photos, and submit for review when ready.
             </p>
           </div>
 
@@ -134,7 +142,7 @@ export default async function EditListingPage({
               role="status"
               className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
             >
-              Draft saved. You can continue editing or submit for review.
+              Draft saved. Add photos below, then submit for review when ready.
             </div>
           )}
 
@@ -144,7 +152,7 @@ export default async function EditListingPage({
               className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
             >
               Your draft was saved, but submission needs a few more details.
-              Please complete the required fields and try again.
+              Please complete the required fields and photos, then try again.
             </div>
           )}
 
@@ -157,6 +165,7 @@ export default async function EditListingPage({
             initialLocalities={localities}
             defaults={listingDefaultsFromRow(business)}
             rejectionReason={business.rejection_reason}
+            initialImages={initialImages}
           />
         </div>
       </main>

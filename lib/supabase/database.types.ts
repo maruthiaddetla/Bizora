@@ -322,6 +322,7 @@ export type Database = {
           id: string;
           business_id: string;
           image_url: string;
+          storage_path: string | null;
           sort_order: number;
           is_primary: boolean;
           created_at: string;
@@ -330,6 +331,7 @@ export type Database = {
           id?: string;
           business_id: string;
           image_url: string;
+          storage_path?: string | null;
           sort_order?: number;
           is_primary?: boolean;
           created_at?: string;
@@ -338,6 +340,7 @@ export type Database = {
           id?: string;
           business_id?: string;
           image_url?: string;
+          storage_path?: string | null;
           sort_order?: number;
           is_primary?: boolean;
           created_at?: string;
@@ -364,6 +367,14 @@ export type Database = {
       };
       promote_to_seller: {
         Args: Record<string, never>;
+        Returns: boolean;
+      };
+      set_primary_business_image: {
+        Args: { p_image_id: string };
+        Returns: boolean;
+      };
+      owner_can_edit_business_images: {
+        Args: { p_business_id: string };
         Returns: boolean;
       };
     };
