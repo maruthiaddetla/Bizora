@@ -72,3 +72,17 @@ export async function requireUser(nextPath = "/"): Promise<AuthUserContext> {
     profile: profile ?? null,
   };
 }
+
+/**
+ * Require an authenticated admin (profiles.role = admin).
+ * Unauthenticated → sign-in. Non-admin → null profile role (caller handles UI).
+ */
+export async function requireAdmin(
+  nextPath = "/admin",
+): Promise<AuthUserContext & { isAdmin: boolean }> {
+  const ctx = await requireUser(nextPath);
+  return {
+    ...ctx,
+    isAdmin: ctx.profile?.role === "admin",
+  };
+}

@@ -74,7 +74,7 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
                     <p className="mt-1 text-sm text-muted">{listing.category}</p>
                     <p className="mt-0.5 text-sm text-muted">{listing.location}</p>
                   </div>
-                  <ListingStatusBadge status={listing.status} />
+                  <ListingStatusBadge status={listing.status} audience="seller" />
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -86,9 +86,16 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
                   </p>
                 </div>
 
+                {listing.status === "pending" && (
+                  <p className="mt-3 text-sm text-amber-800">
+                    Your listing is under review. You&apos;ll be able to edit
+                    again if changes are requested.
+                  </p>
+                )}
+
                 {listing.status === "rejected" && listing.rejectionReason && (
                   <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-800">
-                    <span className="font-semibold">Reason: </span>
+                    <span className="font-semibold">Changes required: </span>
                     {listing.rejectionReason}
                   </div>
                 )}
@@ -99,7 +106,9 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
                       href={`/dashboard/listings/${listing.id}/edit`}
                       size="sm"
                     >
-                      Edit
+                      {listing.status === "rejected"
+                        ? "Edit & Resubmit"
+                        : "Edit"}
                     </Button>
                   )}
 

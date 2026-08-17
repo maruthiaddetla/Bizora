@@ -8,7 +8,7 @@ const statusStyles: Record<BusinessStatus, string> = {
   sold: "border-blue-200 bg-blue-50 text-blue-800",
 };
 
-const statusLabels: Record<BusinessStatus, string> = {
+const adminLabels: Record<BusinessStatus, string> = {
   draft: "Draft",
   pending: "Pending Review",
   published: "Published",
@@ -16,16 +16,31 @@ const statusLabels: Record<BusinessStatus, string> = {
   sold: "Sold",
 };
 
-type ListingStatusBadgeProps = {
-  status: BusinessStatus;
+const sellerLabels: Record<BusinessStatus, string> = {
+  draft: "Draft",
+  pending: "Under review",
+  published: "Published",
+  rejected: "Changes required",
+  sold: "Sold",
 };
 
-export function ListingStatusBadge({ status }: ListingStatusBadgeProps) {
+type ListingStatusBadgeProps = {
+  status: BusinessStatus;
+  /** Seller dashboard uses friendlier labels. */
+  audience?: "admin" | "seller";
+};
+
+export function ListingStatusBadge({
+  status,
+  audience = "admin",
+}: ListingStatusBadgeProps) {
+  const labels = audience === "seller" ? sellerLabels : adminLabels;
+
   return (
     <span
       className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusStyles[status]}`}
     >
-      {statusLabels[status]}
+      {labels[status]}
     </span>
   );
 }
