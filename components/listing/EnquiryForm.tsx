@@ -1,103 +1,165 @@
 "use client";
 
-import { ArrowRight, Phone } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useActionState, useState } from "react";
+import {
+  createEnquiryFormAction,
+  type EnquiryFormActionState,
+} from "@/lib/enquiries/actions";
 import { Button } from "@/components/ui/Button";
 
+export type ContactSellerMode =
+  | "sign-in"
+  | "unavailable"
+  | "own-listing"
+  | "form";
+
 type EnquiryFormProps = {
+  businessId: string;
   businessTitle: string;
+  mode: ContactSellerMode;
+  buyerName?: string | null;
+  buyerEmail?: string | null;
   compact?: boolean;
-  onSuccess?: () => void;
 };
 
-export function EnquiryForm({
-  businessTitle,
-  compact = false,
-  onSuccess,
-}: EnquiryFormProps) {
-  const [submitted, setSubmitted] = useState(false);
+const initialState: EnquiryFormActionState = { ok: false };
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSubmitted(true);
-    onSuccess?.();
+const inputClass =
+  "w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+
+function InfoBox({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-surface px-4 py-4 text-sm">
+      <p className="font-medium text-foreground">{title}</p>
+      <p className="mt-1 text-muted">{description}</p>
+    </div>
+  );
+}
+
+export function EnquiryForm({
+  businessId,
+  businessTitle,
+  mode,
+  buyerName,
+  buyerEmail,
+  compact = false,
+}: EnquiryFormProps) {
+  const [state, formAction, pending] = useActionState(
+    createEnquiryFormAction,
+    initialState,
+  );
+  const [message, setMessage] = useState("");
+
+  if (mode === "sign-in") {
+    return (
+      <InfoBox
+        title="Sign in to contact the seller"
+        description="Create a free Bizora account or sign in to send a confidential enquiry about this business."
+      />
+    );
   }
 
-  if (submitted) {
+  if (mode === "unavailable") {
+    return (
+      <InfoBox
+        title="Seller contact is currently unavailable"
+        description="This listing does not have a seller assigned yet. Please check back later or browse other businesses."
+      />
+    );
+  }
+
+  if (mode === "own-listing") {
+    return (
+      <InfoBox
+        title="This is your listing"
+        description="You cannot send an enquiry on a business you own. Manage it from your dashboard."
+      />
+    );
+  }
+
+  if (state.ok && state.message) {
     return (
       <div
         className="rounded-xl bg-accent-light p-5 text-center"
         role="status"
       >
-        <p className="font-semibold text-accent">Enquiry sent successfully</p>
+        <p className="font-semibold text-accent">{state.message}</p>
         <p className="mt-1 text-sm text-muted">
-          The seller will respond within 24 hours.
+          Track replies in{" "}
+          <Link
+            href="/dashboard/enquiries"
+            className="font-medium text-primary hover:text-primary-hover"
+          >
+            My Enquiries
+          </Link>
+          .
         </p>
       </div>
     );
   }
 
-  const inputClass =
-    "w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+    <form action={formAction} className="space-y-3" noValidate>
+      <input type="hidden" name="businessId" value={businessId} />
+
       {!compact && (
         <p className="text-sm text-muted">
-          Interested in <span className="font-medium text-foreground">{businessTitle}</span>?
+          Interested in{" "}
+          <span className="font-medium text-foreground">{businessTitle}</span>?
           Send a confidential enquiry below.
         </p>
       )}
 
-      <div className={compact ? "space-y-3" : "grid gap-3 sm:grid-cols-2"}>
-        <label className="block">
-          <span className="sr-only">Full name</span>
-          <input
-            type="text"
-            name="name"
-            required
-            autoComplete="name"
-            placeholder="Full name"
-            className={inputClass}
-          />
-        </label>
-        <label className="block">
-          <span className="sr-only">Email</span>
-          <input
-            type="email"
-            name="email"
-            required
-            autoComplete="email"
-            placeholder="Email address"
-            className={inputClass}
-          />
-        </label>
-      </div>
+      {(buyerName || buyerEmail) && (
+        <div className="rounded-xl border border-border bg-surface/60 px-3 py-2 text-sm text-muted">
+          Sending as{" "}
+          <span className="font-medium text-foreground">
+            {buyerName?.trim() || buyerEmail?.trim() || "your account"}
+          </span>
+          {buyerName && buyerEmail ? ` (${buyerEmail})` : null}
+        </div>
+      )}
+
+      {state.message && !state.ok && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+        >
+          {state.message}
+        </div>
+      )}
 
       <label className="block">
-        <span className="sr-only">Phone</span>
-        <input
-          type="tel"
-          name="phone"
-          autoComplete="tel"
-          placeholder="Phone number (optional)"
-          className={inputClass}
-        />
-      </label>
-
-      <label className="block">
-        <span className="sr-only">Message</span>
+        <span className="mb-1.5 block text-sm font-medium text-foreground">
+          Message
+        </span>
         <textarea
           name="message"
           required
           rows={compact ? 3 : 4}
+          minLength={10}
+          maxLength={2000}
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
           placeholder="Tell the seller about your interest and timeline..."
           className={`${inputClass} resize-none`}
+          aria-invalid={Boolean(state.fieldError)}
         />
+        {state.fieldError && (
+          <p className="mt-1 text-sm text-red-700">{state.fieldError}</p>
+        )}
       </label>
 
-      <Button type="submit" size="lg" className="w-full">
-        Send Enquiry
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        {pending ? "Sending…" : "Send Enquiry"}
         <ArrowRight className="h-4 w-4" aria-hidden />
       </Button>
 
@@ -108,13 +170,18 @@ export function EnquiryForm({
   );
 }
 
-type StickyEnquiryCardProps = {
-  businessTitle: string;
+type StickyEnquiryCardProps = EnquiryFormProps & {
+  signInHref: string;
   price?: string;
 };
 
 export function StickyEnquiryCard({
+  businessId,
   businessTitle,
+  mode,
+  signInHref,
+  buyerName,
+  buyerEmail,
   price,
 }: StickyEnquiryCardProps) {
   return (
@@ -130,14 +197,28 @@ export function StickyEnquiryCard({
       )}
 
       <div className={price ? "py-5" : "pb-5"}>
-        <EnquiryForm businessTitle={businessTitle} compact />
-      </div>
-
-      <div className="border-t border-border pt-5">
-        <Button href="#contact-seller" variant="secondary" size="lg" className="w-full">
-          <Phone className="h-4 w-4" aria-hidden />
-          Contact Seller
-        </Button>
+        {mode === "sign-in" ? (
+          <div className="space-y-4">
+            <EnquiryForm
+              businessId={businessId}
+              businessTitle={businessTitle}
+              mode="sign-in"
+              compact
+            />
+            <Button href={signInHref} size="lg" className="w-full">
+              Sign In to Enquire
+            </Button>
+          </div>
+        ) : (
+          <EnquiryForm
+            businessId={businessId}
+            businessTitle={businessTitle}
+            mode={mode}
+            buyerName={buyerName}
+            buyerEmail={buyerEmail}
+            compact
+          />
+        )}
       </div>
     </aside>
   );

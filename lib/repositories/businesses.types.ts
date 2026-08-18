@@ -55,6 +55,7 @@ export type BusinessDetailView = {
   images: string[];
   isPremium: boolean;
   isVerified: boolean;
+  sellerId: string | null;
 };
 
 /** Seller dashboard listing row — separate from public Listing. */

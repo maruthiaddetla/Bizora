@@ -86,6 +86,7 @@ export async function mapBusinessToDetail(
     images,
     isPremium: business.is_premium,
     isVerified: business.is_verified,
+    sellerId: business.seller_id,
   };
 }
 

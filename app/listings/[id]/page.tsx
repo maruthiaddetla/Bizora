@@ -2,15 +2,15 @@ import { BadgeCheck, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DetailSection } from "@/components/listing/DetailSection";
-import { EnquiryForm } from "@/components/listing/EnquiryForm";
+import { EnquiryForm, StickyEnquiryCard, type ContactSellerMode } from "@/components/listing/EnquiryForm";
 import { FinancialMetrics } from "@/components/listing/FinancialMetrics";
 import { ImageGallery } from "@/components/listing/ImageGallery";
 import { ListingActions } from "@/components/listing/ListingActions";
-import { StickyEnquiryCard } from "@/components/listing/EnquiryForm";
 import { ListingCard } from "@/components/home/ListingCard";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
+import { getCurrentProfile, getCurrentUser } from "@/lib/auth/session";
 import {
   fetchBusinessById,
   fetchSimilarBusinesses,
@@ -73,6 +73,27 @@ export default async function BusinessDetailPage({ params }: PageProps) {
     business.categoryId,
     3,
   );
+
+  const user = await getCurrentUser();
+  const profile = user ? await getCurrentProfile() : null;
+  const signInHref = `/sign-in?next=${encodeURIComponent(`/listings/${id}`)}`;
+
+  let enquiryMode: ContactSellerMode = "form";
+  if (!business.sellerId) {
+    enquiryMode = "unavailable";
+  } else if (!user) {
+    enquiryMode = "sign-in";
+  } else if (user.id === business.sellerId) {
+    enquiryMode = "own-listing";
+  }
+
+  const enquiryFormProps = {
+    businessId: business.id,
+    businessTitle: business.title,
+    mode: enquiryMode,
+    buyerName: profile?.full_name,
+    buyerEmail: user?.email,
+  };
 
   return (
     <>
@@ -174,14 +195,24 @@ export default async function BusinessDetailPage({ params }: PageProps) {
                   Contact Seller
                 </h2>
                 <div className="mt-4">
-                  <EnquiryForm businessTitle={business.title} />
+                  {enquiryMode === "sign-in" ? (
+                    <div className="space-y-4">
+                      <EnquiryForm {...enquiryFormProps} compact />
+                      <Button href={signInHref} size="lg" className="w-full">
+                        Sign In to Enquire
+                      </Button>
+                    </div>
+                  ) : (
+                    <EnquiryForm {...enquiryFormProps} />
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="hidden lg:block">
               <StickyEnquiryCard
-                businessTitle={business.title}
+                {...enquiryFormProps}
+                signInHref={signInHref}
                 price={business.askingPrice}
               />
             </div>

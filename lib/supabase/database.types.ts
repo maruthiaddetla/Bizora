@@ -15,6 +15,8 @@ export type BusinessStatus =
 
 export type ProfileRole = "buyer" | "seller" | "broker" | "admin";
 
+export type EnquiryStatus = "new" | "read" | "responded" | "closed";
+
 export type Database = {
   public: {
     Tables: {
@@ -354,6 +356,64 @@ export type Database = {
           },
         ];
       };
+      enquiries: {
+        Row: {
+          id: string;
+          business_id: string;
+          buyer_id: string;
+          seller_id: string;
+          message: string;
+          status: EnquiryStatus;
+          seller_response: string | null;
+          created_at: string;
+          updated_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          buyer_id: string;
+          seller_id?: string;
+          message: string;
+          status?: EnquiryStatus;
+          seller_response?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          business_id?: string;
+          buyer_id?: string;
+          seller_id?: string;
+          message?: string;
+          status?: EnquiryStatus;
+          seller_response?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "enquiries_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "enquiries_buyer_id_fkey";
+            columns: ["buyer_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "enquiries_seller_id_fkey";
+            columns: ["seller_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -385,3 +445,4 @@ export type Database = {
 
 export type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+export type EnquiryRow = Database["public"]["Tables"]["enquiries"]["Row"];
