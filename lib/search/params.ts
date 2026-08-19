@@ -7,6 +7,16 @@ export const DEFAULT_SEARCH_PAGE = 1;
 export const DEFAULT_SEARCH_PAGE_SIZE = 12;
 export const MAX_SEARCH_PAGE_SIZE = 50;
 
+/**
+ * Query sort for published listings.
+ * Not currently parsed from public URL params (homepage / repository only).
+ * - featured: is_premium DESC, then created_at DESC (default /listings order)
+ * - newest: created_at DESC
+ */
+export type BusinessSearchSort = "featured" | "newest";
+
+export const DEFAULT_SEARCH_SORT: BusinessSearchSort = "featured";
+
 export type BusinessSearchFilters = {
   q?: string;
   categoryIds?: string[];
@@ -18,12 +28,14 @@ export type BusinessSearchFilters = {
   maxPrice?: number;
   page?: number;
   pageSize?: number;
+  sort?: BusinessSearchSort;
 };
 
 /** Filters with pagination defaults applied (for repository queries). */
 export type ResolvedBusinessSearchFilters = BusinessSearchFilters & {
   page: number;
   pageSize: number;
+  sort: BusinessSearchSort;
 };
 
 const UUID_PATTERN =
@@ -173,12 +185,16 @@ export function resolveSearchFilters(
       ? Math.min(Math.floor(filters.pageSize), MAX_SEARCH_PAGE_SIZE)
       : DEFAULT_SEARCH_PAGE_SIZE;
 
+  const sort: BusinessSearchSort =
+    filters.sort === "newest" ? "newest" : DEFAULT_SEARCH_SORT;
+
   return {
     ...filters,
     minPrice,
     maxPrice,
     page,
     pageSize,
+    sort,
   };
 }
 

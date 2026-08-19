@@ -14,6 +14,7 @@ type ListingSectionProps = {
   isLoading?: boolean;
   emptyMessage?: string;
   errorMessage?: string;
+  errorHeading?: string;
 };
 
 function ListingCardSkeleton() {
@@ -44,6 +45,7 @@ export function ListingSection({
   isLoading = false,
   emptyMessage,
   errorMessage,
+  errorHeading = "Unable to load listings",
 }: ListingSectionProps) {
   const skeletonCount = 6;
 
@@ -91,9 +93,7 @@ export function ListingSection({
             className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center"
             role="alert"
           >
-            <p className="font-medium text-red-900">
-              Unable to load premium opportunities
-            </p>
+            <p className="font-medium text-red-900">{errorHeading}</p>
             <p className="mt-2 text-sm text-red-700">{errorMessage}</p>
           </div>
         ) : listings.length === 0 && emptyMessage ? (

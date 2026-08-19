@@ -211,6 +211,8 @@ export async function fetchSimilarBusinesses(
 /**
  * Search/browse published businesses for the buyer listings experience.
  * Draft, pending, and sold listings are never returned.
+ * Sort: "featured" (default) = is_premium DESC, created_at DESC;
+ *       "newest" = created_at DESC.
  */
 export async function fetchBusinesses(
   filters: BusinessSearchFilters = {},
@@ -267,10 +269,15 @@ export async function fetchBusinesses(
     query = query.lte("asking_price", resolved.maxPrice);
   }
 
-  const { data, error, count } = await query
-    .order("is_premium", { ascending: false })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  if (resolved.sort === "newest") {
+    query = query.order("created_at", { ascending: false });
+  } else {
+    query = query
+      .order("is_premium", { ascending: false })
+      .order("created_at", { ascending: false });
+  }
+
+  const { data, error, count } = await query.range(from, to);
 
   if (error) {
     if (process.env.NODE_ENV === "development") {

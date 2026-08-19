@@ -3,7 +3,14 @@ import { ArticlesSection } from "@/components/home/ArticlesSection";
 import { CtaBanner } from "@/components/home/CtaBanner";
 import { Footer } from "@/components/home/Footer";
 import { LearnCards } from "@/components/home/LearnCards";
-import { ListingSection } from "@/components/home/ListingSection";
+import {
+  LatestListingsSection,
+  LatestListingsSectionFallback,
+} from "@/components/home/LatestListingsSection";
+import {
+  PopularListingsSection,
+  PopularListingsSectionFallback,
+} from "@/components/home/PopularListingsSection";
 import {
   PremiumListingsSection,
   PremiumListingsSectionFallback,
@@ -11,7 +18,6 @@ import {
 import { Navbar } from "@/components/home/Navbar";
 import { SearchHero } from "@/components/home/SearchHero";
 import { TrustBar } from "@/components/home/TrustBar";
-import { latestListings, popularListings } from "@/lib/listings";
 import { fetchActiveCategories } from "@/lib/repositories/categories.repository";
 import { fetchStates } from "@/lib/repositories/locations.repository";
 
@@ -34,21 +40,12 @@ export default async function Home() {
           <PremiumListingsSection />
         </Suspense>
         <LearnCards />
-        <ListingSection
-          id="latest"
-          title="Latest Listings"
-          subtitle="Fresh opportunities added this week."
-          listings={latestListings}
-          viewAllHref="/listings?sort=latest"
-          className="bg-surface"
-        />
-        <ListingSection
-          id="popular"
-          title="Popular Businesses"
-          subtitle="Most viewed and enquired listings on Bizora right now."
-          listings={popularListings}
-          viewAllHref="/listings?sort=popular"
-        />
+        <Suspense fallback={<LatestListingsSectionFallback />}>
+          <LatestListingsSection />
+        </Suspense>
+        <Suspense fallback={<PopularListingsSectionFallback />}>
+          <PopularListingsSection />
+        </Suspense>
         <ArticlesSection />
         <CtaBanner />
       </main>

@@ -16,6 +16,7 @@ export async function PremiumListingsSection() {
     return (
       <ListingSection
         {...SECTION_PROPS}
+        errorHeading="Unable to load premium opportunities"
         errorMessage={error}
       />
     );
