@@ -85,6 +85,22 @@ export default async function DashboardPage() {
             </div>
           </section>
 
+          <section className="mt-4 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Saved Businesses
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  Revisit published listings you&apos;ve saved while browsing.
+                </p>
+              </div>
+              <Button href="/dashboard/favorites" size="sm" variant="secondary">
+                Saved Businesses
+              </Button>
+            </div>
+          </section>
+
           {result.error && (
             <div
               role="alert"

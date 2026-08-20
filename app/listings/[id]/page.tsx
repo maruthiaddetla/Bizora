@@ -15,6 +15,7 @@ import {
   fetchBusinessById,
   fetchSimilarBusinesses,
 } from "@/lib/repositories/businesses.repository";
+import { isBusinessFavorited } from "@/lib/repositories/favorites.repository";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,9 @@ export default async function BusinessDetailPage({ params }: PageProps) {
   const user = await getCurrentUser();
   const profile = user ? await getCurrentProfile() : null;
   const signInHref = `/sign-in?next=${encodeURIComponent(`/listings/${id}`)}`;
+  const initialFavorited = user
+    ? await isBusinessFavorited(user.id, business.id)
+    : false;
 
   let enquiryMode: ContactSellerMode = "form";
   if (!business.sellerId) {
@@ -120,7 +124,7 @@ export default async function BusinessDetailPage({ params }: PageProps) {
             </Link>
             <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <Link
-              href="/"
+              href="/listings"
               className="shrink-0 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               Listings
@@ -161,7 +165,13 @@ export default async function BusinessDetailPage({ params }: PageProps) {
                 {business.title}
               </h1>
             </div>
-            <ListingActions title={business.title} />
+            <ListingActions
+              title={business.title}
+              businessId={business.id}
+              initialFavorited={initialFavorited}
+              isAuthenticated={Boolean(user)}
+              signInHref={signInHref}
+            />
           </div>
 
           <ImageGallery images={business.images} title={business.title} />

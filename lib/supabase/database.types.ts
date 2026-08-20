@@ -414,6 +414,34 @@ export type Database = {
           },
         ];
       };
+      favorites: {
+        Row: {
+          id: string;
+          user_id: string;
+          business_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          business_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          business_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "favorites_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -446,3 +474,4 @@ export type Database = {
 export type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type EnquiryRow = Database["public"]["Tables"]["enquiries"]["Row"];
+export type FavoriteRow = Database["public"]["Tables"]["favorites"]["Row"];

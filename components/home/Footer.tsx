@@ -12,6 +12,7 @@ const footerSections = {
     { label: "Register", href: "/sign-up" },
     { label: "Dashboard", href: "/dashboard" },
     { label: "My Enquiries", href: "/dashboard/enquiries" },
+    { label: "Saved Businesses", href: "/dashboard/favorites" },
   ],
   Company: [
     { label: "About Us", href: "/about" },
