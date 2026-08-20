@@ -4,8 +4,9 @@ import { fetchAdminListings } from "@/lib/repositories/admin.repository";
 import type { AdminListingQueueFilter } from "@/lib/repositories/admin.types";
 
 export const metadata: Metadata = {
-  title: "Admin listings — Bizora",
+  title: "Admin listings",
   description: "Review queue for Bizora business listings.",
+  robots: { index: false, follow: false },
 };
 
 type PageProps = {

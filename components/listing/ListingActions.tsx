@@ -8,7 +8,6 @@ type ListingActionsProps = {
 };
 
 export function ListingActions({ title }: ListingActionsProps) {
-  const [favourited, setFavourited] = useState(false);
   const [shareLabel, setShareLabel] = useState("Share");
 
   const handleShare = useCallback(async () => {
@@ -30,18 +29,14 @@ export function ListingActions({ title }: ListingActionsProps) {
     <div className="flex items-center gap-2">
       <button
         type="button"
-        onClick={() => setFavourited((f) => !f)}
-        className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        aria-pressed={favourited}
-        aria-label={favourited ? "Remove from favourites" : "Add to favourites"}
+        disabled
+        title="Favourites are coming soon"
+        className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm font-medium text-muted shadow-sm opacity-70 cursor-not-allowed"
+        aria-disabled="true"
+        aria-label="Save listing — favourites coming soon"
       >
-        <Heart
-          className={`h-4 w-4 ${favourited ? "fill-red-500 text-red-500" : ""}`}
-          aria-hidden
-        />
-        <span className="hidden sm:inline">
-          {favourited ? "Saved" : "Save"}
-        </span>
+        <Heart className="h-4 w-4" aria-hidden />
+        <span className="hidden sm:inline">Save (coming soon)</span>
       </button>
 
       <button

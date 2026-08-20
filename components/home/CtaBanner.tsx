@@ -1,4 +1,4 @@
-import { ArrowRight, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export function CtaBanner() {
@@ -24,31 +24,29 @@ export function CtaBanner() {
                 id="cta-heading"
                 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl"
               >
-                Don&apos;t miss an opportunity
+                Stay in the loop
               </h2>
               <p className="mx-auto mt-3 max-w-lg text-base text-blue-100 lg:mx-0">
-                Get the latest business listings delivered to your inbox. Free
-                to subscribe — unsubscribe anytime.
+                Email alerts for new listings are coming soon. Meanwhile, browse
+                published businesses or create an account to manage enquiries.
               </p>
             </div>
 
             <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row lg:shrink-0">
-              <label className="sr-only" htmlFor="cta-email">
-                Email address
-              </label>
-              <input
-                id="cta-email"
-                type="email"
-                placeholder="you@company.com"
-                className="h-12 flex-1 rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-blue-200/70 backdrop-blur-sm focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
               <Button
-                href="/subscribe"
+                href="/listings"
                 size="lg"
                 className="h-12 shrink-0 bg-white text-primary hover:bg-blue-50 active:bg-blue-100 focus-visible:ring-white"
               >
-                Subscribe
-                <ArrowRight className="h-4 w-4" aria-hidden />
+                Browse listings
+              </Button>
+              <Button
+                href="/sign-up"
+                size="lg"
+                variant="secondary"
+                className="h-12 shrink-0 border-white/30 bg-transparent text-white hover:bg-white/10"
+              >
+                Create free account
               </Button>
             </div>
           </div>

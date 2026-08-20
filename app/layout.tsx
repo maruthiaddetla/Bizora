@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +13,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  title: "Bizora — India's Trusted Business Marketplace",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Bizora — India's Business Marketplace",
+    template: "%s — Bizora",
+  },
   description:
-    "Discover verified businesses for sale across India. Connect with genuine buyers, sellers, and trusted brokers. Complete deals with confidence.",
+    "Browse published businesses for sale across India. Enquire as a buyer, list as a seller, and manage listings with admin review.",
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "Bizora",
+    title: "Bizora — India's Business Marketplace",
+    description:
+      "Browse published businesses for sale across India. Enquire as a buyer, list as a seller, and manage listings with admin review.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bizora — India's Business Marketplace",
+    description:
+      "Browse published businesses for sale across India. Enquire as a buyer, list as a seller, and manage listings with admin review.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

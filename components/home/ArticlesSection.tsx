@@ -1,21 +1,18 @@
 import { ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
 
-const articles = [
+const highlights = [
   {
-    title: "How to Find the Right Business to Buy",
-    href: "/resources/find-right-business",
-    readTime: "8 min read",
+    title: "Browse published businesses for sale",
+    description: "Search by keyword, category, location, and price.",
   },
   {
-    title: "7 Ways to Increase the Value of Your Business",
-    href: "/resources/increase-business-value",
-    readTime: "6 min read",
+    title: "Enquire as a registered buyer",
+    description: "Send messages on published listings and track replies.",
   },
   {
-    title: "Buying a Retail Business: A Complete Guide",
-    href: "/resources/retail-buying-guide",
-    readTime: "10 min read",
+    title: "List and manage as a seller",
+    description: "Draft listings, submit for review, and respond to enquiries.",
   },
 ];
 
@@ -32,33 +29,26 @@ export function ArticlesSection() {
               id="articles-heading"
               className="mt-4 text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
             >
-              Popular articles
+              How Bizora works
             </h2>
             <p className="mt-3 text-base text-muted">
-              Expert guides to help you buy smarter, sell faster, and navigate
-              every stage of the acquisition journey.
+              Buy, sell, and enquire on published listings. Detailed buyer and
+              seller guides are coming soon.
             </p>
             <Link
-              href="/resources"
+              href="/listings"
               className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
             >
-              Browse all resources
+              Browse listings
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
 
           <ul className="mt-8 flex flex-col divide-y divide-border lg:mt-0 lg:min-w-0 lg:flex-1">
-            {articles.map((article) => (
-              <li key={article.href}>
-                <Link
-                  href={article.href}
-                  className="group flex items-center justify-between gap-4 py-4 transition-colors first:pt-0 last:pb-0 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
-                >
-                  <span className="font-medium text-foreground transition-colors group-hover:text-primary">
-                    {article.title}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted">{article.readTime}</span>
-                </Link>
+            {highlights.map((item) => (
+              <li key={item.title} className="py-4 first:pt-0 last:pb-0">
+                <p className="font-medium text-foreground">{item.title}</p>
+                <p className="mt-1 text-sm text-muted">{item.description}</p>
               </li>
             ))}
           </ul>

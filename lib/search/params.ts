@@ -1,6 +1,6 @@
 /**
  * URL ↔ BusinessSearchFilters contract for buyer browse/search.
- * Used by the future /listings page and homepage SearchHero navigation.
+ * Used by /listings and homepage SearchHero navigation.
  */
 
 export const DEFAULT_SEARCH_PAGE = 1;
@@ -9,9 +9,10 @@ export const MAX_SEARCH_PAGE_SIZE = 50;
 
 /**
  * Query sort for published listings.
- * Not currently parsed from public URL params (homepage / repository only).
  * - featured: is_premium DESC, then created_at DESC (default /listings order)
  * - newest: created_at DESC
+ *
+ * URL aliases: sort=latest → newest; sort=popular → featured
  */
 export type BusinessSearchSort = "featured" | "newest";
 
@@ -29,6 +30,8 @@ export type BusinessSearchFilters = {
   page?: number;
   pageSize?: number;
   sort?: BusinessSearchSort;
+  /** When true, only premium published listings (URL: premium=true). */
+  premiumOnly?: boolean;
 };
 
 /** Filters with pagination defaults applied (for repository queries). */
@@ -36,6 +39,7 @@ export type ResolvedBusinessSearchFilters = BusinessSearchFilters & {
   page: number;
   pageSize: number;
   sort: BusinessSearchSort;
+  premiumOnly: boolean;
 };
 
 const UUID_PATTERN =
@@ -115,6 +119,22 @@ function parsePageSize(value: string | undefined): number {
   return Math.min(parsed, MAX_SEARCH_PAGE_SIZE);
 }
 
+function parseSort(value: string | undefined): BusinessSearchSort | undefined {
+  const trimmed = parseOptionalString(value)?.toLowerCase();
+  if (!trimmed) return undefined;
+  if (trimmed === "newest" || trimmed === "latest") return "newest";
+  if (trimmed === "featured" || trimmed === "popular") return "featured";
+  return undefined;
+}
+
+function parsePremiumOnly(value: string | undefined): boolean | undefined {
+  const trimmed = parseOptionalString(value)?.toLowerCase();
+  if (!trimmed) return undefined;
+  if (trimmed === "true" || trimmed === "1" || trimmed === "yes") return true;
+  if (trimmed === "false" || trimmed === "0" || trimmed === "no") return false;
+  return undefined;
+}
+
 /**
  * Parse URL search parameters into BusinessSearchFilters.
  * Invalid values are ignored; pagination defaults are applied via resolveSearchFilters.
@@ -128,6 +148,8 @@ export function parseSearchParams(
   const districtId = parseOptionalUuid(firstParam(params, "district"));
   const cityId = parseOptionalUuid(firstParam(params, "city"));
   const localityId = parseOptionalUuid(firstParam(params, "locality"));
+  const sort = parseSort(firstParam(params, "sort"));
+  const premiumOnly = parsePremiumOnly(firstParam(params, "premium"));
 
   let minPrice = parseNonNegativeNumber(firstParam(params, "min"));
   let maxPrice = parseNonNegativeNumber(firstParam(params, "max"));
@@ -151,6 +173,8 @@ export function parseSearchParams(
   if (localityId) filters.localityId = localityId;
   if (minPrice != null) filters.minPrice = minPrice;
   if (maxPrice != null) filters.maxPrice = maxPrice;
+  if (sort) filters.sort = sort;
+  if (premiumOnly === true) filters.premiumOnly = true;
 
   if (pageRaw != null && parseOptionalString(pageRaw)) {
     filters.page = parsePage(pageRaw);
@@ -195,12 +219,14 @@ export function resolveSearchFilters(
     page,
     pageSize,
     sort,
+    premiumOnly: filters.premiumOnly === true,
   };
 }
 
 /**
  * Serialize filters to URLSearchParams.
  * Omits empty values and default pagination (page=1, pageSize=12).
+ * Omits default sort=featured; always writes sort=newest when set.
  */
 export function serializeSearchParams(
   filters: BusinessSearchFilters,
@@ -226,6 +252,14 @@ export function serializeSearchParams(
   }
   if (resolved.maxPrice != null) {
     params.set("max", String(resolved.maxPrice));
+  }
+
+  if (resolved.sort === "newest") {
+    params.set("sort", "newest");
+  }
+
+  if (resolved.premiumOnly) {
+    params.set("premium", "true");
   }
 
   if (resolved.page !== DEFAULT_SEARCH_PAGE) {

@@ -37,13 +37,21 @@ export async function generateMetadata({ searchParams }: PageProps) {
   const filters = parseSearchParams(params);
   if (filters.q) {
     return {
-      title: `Businesses matching "${filters.q}" — Bizora`,
+      title: `Businesses matching "${filters.q}"`,
       description: `Browse published businesses for sale matching "${filters.q}".`,
+      openGraph: {
+        title: `Businesses matching "${filters.q}" — Bizora`,
+        description: `Browse published businesses for sale matching "${filters.q}".`,
+      },
     };
   }
   return {
-    title: "Businesses for Sale — Bizora",
+    title: "Businesses for Sale",
     description: "Browse published businesses for sale across India.",
+    openGraph: {
+      title: "Businesses for Sale — Bizora",
+      description: "Browse published businesses for sale across India.",
+    },
   };
 }
 

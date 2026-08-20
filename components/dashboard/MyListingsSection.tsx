@@ -139,10 +139,11 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
       })}
 
       <p className="text-center text-sm text-muted">
-        Need help with a listing?{" "}
+        Need help with a listing? Visit{" "}
         <Link href="/contact" className="font-medium text-primary hover:text-primary-hover">
-          Contact support
+          Contact
         </Link>
+        .
       </p>
     </div>
   );

@@ -20,13 +20,11 @@ type PageProps = {
   searchParams: Promise<{ submitted?: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Preview listing — Bizora",
-    description: `Owner preview for listing ${id}`,
+    title: "Preview listing",
+    description: "Owner preview for your Bizora listing.",
+    robots: { index: false, follow: false },
   };
 }
 

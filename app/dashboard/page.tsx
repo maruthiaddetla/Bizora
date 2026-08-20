@@ -10,8 +10,9 @@ import { fetchMyBusinesses } from "@/lib/repositories/businesses.repository";
 import { fetchSellerEnquiries } from "@/lib/repositories/enquiries.repository";
 
 export const metadata: Metadata = {
-  title: "Dashboard — Bizora",
+  title: "Dashboard",
   description: "Manage your business listings on Bizora.",
+  robots: { index: false, follow: false },
 };
 
 function welcomeName(

@@ -1,6 +1,6 @@
 import {
   mapBusinessToDetail,
-  mapBusinessToListing,
+  mapBusinessesToListings,
   mapBusinessToSellerListing,
 } from "@/lib/repositories/businesses.mapper";
 import {
@@ -126,9 +126,7 @@ export async function fetchPremiumBusinesses(
   }
 
   return {
-    listings: await Promise.all(
-      data.map((row) => mapBusinessToListing(row as BusinessWithRelations)),
-    ),
+    listings: await mapBusinessesToListings(data as BusinessWithRelations[]),
     error: null,
   };
 }
@@ -203,9 +201,7 @@ export async function fetchSimilarBusinesses(
     return [];
   }
 
-  return Promise.all(
-    data.map((row) => mapBusinessToListing(row as BusinessWithRelations)),
-  );
+  return mapBusinessesToListings(data as BusinessWithRelations[]);
 }
 
 /**
@@ -213,6 +209,7 @@ export async function fetchSimilarBusinesses(
  * Draft, pending, and sold listings are never returned.
  * Sort: "featured" (default) = is_premium DESC, created_at DESC;
  *       "newest" = created_at DESC.
+ * premiumOnly: filters to is_premium = true when URL premium=true.
  */
 export async function fetchBusinesses(
   filters: BusinessSearchFilters = {},
@@ -241,6 +238,10 @@ export async function fetchBusinesses(
     .from("businesses")
     .select(BUSINESS_WITH_RELATIONS_SELECT, { count: "exact" })
     .eq("status", "published");
+
+  if (resolved.premiumOnly) {
+    query = query.eq("is_premium", true);
+  }
 
   if (resolved.q) {
     const escaped = escapeIlikeValue(resolved.q);
@@ -287,10 +288,8 @@ export async function fetchBusinesses(
   }
 
   const total = count ?? 0;
-  const listings = await Promise.all(
-    (data ?? []).map((row) =>
-      mapBusinessToListing(row as BusinessWithRelations),
-    ),
+  const listings = await mapBusinessesToListings(
+    (data ?? []) as BusinessWithRelations[],
   );
 
   return {

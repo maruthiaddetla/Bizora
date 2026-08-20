@@ -8,8 +8,8 @@ const guides = [
     title: "Learn how to buy a business",
     description:
       "Key steps to evaluate opportunities, verify financials, and close with confidence — without costly mistakes.",
-    href: "/resources/how-to-buy",
-    cta: "How to Buy",
+    href: "/listings",
+    cta: "Browse Listings",
     gradient: "from-primary/90 to-blue-700",
     image:
       "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
@@ -20,8 +20,8 @@ const guides = [
     title: "Learn how to sell your business",
     description:
       "Selling takes preparation. Get the timing, positioning, and process right — you only get one shot.",
-    href: "/resources/how-to-sell",
-    cta: "How to Sell",
+    href: "/sell",
+    cta: "Start Selling",
     gradient: "from-emerald-600 to-teal-700",
     image:
       "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",

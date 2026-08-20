@@ -7,7 +7,7 @@ const SECTION_PROPS = {
   id: "latest" as const,
   title: "Latest Listings",
   subtitle: "Fresh opportunities added this week.",
-  viewAllHref: "/listings?sort=latest",
+  viewAllHref: "/listings?sort=newest",
   className: "bg-surface",
 };
 

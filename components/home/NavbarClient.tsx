@@ -1,25 +1,16 @@
 "use client";
 
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/Button";
 
 const navLinks = [
-  { label: "Buy a Business", href: "/buy" },
+  { label: "Buy a Business", href: "/listings" },
   { label: "Sell a Business", href: "/sell" },
-  {
-    label: "Resources",
-    href: "/resources",
-    children: [
-      { label: "How to Buy", href: "/resources/how-to-buy" },
-      { label: "How to Sell", href: "/resources/how-to-sell" },
-      { label: "Business Articles", href: "/resources" },
-      { label: "Businesses Wanted", href: "/wanted" },
-    ],
-  },
-  { label: "Brokers", href: "/brokers" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 type NavbarClientProps = {
@@ -32,7 +23,6 @@ export function NavbarClient({
   postListingHref,
 }: NavbarClientProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [resourcesOpen, setResourcesOpen] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -112,52 +102,20 @@ export function NavbarClient({
           </Link>
 
           <ul className="hidden items-center gap-1 lg:flex">
-            {navLinks.map((link) =>
-              link.children ? (
-                <li key={link.href} className="relative">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    aria-expanded={resourcesOpen}
-                    onClick={() => setResourcesOpen((open) => !open)}
-                    onBlur={() => setTimeout(() => setResourcesOpen(false), 150)}
-                  >
-                    {link.label}
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${resourcesOpen ? "rotate-180" : ""}`}
-                      aria-hidden
-                    />
-                  </button>
-                  {resourcesOpen && (
-                    <ul className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border border-border bg-white py-2 shadow-lg">
-                      {link.children.map((child) => (
-                        <li key={child.href}>
-                          <Link
-                            href={child.href}
-                            className="block px-4 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
-                          >
-                            {child.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ) : (
-                <li key={link.href}>
-                  <Link
-                    href={
-                      link.href === "/sell" && !isAuthenticated
-                        ? "/sign-in?next=/sell"
-                        : link.href
-                    }
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ),
-            )}
+            {navLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={
+                    link.href === "/sell" && !isAuthenticated
+                      ? "/sign-in?next=/sell"
+                      : link.href
+                  }
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
 
           <div className="hidden items-center gap-2 lg:flex">
@@ -206,21 +164,6 @@ export function NavbarClient({
                 >
                   {link.label}
                 </Link>
-                {link.children && (
-                  <ul className="ml-4 border-l border-border pl-4">
-                    {link.children.map((child) => (
-                      <li key={child.href}>
-                        <Link
-                          href={child.href}
-                          className="block rounded-lg px-3 py-2.5 text-base text-muted hover:text-foreground"
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          {child.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </li>
             ))}
           </ul>

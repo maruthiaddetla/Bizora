@@ -18,42 +18,95 @@ export function getStoragePathFromImage(image: {
   return null;
 }
 
+type ImageSource = {
+  storage_path?: string | null;
+  image_url: string;
+};
+
 /**
  * Resolve a displayable URL for an image row.
  * External (seed) URLs returned as-is; Storage paths become signed URLs.
  */
-export async function resolveBusinessImageDisplayUrl(image: {
-  storage_path?: string | null;
-  image_url: string;
-}): Promise<string | null> {
-  if (isExternalImageUrl(image.image_url) && !image.storage_path) {
-    return image.image_url;
+export async function resolveBusinessImageDisplayUrl(
+  image: ImageSource,
+): Promise<string | null> {
+  const [url] = await resolveBusinessImageDisplayUrls([image]);
+  return url;
+}
+
+/**
+ * Batch-resolve display URLs with one Supabase client and one Storage sign call
+ * when multiple Storage paths are present.
+ */
+export async function resolveBusinessImageDisplayUrls(
+  images: ImageSource[],
+): Promise<(string | null)[]> {
+  if (images.length === 0) return [];
+
+  const results: (string | null)[] = new Array(images.length).fill(null);
+  const storageIndexes: number[] = [];
+  const storagePaths: string[] = [];
+
+  for (let i = 0; i < images.length; i += 1) {
+    const image = images[i];
+    if (isExternalImageUrl(image.image_url) && !image.storage_path) {
+      results[i] = image.image_url;
+      continue;
+    }
+
+    const path = getStoragePathFromImage(image);
+    if (!path) {
+      results[i] = isExternalImageUrl(image.image_url) ? image.image_url : null;
+      continue;
+    }
+
+    storageIndexes.push(i);
+    storagePaths.push(path);
   }
 
-  const path = getStoragePathFromImage(image);
-  if (!path) {
-    return isExternalImageUrl(image.image_url) ? image.image_url : null;
+  if (storagePaths.length === 0) {
+    return results;
   }
 
   const supabase = await createSupabaseServerClient();
-  if (!supabase) return null;
+  if (!supabase) return results;
+
+  if (storagePaths.length === 1) {
+    const { data, error } = await supabase.storage
+      .from(BUSINESS_IMAGES_BUCKET)
+      .createSignedUrl(storagePaths[0], SIGNED_URL_TTL_SECONDS);
+
+    if (error || !data?.signedUrl) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[Bizora] signed URL failed:", error?.message);
+      }
+      return results;
+    }
+
+    results[storageIndexes[0]] = data.signedUrl;
+    return results;
+  }
 
   const { data, error } = await supabase.storage
     .from(BUSINESS_IMAGES_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
+    .createSignedUrls(storagePaths, SIGNED_URL_TTL_SECONDS);
 
-  if (error || !data?.signedUrl) {
+  if (error || !data) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] signed URL failed:", error?.message);
+      console.warn("[Bizora] batch signed URLs failed:", error?.message);
     }
-    return null;
+    return results;
   }
 
-  return data.signedUrl;
-}
+  for (let i = 0; i < data.length; i += 1) {
+    const item = data[i];
+    const targetIndex = storageIndexes[i];
+    if (item?.signedUrl) {
+      results[targetIndex] = item.signedUrl;
+    } else if (process.env.NODE_ENV === "development" && item?.error) {
+      console.warn("[Bizora] signed URL failed:", item.error);
+    }
+  }
 
-export async function resolveBusinessImageDisplayUrls(
-  images: Array<{ storage_path?: string | null; image_url: string }>,
-): Promise<(string | null)[]> {
-  return Promise.all(images.map((image) => resolveBusinessImageDisplayUrl(image)));
+  return results;
 }

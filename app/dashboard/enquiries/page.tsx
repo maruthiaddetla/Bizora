@@ -11,8 +11,9 @@ import {
 } from "@/lib/repositories/enquiries.repository";
 
 export const metadata: Metadata = {
-  title: "My Enquiries — Bizora",
+  title: "My Enquiries",
   description: "View enquiries you have sent and received on Bizora.",
+  robots: { index: false, follow: false },
 };
 
 export default async function DashboardEnquiriesPage() {

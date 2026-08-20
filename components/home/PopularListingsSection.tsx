@@ -7,7 +7,7 @@ const SECTION_PROPS = {
   id: "popular" as const,
   title: "Popular Businesses",
   subtitle: "Most viewed and enquired listings on Bizora right now.",
-  viewAllHref: "/listings?sort=popular",
+  viewAllHref: "/listings?sort=featured",
 };
 
 /**

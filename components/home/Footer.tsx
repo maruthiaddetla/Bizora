@@ -1,23 +1,17 @@
-import { Globe, Share2 } from "lucide-react";
 import Link from "next/link";
 
 const footerSections = {
   "Listing Tools": [
     { label: "Browse All Listings", href: "/listings" },
-    { label: "New Listings", href: "/listings?sort=latest" },
+    { label: "New Listings", href: "/listings?sort=newest" },
     { label: "Premium Opportunities", href: "/listings?premium=true" },
-    { label: "Franchises for Sale", href: "/listings?category=franchises" },
+    { label: "Sell a Business", href: "/sell" },
   ],
-  Resources: [
-    { label: "How to Buy a Business", href: "/resources/how-to-buy" },
-    { label: "How to Sell a Business", href: "/resources/how-to-sell" },
-    { label: "Business Articles", href: "/resources" },
-    { label: "Businesses Wanted", href: "/wanted" },
-  ],
-  Directories: [
-    { label: "Business Brokers", href: "/brokers" },
-    { label: "Accountants Directory", href: "/accountants" },
-    { label: "All Listings", href: "/listings" },
+  Account: [
+    { label: "Sign In", href: "/sign-in" },
+    { label: "Register", href: "/sign-up" },
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "My Enquiries", href: "/dashboard/enquiries" },
   ],
   Company: [
     { label: "About Us", href: "/about" },
@@ -26,11 +20,6 @@ const footerSections = {
     { label: "Terms & Conditions", href: "/terms" },
   ],
 };
-
-const socialLinks = [
-  { label: "LinkedIn", href: "#", icon: Share2 },
-  { label: "Facebook", href: "#", icon: Globe },
-];
 
 export function Footer() {
   return (
@@ -45,25 +34,13 @@ export function Footer() {
               <span className="text-xl font-bold text-white">Bizora</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-slate-400">
-              The modern marketplace connecting business buyers, sellers, and
-              brokers across India. Quality listings. Serious enquiries.
-              Straightforward next steps.
+              An India-focused marketplace for buying and selling businesses.
+              Browse published listings, enquire as a buyer, and manage seller
+              listings with admin review.
             </p>
-            <div className="mt-5 flex items-center gap-3">
-              {socialLinks.map(({ label, href, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition-colors hover:border-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                >
-                  <Icon className="h-4 w-4" aria-hidden />
-                </a>
-              ))}
-            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:gap-12">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:gap-12">
             {Object.entries(footerSections).map(([title, links]) => (
               <div key={title}>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -71,7 +48,7 @@ export function Footer() {
                 </h3>
                 <ul className="mt-4 space-y-2.5">
                   {links.map((link) => (
-                    <li key={link.href}>
+                    <li key={`${title}-${link.href}`}>
                       <Link
                         href={link.href}
                         className="text-sm text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-sm"

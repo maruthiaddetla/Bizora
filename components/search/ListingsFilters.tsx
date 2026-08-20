@@ -71,6 +71,8 @@ export function ListingsFilters({
       localityId: location.localityId ?? undefined,
       minPrice: parsePrice(minPrice),
       maxPrice: parsePrice(maxPrice),
+      sort: initialFilters.sort,
+      premiumOnly: initialFilters.premiumOnly,
       page: 1,
     };
 

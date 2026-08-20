@@ -21,11 +21,15 @@ export async function generateMetadata({
   const { id } = await params;
   const { listing } = await fetchAdminBusinessById(id);
   if (!listing) {
-    return { title: "Listing not found — Admin — Bizora" };
+    return {
+      title: "Listing not found — Admin",
+      robots: { index: false, follow: false },
+    };
   }
   return {
-    title: `Review: ${listing.title} — Admin — Bizora`,
+    title: `Review: ${listing.title}`,
     description: "Admin review of a business listing.",
+    robots: { index: false, follow: false },
   };
 }
 

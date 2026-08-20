@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
-  title: "Sell a Business — Bizora",
+  title: "Sell a Business",
   description: "Sell your business on Bizora and connect with genuine buyers.",
 };
 

@@ -8,8 +8,9 @@ import { fetchActiveCategories } from "@/lib/repositories/categories.repository"
 import { fetchStates } from "@/lib/repositories/locations.repository";
 
 export const metadata: Metadata = {
-  title: "Create listing — Bizora",
+  title: "Create listing",
   description: "Create a new business listing draft on Bizora.",
+  robots: { index: false, follow: false },
 };
 
 export default async function NewListingPage() {

@@ -4,8 +4,9 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { getSafeNextPath } from "@/lib/auth/redirect";
 
 export const metadata: Metadata = {
-  title: "Register — Bizora",
+  title: "Register",
   description: "Create a free Bizora account.",
+  robots: { index: false, follow: false },
 };
 
 type PageProps = {

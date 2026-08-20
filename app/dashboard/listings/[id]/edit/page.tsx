@@ -18,8 +18,9 @@ import {
 } from "@/lib/repositories/locations.repository";
 
 export const metadata: Metadata = {
-  title: "Edit listing — Bizora",
+  title: "Edit listing",
   description: "Edit your business listing draft on Bizora.",
+  robots: { index: false, follow: false },
 };
 
 type PageProps = {

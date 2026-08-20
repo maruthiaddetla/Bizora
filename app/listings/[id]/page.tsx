@@ -27,12 +27,20 @@ export async function generateMetadata({ params }: PageProps) {
   const { business } = await fetchBusinessById(id);
 
   if (!business) {
-    return { title: "Business not found — Bizora" };
+    return { title: "Business not found" };
   }
 
+  const description =
+    business.description?.slice(0, 160) ??
+    `${business.title} for sale on Bizora.`;
+
   return {
-    title: `${business.title} — Bizora`,
-    description: business.description?.slice(0, 160) ?? undefined,
+    title: business.title,
+    description,
+    openGraph: {
+      title: `${business.title} — Bizora`,
+      description,
+    },
   };
 }
 

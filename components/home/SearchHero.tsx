@@ -242,12 +242,13 @@ export function SearchHero({ categories, states }: SearchHeroProps) {
                 </Button>
               </div>
               <div className="rounded-xl border border-border bg-surface p-5">
-                <h3 className="font-semibold text-foreground">Broker-assisted</h3>
+                <h3 className="font-semibold text-foreground">Need guidance?</h3>
                 <p className="mt-2 text-sm text-muted">
-                  Work with a verified broker to manage your listing and deal flow.
+                  Start with a private draft listing, then submit it for Bizora
+                  review when you are ready.
                 </p>
-                <Button href="/brokers" variant="secondary" size="sm" className="mt-4">
-                  Find a Broker
+                <Button href="/sell" variant="secondary" size="sm" className="mt-4">
+                  Learn about selling
                 </Button>
               </div>
             </div>
@@ -258,7 +259,7 @@ export function SearchHero({ categories, states }: SearchHeroProps) {
               <p className="text-sm text-muted">
                 Browse the newest verified listings added in the last 7 days.
               </p>
-              <Button href="/listings?sort=latest" size="md" className="mt-4">
+              <Button href="/listings?sort=newest" size="md" className="mt-4">
                 View Latest Listings
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Button>

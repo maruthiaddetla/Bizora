@@ -19,10 +19,11 @@ export function AdminAccessDenied() {
         </Button>
       </div>
       <p className="mt-6 text-sm text-muted">
-        Think this is a mistake?{" "}
+        Think this is a mistake? Visit{" "}
         <Link href="/contact" className="font-medium text-primary hover:text-primary-hover">
-          Contact support
+          Contact
         </Link>
+        .
       </p>
     </main>
   );

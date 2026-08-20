@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { fetchAdminListingSummary } from "@/lib/repositories/admin.repository";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard — Bizora",
+  title: "Admin Dashboard",
   description: "Review and moderate Bizora business listings.",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminDashboardPage() {

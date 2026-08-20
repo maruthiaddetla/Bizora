@@ -3,7 +3,7 @@ import type {
   BusinessWithRelations,
   SellerListingView,
 } from "@/lib/repositories/businesses.types";
-import { resolveBusinessImageDisplayUrl } from "@/lib/business-images/resolve-url";
+import { resolveBusinessImageDisplayUrls } from "@/lib/business-images/resolve-url";
 import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import { formatIndianCurrency, toNumber } from "@/lib/format/currency";
 import type { Listing } from "@/lib/listings";
@@ -34,33 +34,60 @@ export function getSortedImageRows(business: BusinessWithRelations) {
 /**
  * Resolve display URLs (external or signed Storage URLs).
  * Falls back to placeholder when none resolve.
+ * Uses one Storage batch sign per business when multiple paths are present.
  */
 export async function getSortedImageUrls(
   business: BusinessWithRelations,
 ): Promise<string[]> {
   const rows = getSortedImageRows(business);
-  const urls = (
-    await Promise.all(rows.map((image) => resolveBusinessImageDisplayUrl(image)))
-  ).filter((url): url is string => Boolean(url));
+  const urls = (await resolveBusinessImageDisplayUrls(rows)).filter(
+    (url): url is string => Boolean(url),
+  );
 
   return urls.length > 0 ? urls : [LISTING_PLACEHOLDER_IMAGE];
+}
+
+/**
+ * Batch-map businesses to card listings with one Storage batch sign across
+ * all images in the page result set.
+ */
+export async function mapBusinessesToListings(
+  businesses: BusinessWithRelations[],
+): Promise<Listing[]> {
+  if (businesses.length === 0) return [];
+
+  const rowGroups = businesses.map((business) => getSortedImageRows(business));
+  const flatRows = rowGroups.flat();
+  const flatUrls = await resolveBusinessImageDisplayUrls(flatRows);
+
+  let offset = 0;
+  return businesses.map((business, index) => {
+    const count = rowGroups[index].length;
+    const urls = flatUrls
+      .slice(offset, offset + count)
+      .filter((url): url is string => Boolean(url));
+    offset += count;
+
+    const images = urls.length > 0 ? urls : [LISTING_PLACEHOLDER_IMAGE];
+
+    return {
+      id: business.id,
+      title: business.title,
+      location: buildLocationLabel(business),
+      price: formatIndianCurrency(toNumber(business.asking_price)),
+      description: business.description ?? "",
+      image: images[0],
+      category: business.category?.name ?? "Business",
+      premium: business.is_premium,
+    };
+  });
 }
 
 export async function mapBusinessToListing(
   business: BusinessWithRelations,
 ): Promise<Listing> {
-  const images = await getSortedImageUrls(business);
-
-  return {
-    id: business.id,
-    title: business.title,
-    location: buildLocationLabel(business),
-    price: formatIndianCurrency(toNumber(business.asking_price)),
-    description: business.description ?? "",
-    image: images[0],
-    category: business.category?.name ?? "Business",
-    premium: business.is_premium,
-  };
+  const [listing] = await mapBusinessesToListings([business]);
+  return listing;
 }
 
 export async function mapBusinessToDetail(

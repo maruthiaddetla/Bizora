@@ -16,11 +16,11 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: `Enquiry — Bizora`,
-    description: `Enquiry ${id}`,
+    title: "Enquiry",
+    description: "View enquiry details on Bizora.",
+    robots: { index: false, follow: false },
   };
 }
 

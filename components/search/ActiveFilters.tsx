@@ -144,5 +144,21 @@ export function buildActiveFilterChips(
     });
   }
 
+  if (filters.sort === "newest") {
+    chips.push({
+      key: "sort",
+      label: "Newest first",
+      href: buildSearchHref({ ...filters, sort: undefined, page: 1 }),
+    });
+  }
+
+  if (filters.premiumOnly) {
+    chips.push({
+      key: "premium",
+      label: "Premium only",
+      href: buildSearchHref({ ...filters, premiumOnly: undefined, page: 1 }),
+    });
+  }
+
   return chips;
 }
