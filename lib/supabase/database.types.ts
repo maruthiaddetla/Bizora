@@ -17,6 +17,15 @@ export type ProfileRole = "buyer" | "seller" | "broker" | "admin";
 
 export type EnquiryStatus = "new" | "read" | "responded" | "closed";
 
+export type NotificationType =
+  | "listing_submitted"
+  | "listing_approved"
+  | "listing_rejected"
+  | "new_enquiry"
+  | "enquiry_response"
+  | "listing_sold"
+  | "listing_resubmitted";
+
 export type Database = {
   public: {
     Tables: {
@@ -27,6 +36,11 @@ export type Database = {
           full_name: string | null;
           phone: string | null;
           company_name: string | null;
+          display_name: string | null;
+          bio: string | null;
+          avatar_storage_path: string | null;
+          website: string | null;
+          city: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -36,6 +50,11 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           company_name?: string | null;
+          display_name?: string | null;
+          bio?: string | null;
+          avatar_storage_path?: string | null;
+          website?: string | null;
+          city?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -45,6 +64,11 @@ export type Database = {
           full_name?: string | null;
           phone?: string | null;
           company_name?: string | null;
+          display_name?: string | null;
+          bio?: string | null;
+          avatar_storage_path?: string | null;
+          website?: string | null;
+          city?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -442,8 +466,71 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          message: string;
+          business_id: string | null;
+          enquiry_id: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          message: string;
+          business_id?: string | null;
+          enquiry_id?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: NotificationType;
+          title?: string;
+          message?: string;
+          business_id?: string | null;
+          enquiry_id?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_enquiry_id_fkey";
+            columns: ["enquiry_id"];
+            referencedRelation: "enquiries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
-    Views: Record<string, never>;
+    Views: {
+      public_seller_profiles: {
+        Row: {
+          id: string;
+          display_name: string;
+          company_name: string | null;
+          bio: string | null;
+          avatar_storage_path: string | null;
+          website: string | null;
+          city: string | null;
+          member_since: string;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       is_admin: {
         Args: Record<string, never>;
@@ -475,3 +562,5 @@ export type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type EnquiryRow = Database["public"]["Tables"]["enquiries"]["Row"];
 export type FavoriteRow = Database["public"]["Tables"]["favorites"]["Row"];
+export type NotificationRow =
+  Database["public"]["Tables"]["notifications"]["Row"];

@@ -6,6 +6,7 @@ import { EnquiryForm, StickyEnquiryCard, type ContactSellerMode } from "@/compon
 import { FinancialMetrics } from "@/components/listing/FinancialMetrics";
 import { ImageGallery } from "@/components/listing/ImageGallery";
 import { ListingActions } from "@/components/listing/ListingActions";
+import { SellerCard } from "@/components/listing/SellerCard";
 import { ListingCard } from "@/components/home/ListingCard";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
@@ -16,6 +17,7 @@ import {
   fetchSimilarBusinesses,
 } from "@/lib/repositories/businesses.repository";
 import { isBusinessFavorited } from "@/lib/repositories/favorites.repository";
+import { fetchPublicSellerSummary } from "@/lib/repositories/profiles.repository";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +91,10 @@ export default async function BusinessDetailPage({ params }: PageProps) {
   const initialFavorited = user
     ? await isBusinessFavorited(user.id, business.id)
     : false;
+
+  const sellerSummary = business.sellerId
+    ? await fetchPublicSellerSummary(business.sellerId)
+    : null;
 
   let enquiryMode: ContactSellerMode = "form";
   if (!business.sellerId) {
@@ -205,6 +211,13 @@ export default async function BusinessDetailPage({ params }: PageProps) {
                 </DetailSection>
               )}
 
+              {sellerSummary ? (
+                <SellerCard
+                  seller={sellerSummary}
+                  listingLocation={business.location}
+                />
+              ) : null}
+
               <div
                 id="contact-seller"
                 className="scroll-mt-24 rounded-2xl border border-border bg-surface p-6 lg:hidden"
@@ -227,7 +240,13 @@ export default async function BusinessDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="hidden lg:block">
+            <div className="hidden space-y-6 lg:block">
+              {sellerSummary ? (
+                <SellerCard
+                  seller={sellerSummary}
+                  listingLocation={business.location}
+                />
+              ) : null}
               <StickyEnquiryCard
                 {...enquiryFormProps}
                 signInHref={signInHref}

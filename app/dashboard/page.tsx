@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/lib/auth/session";
 import { fetchMyBusinesses } from "@/lib/repositories/businesses.repository";
 import { fetchSellerEnquiries } from "@/lib/repositories/enquiries.repository";
+import { countUnreadNotifications } from "@/lib/repositories/notifications.repository";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -27,9 +28,10 @@ function welcomeName(
 
 export default async function DashboardPage() {
   const { user, profile } = await requireUser("/dashboard");
-  const [result, sellerEnquiries] = await Promise.all([
+  const [result, sellerEnquiries, unreadNotifications] = await Promise.all([
     fetchMyBusinesses(user.id),
     fetchSellerEnquiries(user.id),
+    countUnreadNotifications(user.id),
   ]);
   const name = welcomeName(profile?.full_name, user.email);
   const newEnquiryCount = sellerEnquiries.enquiries.filter(
@@ -68,6 +70,45 @@ export default async function DashboardPage() {
           </div>
 
           <section className="mt-8 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Profile
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  Update your display name, company details, and public seller
+                  profile.
+                </p>
+              </div>
+              <Button href="/dashboard/profile" size="sm" variant="secondary">
+                Edit profile
+              </Button>
+            </div>
+          </section>
+
+          <section className="mt-4 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Notifications
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  {unreadNotifications > 0
+                    ? `You have ${unreadNotifications} unread notification${unreadNotifications === 1 ? "" : "s"}.`
+                    : "You're all caught up — no unread notifications."}
+                </p>
+              </div>
+              <Button
+                href="/dashboard/notifications"
+                size="sm"
+                variant="secondary"
+              >
+                View notifications
+              </Button>
+            </div>
+          </section>
+
+          <section className="mt-4 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">

@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOutAction } from "@/lib/auth/actions";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/Button";
 
 const navLinks = [
@@ -16,11 +17,13 @@ const navLinks = [
 type NavbarClientProps = {
   isAuthenticated: boolean;
   postListingHref: string;
+  unreadNotificationCount?: number;
 };
 
 export function NavbarClient({
   isAuthenticated,
   postListingHref,
+  unreadNotificationCount = 0,
 }: NavbarClientProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -50,6 +53,10 @@ export function NavbarClient({
           <span className="text-white/20">|</span>
           {isAuthenticated ? (
             <>
+              <NotificationBell
+                unreadCount={unreadNotificationCount}
+                variant="dark"
+              />
               <Link
                 href="/dashboard"
                 className="rounded-sm font-medium transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
@@ -120,25 +127,37 @@ export function NavbarClient({
 
           <div className="hidden items-center gap-2 lg:flex">
             {isAuthenticated && (
-              <Button href="/dashboard" variant="secondary" size="sm">
-                Dashboard
-              </Button>
+              <>
+                <NotificationBell unreadCount={unreadNotificationCount} />
+                <Button href="/dashboard" variant="secondary" size="sm">
+                  Dashboard
+                </Button>
+              </>
             )}
             <Button href={postListingHref} size="sm">
               Post a Listing
             </Button>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-1 lg:hidden">
+            {isAuthenticated && (
+              <NotificationBell unreadCount={unreadNotificationCount} />
+            )}
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </nav>
       </div>
 
@@ -166,6 +185,20 @@ export function NavbarClient({
                 </Link>
               </li>
             ))}
+            {isAuthenticated && (
+              <li>
+                <Link
+                  href="/dashboard/notifications"
+                  className="block rounded-lg px-3 py-3 text-lg font-medium text-foreground transition-colors hover:bg-surface"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Notifications
+                  {unreadNotificationCount > 0
+                    ? ` (${unreadNotificationCount > 99 ? "99+" : unreadNotificationCount})`
+                    : ""}
+                </Link>
+              </li>
+            )}
           </ul>
 
           <div className="mt-auto flex flex-col gap-3 border-t border-border pt-6">

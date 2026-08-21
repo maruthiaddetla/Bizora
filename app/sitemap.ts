@@ -27,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { data, error } = await supabase
     .from("businesses")
-    .select("id, updated_at")
+    .select("id, updated_at, seller_id")
     .eq("status", "published")
     .order("updated_at", { ascending: false })
     .limit(5000);
@@ -46,5 +46,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...listingEntries];
+  const sellerIds = [
+    ...new Set(
+      data
+        .map((row) => row.seller_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ].slice(0, 2000);
+
+  const sellerEntries: MetadataRoute.Sitemap = sellerIds.map((id) => ({
+    url: `${siteUrl}/sellers/${id}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+
+  return [...staticEntries, ...listingEntries, ...sellerEntries];
 }

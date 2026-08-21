@@ -11,6 +11,8 @@ const footerSections = {
     { label: "Sign In", href: "/sign-in" },
     { label: "Register", href: "/sign-up" },
     { label: "Dashboard", href: "/dashboard" },
+    { label: "My Profile", href: "/dashboard/profile" },
+    { label: "Notifications", href: "/dashboard/notifications" },
     { label: "My Enquiries", href: "/dashboard/enquiries" },
     { label: "Saved Businesses", href: "/dashboard/favorites" },
   ],

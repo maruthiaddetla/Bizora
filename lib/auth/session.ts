@@ -31,7 +31,9 @@ export async function getCurrentProfile(): Promise<ProfileRow | null> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, role, full_name, phone, company_name, created_at, updated_at")
+    .select(
+      "id, role, full_name, phone, company_name, display_name, bio, avatar_storage_path, website, city, created_at, updated_at",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
@@ -63,7 +65,9 @@ export async function requireUser(nextPath = "/"): Promise<AuthUserContext> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role, full_name, phone, company_name, created_at, updated_at")
+    .select(
+      "id, role, full_name, phone, company_name, display_name, bio, avatar_storage_path, website, city, created_at, updated_at",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
