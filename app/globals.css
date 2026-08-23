@@ -2,19 +2,22 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0c1222;
-  --muted: #5c6b82;
-  --border: #e3e8f0;
-  --surface: #f4f6fa;
+  --foreground: #0b1f3a;
+  --muted: #64748b;
+  --border: #e6ebf2;
+  --surface: #f7f9fc;
   --surface-elevated: #ffffff;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
-  --accent: #10b981;
-  --accent-hover: #059669;
+  --primary: #0f9f6e;
+  --primary-hover: #0b855c;
+  --primary-light: #ecfdf5;
+  --accent: #0f9f6e;
+  --accent-hover: #0b855c;
   --accent-light: #ecfdf5;
-  --hero-from: #0c1222;
-  --hero-to: #1e3a5f;
+  --cta: #f97316;
+  --cta-hover: #ea580c;
+  --navy: #0b1f3a;
+  --hero-from: #0b1f3a;
+  --hero-to: #12304f;
 }
 
 @theme inline {
@@ -30,6 +33,9 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-light: var(--accent-light);
+  --color-cta: var(--cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-navy: var(--navy);
   --color-hero-from: var(--hero-from);
   --color-hero-to: var(--hero-to);
   --font-sans: var(--font-geist-sans);

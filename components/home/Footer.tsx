@@ -2,10 +2,10 @@ import Link from "next/link";
 
 const footerSections = {
   "Listing Tools": [
-    { label: "Browse All Listings", href: "/listings" },
+    { label: "Businesses for Sale", href: "/listings?type=business" },
+    { label: "Commercial Spaces", href: "/listings?type=commercial_space" },
     { label: "New Listings", href: "/listings?sort=newest" },
-    { label: "Premium Opportunities", href: "/listings?premium=true" },
-    { label: "Sell a Business", href: "/sell" },
+    { label: "List with Bizora", href: "/dashboard/listings/new" },
   ],
   Account: [
     { label: "Sign In", href: "/sign-in" },
@@ -14,7 +14,7 @@ const footerSections = {
     { label: "My Profile", href: "/dashboard/profile" },
     { label: "Notifications", href: "/dashboard/notifications" },
     { label: "My Enquiries", href: "/dashboard/enquiries" },
-    { label: "Saved Businesses", href: "/dashboard/favorites" },
+    { label: "Favourites", href: "/dashboard/favorites" },
   ],
   Company: [
     { label: "About Us", href: "/about" },
@@ -37,9 +37,8 @@ export function Footer() {
               <span className="text-xl font-bold text-white">Bizora</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-slate-400">
-              An India-focused marketplace for buying and selling businesses.
-              Browse published listings, enquire as a buyer, and manage seller
-              listings with admin review.
+              Buy a business. Find the right space. An India-focused marketplace
+              for businesses for sale and commercial premises in Hyderabad.
             </p>
           </div>
 

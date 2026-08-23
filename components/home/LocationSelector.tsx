@@ -27,6 +27,8 @@ type LocationSelectorProps = {
   states: LocationOption[];
   value: LocationSelection;
   onChange: (value: LocationSelection) => void;
+  /** Optional classes for the closed trigger button (presentation only). */
+  triggerClassName?: string;
 };
 
 const selectClass =
@@ -36,6 +38,7 @@ export function LocationSelector({
   states,
   value,
   onChange,
+  triggerClassName = "",
 }: LocationSelectorProps) {
   const [open, setOpen] = useState(false);
   const [districts, setDistricts] = useState<LocationOption[]>([]);
@@ -146,7 +149,14 @@ export function LocationSelector({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-12 w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-white px-3 text-left text-sm transition-colors hover:border-slate-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4"
+        className={
+          triggerClassName
+            ? [
+                "flex w-full min-w-0 items-center gap-2 text-left text-sm transition-colors focus:outline-none",
+                triggerClassName,
+              ].join(" ")
+            : "flex h-12 w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-white px-3 text-left text-sm transition-colors hover:border-slate-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4"
+        }
       >
         <MapPin className="h-4 w-4 shrink-0 text-muted" aria-hidden />
         <span

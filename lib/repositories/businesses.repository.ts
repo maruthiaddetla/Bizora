@@ -91,6 +91,91 @@ function mostSpecificLocationFilter(filters: {
 }
 
 /**
+ * Fetches published businesses for homepage featured section.
+ * Prefers premium, then newest. Not limited to premium-only.
+ */
+export async function fetchFeaturedBusinesses(
+  limit = 4,
+): Promise<FetchPremiumBusinessesResult> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return {
+      listings: [],
+      error:
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(BUSINESS_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .eq("listing_type", "business")
+    .order("is_premium", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] Supabase fetch failed:", error.message);
+    }
+    return { listings: [], error: error.message };
+  }
+
+  if (!data || data.length === 0) {
+    return { listings: [], error: null };
+  }
+
+  return {
+    listings: await mapBusinessesToListings(data as BusinessWithRelations[]),
+    error: null,
+  };
+}
+
+/**
+ * Fetches published commercial spaces for homepage featured section.
+ */
+export async function fetchFeaturedCommercialSpaces(
+  limit = 4,
+): Promise<FetchPremiumBusinessesResult> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return {
+      listings: [],
+      error:
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(BUSINESS_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .eq("listing_type", "commercial_space")
+    .order("is_premium", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] Supabase fetch failed:", error.message);
+    }
+    return { listings: [], error: error.message };
+  }
+
+  if (!data || data.length === 0) {
+    return { listings: [], error: null };
+  }
+
+  return {
+    listings: await mapBusinessesToListings(data as BusinessWithRelations[]),
+    error: null,
+  };
+}
+
+/**
  * Fetches published premium businesses for the homepage
  * Premium Opportunities section.
  */

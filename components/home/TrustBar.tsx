@@ -1,52 +1,39 @@
-import {
-  BadgeCheck,
-  FolderLock,
-  MessageSquare,
-  Shield,
-  type LucideIcon,
-} from "lucide-react";
+import { Check } from "lucide-react";
 
-const trustItems: { icon: LucideIcon; label: string; detail: string }[] = [
-  {
-    icon: Shield,
-    label: "Verified Listings",
-    detail: "Financials reviewed before publish",
-  },
-  {
-    icon: BadgeCheck,
-    label: "Serious Enquiries",
-    detail: "Vetted buyers only",
-  },
-  {
-    icon: FolderLock,
-    label: "Secure Deal Rooms",
-    detail: "NDAs & document control",
-  },
-  {
-    icon: MessageSquare,
-    label: "Direct Messaging",
-    detail: "Talk to decision-makers",
-  },
+const trustItems = [
+  "Free for Buyers",
+  "Admin Reviewed",
+  "Direct Communication",
+  "Hyderabad Focused",
 ];
 
 export function TrustBar() {
   return (
-    <section className="border-y border-border bg-white py-8" aria-label="Platform benefits">
+    <section
+      className="border-t border-border bg-surface py-8 sm:py-10"
+      aria-labelledby="why-bizora-heading"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
-          {trustItems.map(({ icon: Icon, label, detail }) => (
-            <div key={label} className="flex gap-3 sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
-                <Icon className="h-5 w-5" aria-hidden />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground sm:text-base">
-                  {label}
-                </p>
-                <p className="mt-0.5 text-xs text-muted sm:text-sm">{detail}</p>
-              </div>
-            </div>
-          ))}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
+          <h2
+            id="why-bizora-heading"
+            className="shrink-0 text-lg font-bold tracking-tight text-navy sm:text-xl"
+          >
+            Why Bizora?
+          </h2>
+          <ul className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2 lg:flex-1 lg:justify-between lg:gap-4">
+            {trustItems.map((label) => (
+              <li
+                key={label}
+                className="inline-flex items-center gap-2 text-sm font-medium text-navy"
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-light text-primary">
+                  <Check className="h-3 w-3" aria-hidden strokeWidth={3} />
+                </span>
+                {label}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

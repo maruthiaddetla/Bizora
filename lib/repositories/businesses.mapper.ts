@@ -90,10 +90,16 @@ function mapCommercialCardFields(
 
 function mapBusinessCardFields(
   business: BusinessWithRelations,
-): Pick<Listing, "listingType" | "price"> {
+): Pick<
+  Listing,
+  "listingType" | "price" | "annualRevenue" | "annualProfit" | "employees"
+> {
   return {
     listingType: "business",
     price: formatIndianCurrency(toNumber(business.asking_price)),
+    annualRevenue: formatIndianCurrency(toNumber(business.annual_revenue)),
+    annualProfit: formatIndianCurrency(toNumber(business.annual_profit)),
+    employees: business.employees,
   };
 }
 

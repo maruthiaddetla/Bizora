@@ -1,22 +1,22 @@
 import { ListingSection } from "@/components/home/ListingSection";
-import { fetchPremiumBusinesses } from "@/lib/repositories/businesses.repository";
+import { fetchFeaturedBusinesses } from "@/lib/repositories/businesses.repository";
 
 const SECTION_PROPS = {
-  id: "premium" as const,
-  title: "Featured Businesses",
-  subtitle:
-    "Hand-picked businesses for sale with verified details and serious seller intent.",
+  id: "featured-businesses" as const,
+  title: "Featured Businesses for Sale",
   viewAllHref: "/listings?type=business",
+  columns: 4 as const,
 };
 
 export async function PremiumListingsSection() {
-  const { listings, error } = await fetchPremiumBusinesses(6);
+  const { listings, error } = await fetchFeaturedBusinesses(4);
 
   if (error) {
     return (
       <ListingSection
         {...SECTION_PROPS}
-        errorHeading="Unable to load premium opportunities"
+        className="bg-white"
+        errorHeading="Unable to load featured businesses"
         errorMessage={error}
       />
     );
@@ -26,15 +26,15 @@ export async function PremiumListingsSection() {
     return (
       <ListingSection
         {...SECTION_PROPS}
-        emptyMessage="No premium opportunities available"
+        className="bg-white"
+        emptyMessage="No published businesses yet"
       />
     );
   }
 
-  return <ListingSection {...SECTION_PROPS} listings={listings} />;
+  return <ListingSection {...SECTION_PROPS} listings={listings} className="bg-white" />;
 }
 
-/** Shown while the Supabase request is in flight */
 export function PremiumListingsSectionFallback() {
-  return <ListingSection {...SECTION_PROPS} isLoading />;
+  return <ListingSection {...SECTION_PROPS} isLoading className="bg-white" />;
 }

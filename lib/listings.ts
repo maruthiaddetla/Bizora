@@ -17,6 +17,10 @@ export type Listing = {
   spaceTypeLabel?: string | null;
   floor?: string | null;
   parkingSpaces?: number | null;
+  /** Business card stats (formatted) */
+  annualRevenue?: string;
+  annualProfit?: string;
+  employees?: number | null;
 };
 
 export type SellerInfo = {
