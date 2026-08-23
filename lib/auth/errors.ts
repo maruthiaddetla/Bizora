@@ -39,6 +39,8 @@ export function isSmsProviderError(error: AuthErrorLike): boolean {
 
   return (
     code === "sms_send_failed" ||
+    code === "phone_provider_disabled" ||
+    code === "otp_disabled" ||
     (code === "unexpected_failure" && message.includes("sms")) ||
     message.includes("sms provider") ||
     message.includes("sms is not configured") ||
@@ -48,6 +50,8 @@ export function isSmsProviderError(error: AuthErrorLike): boolean {
     message.includes("error sending sms") ||
     message.includes("unable to send sms") ||
     message.includes("failed to send sms") ||
+    message.includes("phone signups are disabled") ||
+    message.includes("signups not allowed for otp") ||
     (message.includes("sms") && message.includes("not enabled")) ||
     (message.includes("phone provider") &&
       (message.includes("not enabled") ||
@@ -65,12 +69,18 @@ export function isSmsProviderError(error: AuthErrorLike): boolean {
 export function isPhoneProviderDisabledError(error: AuthErrorLike): boolean {
   if (!error) return false;
   const message = (error.message ?? "").toLowerCase();
+  const code = (error.code ?? "").toLowerCase();
   return (
     isSmsProviderError(error) ||
+    code === "phone_provider_disabled" ||
+    message.includes("phone logins are disabled") ||
+    message.includes("phone signups are disabled") ||
     (message.includes("phone") &&
       (message.includes("not enabled") ||
         message.includes("provider is disabled") ||
-        message.includes("signup is disabled")))
+        message.includes("signups are disabled") ||
+        message.includes("signup is disabled") ||
+        message.includes("logins are disabled")))
   );
 }
 
