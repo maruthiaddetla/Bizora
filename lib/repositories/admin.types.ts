@@ -1,5 +1,5 @@
 import type { BusinessStatus } from "@/lib/supabase/database.types";
-import type { BusinessDetailView } from "@/lib/repositories/businesses.types";
+import type { ListingDetailView } from "@/lib/repositories/businesses.types";
 
 export type AdminListingSummary = {
   pending: number;
@@ -23,13 +23,14 @@ export type AdminListingQueueItem = {
   category: string;
   location: string;
   status: BusinessStatus;
+  listingType: "business" | "commercial_space";
   image: string;
   sellerName: string;
   submittedAt: string | null;
   updatedAt: string;
 };
 
-export type AdminListingDetail = BusinessDetailView & {
+export type AdminListingDetail = ListingDetailView & {
   status: BusinessStatus;
   rejectionReason: string | null;
   submittedAt: string | null;

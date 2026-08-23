@@ -3,6 +3,12 @@
  * Used by /listings and homepage SearchHero navigation.
  */
 
+import {
+  DEFAULT_LISTING_TYPE,
+  isListingType,
+  type ListingType,
+} from "@/lib/listing-types";
+
 export const DEFAULT_SEARCH_PAGE = 1;
 export const DEFAULT_SEARCH_PAGE_SIZE = 12;
 export const MAX_SEARCH_PAGE_SIZE = 50;
@@ -20,6 +26,8 @@ export const DEFAULT_SEARCH_SORT: BusinessSearchSort = "featured";
 
 export type BusinessSearchFilters = {
   q?: string;
+  /** Marketplace vertical — defaults to business when omitted (backwards compatible). */
+  listingType?: ListingType;
   categoryIds?: string[];
   stateId?: string;
   districtId?: string;
@@ -27,6 +35,12 @@ export type BusinessSearchFilters = {
   localityId?: string;
   minPrice?: number;
   maxPrice?: number;
+  /** Commercial space only */
+  spaceType?: string;
+  furnished?: string;
+  minArea?: number;
+  maxArea?: number;
+  minParking?: number;
   page?: number;
   pageSize?: number;
   sort?: BusinessSearchSort;
@@ -36,6 +50,7 @@ export type BusinessSearchFilters = {
 
 /** Filters with pagination defaults applied (for repository queries). */
 export type ResolvedBusinessSearchFilters = BusinessSearchFilters & {
+  listingType: ListingType;
   page: number;
   pageSize: number;
   sort: BusinessSearchSort;
@@ -135,6 +150,12 @@ function parsePremiumOnly(value: string | undefined): boolean | undefined {
   return undefined;
 }
 
+function parseListingType(value: string | undefined): ListingType | undefined {
+  const trimmed = parseOptionalString(value);
+  if (!trimmed) return undefined;
+  return isListingType(trimmed) ? trimmed : undefined;
+}
+
 /**
  * Parse URL search parameters into BusinessSearchFilters.
  * Invalid values are ignored; pagination defaults are applied via resolveSearchFilters.
@@ -143,6 +164,7 @@ export function parseSearchParams(
   params: URLSearchParams | Record<string, string | string[] | undefined>,
 ): BusinessSearchFilters {
   const q = parseOptionalString(firstParam(params, "q"));
+  const listingType = parseListingType(firstParam(params, "type"));
   const categoryIds = parseCategoryIds(firstParam(params, "category"));
   const stateId = parseOptionalUuid(firstParam(params, "state"));
   const districtId = parseOptionalUuid(firstParam(params, "district"));
@@ -150,14 +172,25 @@ export function parseSearchParams(
   const localityId = parseOptionalUuid(firstParam(params, "locality"));
   const sort = parseSort(firstParam(params, "sort"));
   const premiumOnly = parsePremiumOnly(firstParam(params, "premium"));
+  const spaceType = parseOptionalString(firstParam(params, "spaceType"));
+  const furnished = parseOptionalString(firstParam(params, "furnished"));
 
   let minPrice = parseNonNegativeNumber(firstParam(params, "min"));
   let maxPrice = parseNonNegativeNumber(firstParam(params, "max"));
+  let minArea = parseNonNegativeNumber(firstParam(params, "minArea"));
+  let maxArea = parseNonNegativeNumber(firstParam(params, "maxArea"));
+  const minParking = parseNonNegativeNumber(firstParam(params, "minParking"));
 
   if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
     const swappedMin = maxPrice;
     maxPrice = minPrice;
     minPrice = swappedMin;
+  }
+
+  if (minArea != null && maxArea != null && minArea > maxArea) {
+    const swappedMin = maxArea;
+    maxArea = minArea;
+    minArea = swappedMin;
   }
 
   const pageRaw = firstParam(params, "page");
@@ -166,6 +199,7 @@ export function parseSearchParams(
   const filters: BusinessSearchFilters = {};
 
   if (q) filters.q = q;
+  if (listingType) filters.listingType = listingType;
   if (categoryIds) filters.categoryIds = categoryIds;
   if (stateId) filters.stateId = stateId;
   if (districtId) filters.districtId = districtId;
@@ -173,6 +207,11 @@ export function parseSearchParams(
   if (localityId) filters.localityId = localityId;
   if (minPrice != null) filters.minPrice = minPrice;
   if (maxPrice != null) filters.maxPrice = maxPrice;
+  if (spaceType) filters.spaceType = spaceType;
+  if (furnished) filters.furnished = furnished;
+  if (minArea != null) filters.minArea = minArea;
+  if (maxArea != null) filters.maxArea = maxArea;
+  if (minParking != null) filters.minParking = minParking;
   if (sort) filters.sort = sort;
   if (premiumOnly === true) filters.premiumOnly = true;
 
@@ -192,11 +231,19 @@ export function resolveSearchFilters(
 ): ResolvedBusinessSearchFilters {
   let minPrice = filters.minPrice;
   let maxPrice = filters.maxPrice;
+  let minArea = filters.minArea;
+  let maxArea = filters.maxArea;
 
   if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
     const swappedMin = maxPrice;
     maxPrice = minPrice;
     minPrice = swappedMin;
+  }
+
+  if (minArea != null && maxArea != null && minArea > maxArea) {
+    const swappedMin = maxArea;
+    maxArea = minArea;
+    minArea = swappedMin;
   }
 
   const page =
@@ -212,10 +259,15 @@ export function resolveSearchFilters(
   const sort: BusinessSearchSort =
     filters.sort === "newest" ? "newest" : DEFAULT_SEARCH_SORT;
 
+  const listingType: ListingType = filters.listingType ?? DEFAULT_LISTING_TYPE;
+
   return {
     ...filters,
+    listingType,
     minPrice,
     maxPrice,
+    minArea,
+    maxArea,
     page,
     pageSize,
     sort,
@@ -238,6 +290,10 @@ export function serializeSearchParams(
     params.set("q", resolved.q);
   }
 
+  if (resolved.listingType && resolved.listingType !== DEFAULT_LISTING_TYPE) {
+    params.set("type", resolved.listingType);
+  }
+
   if (resolved.categoryIds && resolved.categoryIds.length > 0) {
     params.set("category", resolved.categoryIds.join(","));
   }
@@ -252,6 +308,22 @@ export function serializeSearchParams(
   }
   if (resolved.maxPrice != null) {
     params.set("max", String(resolved.maxPrice));
+  }
+
+  if (resolved.spaceType) {
+    params.set("spaceType", resolved.spaceType);
+  }
+  if (resolved.furnished) {
+    params.set("furnished", resolved.furnished);
+  }
+  if (resolved.minArea != null) {
+    params.set("minArea", String(resolved.minArea));
+  }
+  if (resolved.maxArea != null) {
+    params.set("maxArea", String(resolved.maxArea));
+  }
+  if (resolved.minParking != null) {
+    params.set("minParking", String(resolved.minParking));
   }
 
   if (resolved.sort === "newest") {

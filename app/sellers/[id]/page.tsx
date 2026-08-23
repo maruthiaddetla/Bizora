@@ -207,7 +207,7 @@ export default async function PublicSellerPage({ params }: PageProps) {
             Businesses for sale
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Published listings from this seller.
+            Published businesses and commercial spaces from this seller.
           </p>
 
           {profile.listings.length === 0 ? (

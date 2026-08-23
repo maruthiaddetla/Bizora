@@ -5,20 +5,25 @@ import { getBusinessImageSubmitState } from "@/lib/business-images/actions";
 import { requireUser } from "@/lib/auth/session";
 import { generateUniqueSlug } from "@/lib/listing-creation/slug";
 import {
-  hasFieldErrors,
-  parseListingFormInput,
-  validateDraftFields,
-  validateSubmitFields,
-  type ListingFieldErrors,
-  type ListingFormInput,
-  type ParsedListingFields,
-} from "@/lib/listing-creation/validation";
+  hasCommercialFieldErrors,
+  parseCommercialFormInput,
+  validateCommercialDraftFields,
+  validateCommercialSubmitFields,
+  type CommercialFieldErrors,
+  type CommercialSpaceFormInput,
+  type ParsedCommercialFields,
+} from "@/lib/listing-creation/commercial-validation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type {
+  FurnishedOption,
+  ListingPurpose,
+  SpaceType,
+} from "@/lib/listing-types";
 
 const GENERIC_ERROR =
   "We couldn't save your listing right now. Please try again shortly.";
 
-export type ListingActionResult =
+export type CommercialListingActionResult =
   | {
       ok: true;
       listingId: string;
@@ -28,10 +33,10 @@ export type ListingActionResult =
   | {
       ok: false;
       message: string;
-      fieldErrors?: ListingFieldErrors;
+      fieldErrors?: CommercialFieldErrors;
     };
 
-function formDataToInput(formData: FormData): ListingFormInput {
+function formDataToCommercialInput(formData: FormData): CommercialSpaceFormInput {
   const read = (key: string) => {
     const value = formData.get(key);
     return typeof value === "string" ? value : null;
@@ -45,17 +50,21 @@ function formDataToInput(formData: FormData): ListingFormInput {
     districtId: read("districtId") || null,
     cityId: read("cityId") || null,
     localityId: read("localityId") || null,
-    askingPrice: read("askingPrice"),
-    annualRevenue: read("annualRevenue"),
-    annualProfit: read("annualProfit"),
-    ebitda: read("ebitda"),
-    establishedYear: read("establishedYear"),
-    employees: read("employees"),
-    reasonForSale: read("reasonForSale"),
+    spaceType: read("spaceType") || null,
+    listingPurpose: read("listingPurpose") || null,
+    monthlyRent: read("monthlyRent"),
+    securityDeposit: read("securityDeposit"),
+    areaSqft: read("areaSqft"),
+    floor: read("floor"),
+    parkingSpaces: read("parkingSpaces"),
+    furnished: read("furnished") || null,
+    leaseTermMonths: read("leaseTermMonths"),
+    availableFrom: read("availableFrom") || null,
+    businessUsage: read("businessUsage"),
   };
 }
 
-function toDbRow(fields: ParsedListingFields) {
+function toCommercialDbRow(fields: ParsedCommercialFields) {
   return {
     title: fields.title,
     description: fields.description,
@@ -64,13 +73,17 @@ function toDbRow(fields: ParsedListingFields) {
     district_id: fields.districtId,
     city_id: fields.cityId,
     locality_id: fields.localityId,
-    asking_price: fields.askingPrice,
-    annual_revenue: fields.annualRevenue,
-    annual_profit: fields.annualProfit,
-    ebitda: fields.ebitda,
-    established_year: fields.establishedYear,
-    employees: fields.employees,
-    reason_for_sale: fields.reasonForSale,
+    space_type: fields.spaceType as SpaceType | null,
+    listing_purpose: fields.listingPurpose as ListingPurpose | null,
+    monthly_rent: fields.monthlyRent,
+    security_deposit: fields.securityDeposit,
+    area_sqft: fields.areaSqft,
+    floor: fields.floor,
+    parking_spaces: fields.parkingSpaces,
+    furnished: fields.furnished as FurnishedOption | null,
+    lease_term_months: fields.leaseTermMonths,
+    available_from: fields.availableFrom,
+    business_usage: fields.businessUsage,
   };
 }
 
@@ -94,8 +107,14 @@ function mapDbError(message: string | undefined): string {
   if (text.includes("city is required")) {
     return "Please select a city.";
   }
+  if (text.includes("monthly_rent")) {
+    return "Please enter a monthly rent greater than zero.";
+  }
+  if (text.includes("area_sqft")) {
+    return "Please enter an area greater than zero.";
+  }
   if (text.includes("duplicate") && text.includes("slug")) {
-    return "That business title is already in use. Please adjust the title.";
+    return "That title is already in use. Please adjust the title.";
   }
   return GENERIC_ERROR;
 }
@@ -137,22 +156,18 @@ async function promoteCallerToSeller(): Promise<void> {
   }
 }
 
-/**
- * Create a new draft listing owned by the authenticated user.
- * seller_id and status are server-controlled.
- */
-export async function createDraftListing(
-  input: ListingFormInput,
-): Promise<ListingActionResult> {
-  const { user } = await requireUser("/dashboard/listings/new");
+export async function createCommercialDraftListing(
+  input: CommercialSpaceFormInput,
+): Promise<CommercialListingActionResult> {
+  const { user } = await requireUser("/dashboard/listings/new/commercial");
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { fields, errors: parseErrors } = parseListingFormInput(input);
-  const fieldErrors = validateDraftFields(fields, parseErrors);
-  if (hasFieldErrors(fieldErrors)) {
+  const { fields, errors: parseErrors } = parseCommercialFormInput(input);
+  const fieldErrors = validateCommercialDraftFields(fields, parseErrors);
+  if (hasCommercialFieldErrors(fieldErrors)) {
     return {
       ok: false,
       message: "Please fix the highlighted fields.",
@@ -167,11 +182,11 @@ export async function createDraftListing(
   const { data, error } = await supabase
     .from("businesses")
     .insert({
-      ...toDbRow(fields),
+      ...toCommercialDbRow(fields),
       slug,
       seller_id: user.id,
       status: "draft",
-      listing_type: "business",
+      listing_type: "commercial_space",
       is_premium: false,
       is_verified: false,
     })
@@ -180,7 +195,7 @@ export async function createDraftListing(
 
   if (error || !data) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] createDraftListing failed:", error?.message);
+      console.warn("[Bizora] createCommercialDraftListing failed:", error?.message);
     }
     return { ok: false, message: mapDbError(error?.message) };
   }
@@ -195,22 +210,19 @@ export async function createDraftListing(
   };
 }
 
-/**
- * Update an owned draft or rejected listing. Never publishes.
- */
-export async function updateDraftListing(
+export async function updateCommercialDraftListing(
   listingId: string,
-  input: ListingFormInput,
-): Promise<ListingActionResult> {
+  input: CommercialSpaceFormInput,
+): Promise<CommercialListingActionResult> {
   const { user } = await requireUser(`/dashboard/listings/${listingId}/edit`);
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { fields, errors: parseErrors } = parseListingFormInput(input);
-  const fieldErrors = validateDraftFields(fields, parseErrors);
-  if (hasFieldErrors(fieldErrors)) {
+  const { fields, errors: parseErrors } = parseCommercialFormInput(input);
+  const fieldErrors = validateCommercialDraftFields(fields, parseErrors);
+  if (hasCommercialFieldErrors(fieldErrors)) {
     return {
       ok: false,
       message: "Please fix the highlighted fields.",
@@ -220,13 +232,17 @@ export async function updateDraftListing(
 
   const { data: existing, error: loadError } = await supabase
     .from("businesses")
-    .select("id, seller_id, status, title, slug")
+    .select("id, seller_id, status, title, slug, listing_type")
     .eq("id", listingId)
     .eq("seller_id", user.id)
     .maybeSingle();
 
   if (loadError || !existing) {
     return { ok: false, message: "Listing not found or you do not have access." };
+  }
+
+  if (existing.listing_type !== "commercial_space") {
+    return { ok: false, message: "This listing is not a commercial space." };
   }
 
   if (existing.status !== "draft" && existing.status !== "rejected") {
@@ -246,7 +262,7 @@ export async function updateDraftListing(
   const { data, error } = await supabase
     .from("businesses")
     .update({
-      ...toDbRow(fields),
+      ...toCommercialDbRow(fields),
       slug,
       updated_at: new Date().toISOString(),
     })
@@ -258,7 +274,7 @@ export async function updateDraftListing(
 
   if (error || !data) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] updateDraftListing failed:", error?.message);
+      console.warn("[Bizora] updateCommercialDraftListing failed:", error?.message);
     }
     return { ok: false, message: mapDbError(error?.message) };
   }
@@ -271,14 +287,10 @@ export async function updateDraftListing(
   };
 }
 
-/**
- * Persist form data (if provided), validate text/data rules, and set status=pending.
- * Image requirement is reserved for Phase 4C-2B via validateSubmitFields options.
- */
-export async function submitListingForReview(
+export async function submitCommercialListingForReview(
   listingId: string,
-  input?: ListingFormInput,
-): Promise<ListingActionResult> {
+  input?: CommercialSpaceFormInput,
+): Promise<CommercialListingActionResult> {
   const { user } = await requireUser(`/dashboard/listings/${listingId}/edit`);
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
@@ -287,15 +299,17 @@ export async function submitListingForReview(
 
   const { data: existing, error: loadError } = await supabase
     .from("businesses")
-    .select(
-      "id, seller_id, status, title, description, category_id, state_id, district_id, city_id, locality_id, asking_price, annual_revenue, annual_profit, ebitda, established_year, employees, reason_for_sale, slug",
-    )
+    .select("*")
     .eq("id", listingId)
     .eq("seller_id", user.id)
     .maybeSingle();
 
   if (loadError || !existing) {
     return { ok: false, message: "Listing not found or you do not have access." };
+  }
+
+  if (existing.listing_type !== "commercial_space") {
+    return { ok: false, message: "This listing is not a commercial space." };
   }
 
   if (existing.status !== "draft" && existing.status !== "rejected") {
@@ -305,11 +319,11 @@ export async function submitListingForReview(
     };
   }
 
-  let fields: ParsedListingFields;
-  let parseErrors: ListingFieldErrors = {};
+  let fields: ParsedCommercialFields;
+  let parseErrors: CommercialFieldErrors = {};
 
   if (input) {
-    const parsed = parseListingFormInput(input);
+    const parsed = parseCommercialFormInput(input);
     fields = parsed.fields;
     parseErrors = parsed.errors;
   } else {
@@ -321,24 +335,28 @@ export async function submitListingForReview(
       districtId: existing.district_id,
       cityId: existing.city_id,
       localityId: existing.locality_id,
-      askingPrice: existing.asking_price,
-      annualRevenue: existing.annual_revenue,
-      annualProfit: existing.annual_profit,
-      ebitda: existing.ebitda,
-      establishedYear: existing.established_year,
-      employees: existing.employees,
-      reasonForSale: existing.reason_for_sale,
+      spaceType: existing.space_type,
+      listingPurpose: existing.listing_purpose,
+      monthlyRent: existing.monthly_rent,
+      securityDeposit: existing.security_deposit,
+      areaSqft: existing.area_sqft,
+      floor: existing.floor,
+      parkingSpaces: existing.parking_spaces,
+      furnished: existing.furnished,
+      leaseTermMonths: existing.lease_term_months,
+      availableFrom: existing.available_from,
+      businessUsage: existing.business_usage,
     };
   }
 
   const imageState = await getBusinessImageSubmitState(listingId);
-  const fieldErrors = await validateSubmitFields(fields, parseErrors, {
+  const fieldErrors = await validateCommercialSubmitFields(fields, parseErrors, {
     requirePrimaryImage: true,
     hasPrimaryImage: imageState.hasPrimary,
     imageCount: imageState.imageCount,
   });
 
-  if (hasFieldErrors(fieldErrors)) {
+  if (hasCommercialFieldErrors(fieldErrors)) {
     return {
       ok: false,
       message: "Please complete the required fields before submitting.",
@@ -356,7 +374,7 @@ export async function submitListingForReview(
   const { data, error } = await supabase
     .from("businesses")
     .update({
-      ...toDbRow(fields),
+      ...toCommercialDbRow(fields),
       slug,
       status: "pending",
       submitted_at: new Date().toISOString(),
@@ -370,7 +388,10 @@ export async function submitListingForReview(
 
   if (error || !data) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] submitListingForReview failed:", error?.message);
+      console.warn(
+        "[Bizora] submitCommercialListingForReview failed:",
+        error?.message,
+      );
     }
     return { ok: false, message: mapDbError(error?.message) };
   }
@@ -383,23 +404,23 @@ export async function submitListingForReview(
   };
 }
 
-export type ListingFormActionState = {
+export type CommercialFormActionState = {
   ok: boolean;
   message?: string;
-  fieldErrors?: ListingFieldErrors;
+  fieldErrors?: CommercialFieldErrors;
   listingId?: string;
   intent?: "draft" | "submit";
 };
 
-export async function createListingFormAction(
-  _prev: ListingFormActionState,
+export async function createCommercialFormAction(
+  _prev: CommercialFormActionState,
   formData: FormData,
-): Promise<ListingFormActionState> {
+): Promise<CommercialFormActionState> {
   const intent = formData.get("intent") === "submit" ? "submit" : "draft";
-  const input = formDataToInput(formData);
+  const input = formDataToCommercialInput(formData);
 
   if (intent === "draft") {
-    const result = await createDraftListing(input);
+    const result = await createCommercialDraftListing(input);
     if (!result.ok) {
       return {
         ok: false,
@@ -411,14 +432,13 @@ export async function createListingFormAction(
     redirect(`/dashboard/listings/${result.listingId}/edit?saved=1`);
   }
 
-  // Pre-validate submit rules before creating so the user keeps form state on errors
-  const { fields, errors: parseErrors } = parseListingFormInput(input);
-  const submitErrors = await validateSubmitFields(fields, parseErrors, {
+  const { fields, errors: parseErrors } = parseCommercialFormInput(input);
+  const submitErrors = await validateCommercialSubmitFields(fields, parseErrors, {
     requirePrimaryImage: true,
     hasPrimaryImage: false,
     imageCount: 0,
   });
-  if (hasFieldErrors(submitErrors)) {
+  if (hasCommercialFieldErrors(submitErrors)) {
     return {
       ok: false,
       message:
@@ -429,7 +449,7 @@ export async function createListingFormAction(
     };
   }
 
-  const created = await createDraftListing(input);
+  const created = await createCommercialDraftListing(input);
   if (!created.ok) {
     return {
       ok: false,
@@ -439,7 +459,10 @@ export async function createListingFormAction(
     };
   }
 
-  const submitted = await submitListingForReview(created.listingId, input);
+  const submitted = await submitCommercialListingForReview(
+    created.listingId,
+    input,
+  );
   if (!submitted.ok) {
     redirect(`/dashboard/listings/${created.listingId}/edit?error=submit`);
   }
@@ -447,20 +470,20 @@ export async function createListingFormAction(
   redirect(`/dashboard/listings/${created.listingId}/preview?submitted=1`);
 }
 
-export async function updateListingFormAction(
-  _prev: ListingFormActionState,
+export async function updateCommercialFormAction(
+  _prev: CommercialFormActionState,
   formData: FormData,
-): Promise<ListingFormActionState> {
+): Promise<CommercialFormActionState> {
   const listingId = String(formData.get("listingId") ?? "");
   const intent = formData.get("intent") === "submit" ? "submit" : "draft";
-  const input = formDataToInput(formData);
+  const input = formDataToCommercialInput(formData);
 
   if (!listingId) {
     return { ok: false, message: "Listing id is required.", intent };
   }
 
   if (intent === "draft") {
-    const result = await updateDraftListing(listingId, input);
+    const result = await updateCommercialDraftListing(listingId, input);
     if (!result.ok) {
       return {
         ok: false,
@@ -478,7 +501,7 @@ export async function updateListingFormAction(
     };
   }
 
-  const submitted = await submitListingForReview(listingId, input);
+  const submitted = await submitCommercialListingForReview(listingId, input);
   if (!submitted.ok) {
     return {
       ok: false,

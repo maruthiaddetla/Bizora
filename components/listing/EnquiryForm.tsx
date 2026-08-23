@@ -173,6 +173,7 @@ export function EnquiryForm({
 type StickyEnquiryCardProps = EnquiryFormProps & {
   signInHref: string;
   price?: string;
+  priceLabel?: string;
 };
 
 export function StickyEnquiryCard({
@@ -183,6 +184,7 @@ export function StickyEnquiryCard({
   buyerName,
   buyerEmail,
   price,
+  priceLabel = "Asking price",
 }: StickyEnquiryCardProps) {
   return (
     <aside
@@ -192,7 +194,7 @@ export function StickyEnquiryCard({
       {price && (
         <div className="border-b border-border pb-5">
           <p className="text-2xl font-bold text-accent">{price}</p>
-          <p className="mt-1 text-sm text-muted">Asking price</p>
+          <p className="mt-1 text-sm text-muted">{priceLabel}</p>
         </div>
       )}
 

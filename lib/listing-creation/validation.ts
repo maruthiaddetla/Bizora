@@ -4,7 +4,7 @@ import {
   fetchLocalities,
   fetchStates,
 } from "@/lib/repositories/locations.repository";
-import { fetchActiveCategories } from "@/lib/repositories/categories.repository";
+import { fetchBusinessCategories } from "@/lib/repositories/categories.repository";
 
 export type ListingFormInput = {
   title?: string | null;
@@ -216,7 +216,7 @@ export async function validateSubmitFields(
   if (!fields.categoryId) {
     errors.categoryId = "Please select a category.";
   } else {
-    const categories = await fetchActiveCategories();
+    const categories = await fetchBusinessCategories();
     if (!categories.some((category) => category.id === fields.categoryId)) {
       errors.categoryId = "Please select a valid active category.";
     }

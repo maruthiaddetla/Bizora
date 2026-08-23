@@ -152,13 +152,22 @@ export async function fetchAdminListings(
   const listings: AdminListingQueueItem[] = await Promise.all(
     sorted.map(async (row) => {
       const images = await getSortedImageUrls(row);
+      const listingType = row.listing_type ?? "business";
+      const price =
+        listingType === "commercial_space"
+          ? row.monthly_rent
+            ? `${formatIndianCurrency(toNumber(row.monthly_rent))} / mo`
+            : undefined
+          : formatIndianCurrency(toNumber(row.asking_price));
+
       return {
         id: row.id,
         title: row.title,
-        price: formatIndianCurrency(toNumber(row.asking_price)),
-        category: row.category?.name ?? "Business",
+        price,
+        category: row.category?.name ?? "Listing",
         location: buildLocationLabel(row),
         status: row.status,
+        listingType,
         image: images[0],
         sellerName: sellerDisplayName(row.seller),
         submittedAt: row.submitted_at,

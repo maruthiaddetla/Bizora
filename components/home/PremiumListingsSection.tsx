@@ -3,10 +3,10 @@ import { fetchPremiumBusinesses } from "@/lib/repositories/businesses.repository
 
 const SECTION_PROPS = {
   id: "premium" as const,
-  title: "Premium Opportunities",
+  title: "Featured Businesses",
   subtitle:
-    "Hand-picked listings with verified financials and serious seller intent.",
-  viewAllHref: "/listings?premium=true",
+    "Hand-picked businesses for sale with verified details and serious seller intent.",
+  viewAllHref: "/listings?type=business",
 };
 
 export async function PremiumListingsSection() {

@@ -14,7 +14,12 @@ type ListingCardProps = {
 
 export function ListingCard({ listing, variant = "default" }: ListingCardProps) {
   const isCompact = variant === "compact";
+  const isCommercial = listing.listingType === "commercial_space";
   const [imageSrc, setImageSrc] = useState(listing.image);
+
+  const priceLabel = isCommercial
+    ? listing.monthlyRent ?? listing.price
+    : listing.price;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
@@ -51,17 +56,31 @@ export function ListingCard({ listing, variant = "default" }: ListingCardProps) 
       </Link>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
-        {listing.price && (
-          <p className="text-lg font-bold text-accent sm:text-xl">{listing.price}</p>
+        {priceLabel && (
+          <p className="text-lg font-bold text-accent sm:text-xl">{priceLabel}</p>
         )}
 
         <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-lg">
           <Link href={`/listings/${listing.id}`}>{listing.title}</Link>
         </h3>
 
-        <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-muted">
-          {listing.description}
-        </p>
+        {isCommercial ? (
+          <p className="mt-2 line-clamp-2 text-sm text-muted">
+            {[
+              listing.areaSqft
+                ? `${listing.areaSqft.toLocaleString("en-IN")} sq.ft`
+                : null,
+              listing.floor,
+              listing.spaceTypeLabel,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        ) : (
+          <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-muted">
+            {listing.description}
+          </p>
+        )}
 
         <Link
           href={`/listings/${listing.id}`}

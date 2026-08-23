@@ -1,11 +1,23 @@
 import type {
   BusinessDetailView,
   BusinessWithRelations,
+  CommercialSpaceDetailView,
+  ListingDetailView,
   SellerListingView,
 } from "@/lib/repositories/businesses.types";
 import { resolveBusinessImageDisplayUrls } from "@/lib/business-images/resolve-url";
 import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import { formatIndianCurrency, toNumber } from "@/lib/format/currency";
+import {
+  formatFloorLabel,
+  FURNISHED_LABELS,
+  LISTING_PURPOSE_LABELS,
+  SPACE_TYPE_LABELS,
+  type FurnishedOption,
+  type ListingPurpose,
+  type ListingType,
+  type SpaceType,
+} from "@/lib/listing-types";
 import type { Listing } from "@/lib/listings";
 
 /** Locality, City, State — skips missing parts and duplicate names */
@@ -34,7 +46,6 @@ export function getSortedImageRows(business: BusinessWithRelations) {
 /**
  * Resolve display URLs (external or signed Storage URLs).
  * Falls back to placeholder when none resolve.
- * Uses one Storage batch sign per business when multiple paths are present.
  */
 export async function getSortedImageUrls(
   business: BusinessWithRelations,
@@ -45,6 +56,45 @@ export async function getSortedImageUrls(
   );
 
   return urls.length > 0 ? urls : [LISTING_PLACEHOLDER_IMAGE];
+}
+
+function mapCommercialCardFields(
+  business: BusinessWithRelations,
+): Pick<
+  Listing,
+  | "listingType"
+  | "monthlyRent"
+  | "areaSqft"
+  | "spaceType"
+  | "spaceTypeLabel"
+  | "floor"
+  | "parkingSpaces"
+  | "price"
+> {
+  const spaceType = business.space_type as SpaceType | null;
+  return {
+    listingType: "commercial_space",
+    monthlyRent: business.monthly_rent
+      ? `${formatIndianCurrency(toNumber(business.monthly_rent))} / month`
+      : undefined,
+    areaSqft: business.area_sqft,
+    spaceType,
+    spaceTypeLabel: spaceType ? SPACE_TYPE_LABELS[spaceType] : null,
+    floor: formatFloorLabel(business.floor),
+    parkingSpaces: business.parking_spaces,
+    price: business.monthly_rent
+      ? `${formatIndianCurrency(toNumber(business.monthly_rent))} / month`
+      : undefined,
+  };
+}
+
+function mapBusinessCardFields(
+  business: BusinessWithRelations,
+): Pick<Listing, "listingType" | "price"> {
+  return {
+    listingType: "business",
+    price: formatIndianCurrency(toNumber(business.asking_price)),
+  };
 }
 
 /**
@@ -69,16 +119,21 @@ export async function mapBusinessesToListings(
     offset += count;
 
     const images = urls.length > 0 ? urls : [LISTING_PLACEHOLDER_IMAGE];
+    const listingType = (business.listing_type ?? "business") as ListingType;
+    const typeFields =
+      listingType === "commercial_space"
+        ? mapCommercialCardFields(business)
+        : mapBusinessCardFields(business);
 
     return {
       id: business.id,
       title: business.title,
       location: buildLocationLabel(business),
-      price: formatIndianCurrency(toNumber(business.asking_price)),
       description: business.description ?? "",
       image: images[0],
-      category: business.category?.name ?? "Business",
+      category: business.category?.name ?? "Listing",
       premium: business.is_premium,
+      ...typeFields,
     };
   });
 }
@@ -90,11 +145,10 @@ export async function mapBusinessToListing(
   return listing;
 }
 
-export async function mapBusinessToDetail(
+function mapBaseDetail(
   business: BusinessWithRelations,
-): Promise<BusinessDetailView> {
-  const images = await getSortedImageUrls(business);
-
+  images: string[],
+): BusinessDetailView {
   return {
     id: business.id,
     slug: business.slug,
@@ -103,6 +157,7 @@ export async function mapBusinessToDetail(
     location: buildLocationLabel(business),
     category: business.category?.name ?? null,
     categoryId: business.category_id,
+    listingType: (business.listing_type ?? "business") as ListingType,
     askingPrice: formatIndianCurrency(toNumber(business.asking_price)),
     annualRevenue: formatIndianCurrency(toNumber(business.annual_revenue)),
     annualProfit: formatIndianCurrency(toNumber(business.annual_profit)),
@@ -117,19 +172,66 @@ export async function mapBusinessToDetail(
   };
 }
 
+export async function mapBusinessToDetail(
+  business: BusinessWithRelations,
+): Promise<ListingDetailView> {
+  const images = await getSortedImageUrls(business);
+  const base = mapBaseDetail(business, images);
+
+  if (base.listingType === "commercial_space") {
+    const spaceType = business.space_type as SpaceType | null;
+    const listingPurpose = business.listing_purpose as ListingPurpose | null;
+    const furnished = business.furnished as FurnishedOption | null;
+
+    const commercial: CommercialSpaceDetailView = {
+      ...base,
+      listingType: "commercial_space",
+      spaceType,
+      spaceTypeLabel: spaceType ? SPACE_TYPE_LABELS[spaceType] : null,
+      listingPurpose,
+      listingPurposeLabel: listingPurpose
+        ? LISTING_PURPOSE_LABELS[listingPurpose]
+        : null,
+      monthlyRent: formatIndianCurrency(toNumber(business.monthly_rent)),
+      securityDeposit: formatIndianCurrency(toNumber(business.security_deposit)),
+      areaSqft: business.area_sqft,
+      floor: business.floor,
+      floorLabel: formatFloorLabel(business.floor),
+      parkingSpaces: business.parking_spaces,
+      furnished,
+      furnishedLabel: furnished ? FURNISHED_LABELS[furnished] : null,
+      leaseTermMonths: business.lease_term_months,
+      availableFrom: business.available_from,
+      businessUsage: business.business_usage,
+    };
+    return commercial;
+  }
+
+  return base;
+}
+
 export async function mapBusinessToSellerListing(
   business: BusinessWithRelations,
 ): Promise<SellerListingView> {
   const images = await getSortedImageUrls(business);
+  const listingType = (business.listing_type ?? "business") as ListingType;
+
+  const price =
+    listingType === "commercial_space"
+      ? business.monthly_rent
+        ? `${formatIndianCurrency(toNumber(business.monthly_rent))} / mo`
+        : undefined
+      : formatIndianCurrency(toNumber(business.asking_price));
 
   return {
     id: business.id,
     title: business.title,
-    price: formatIndianCurrency(toNumber(business.asking_price)),
+    price,
     location: buildLocationLabel(business),
-    category: business.category?.name ?? "Business",
+    category: business.category?.name ?? "Listing",
     image: images[0],
     status: business.status,
+    listingType,
     rejectionReason: business.rejection_reason,
     updatedAt: business.updated_at,
   };

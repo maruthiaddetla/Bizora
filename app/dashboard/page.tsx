@@ -52,7 +52,7 @@ export default async function DashboardPage() {
                 Welcome, {name}
               </p>
               <p className="mt-1 max-w-2xl text-sm text-muted sm:text-base">
-                Manage your business listings and track their review status.
+                Manage your business and commercial space listings.
               </p>
             </div>
             <Button
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
               className="shrink-0 self-start sm:self-auto"
             >
               <Plus className="h-4 w-4" aria-hidden />
-              Post a Business
+              Create listing
             </Button>
           </div>
 
@@ -156,14 +156,14 @@ export default async function DashboardPage() {
               <h2 className="text-xl font-semibold text-foreground">
                 My Listings
               </h2>
-              <Button
+                <Button
                 href="/dashboard/listings/new"
                 size="sm"
                 variant="secondary"
                 className="self-start"
               >
                 <Plus className="h-4 w-4" aria-hidden />
-                Post a Business
+                Create listing
               </Button>
             </div>
             <MyListingsSection listings={result.listings} />

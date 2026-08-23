@@ -1,3 +1,5 @@
+import type { ListingType, SpaceType } from "@/lib/listing-types";
+
 export type Listing = {
   id: string;
   title: string;
@@ -7,6 +9,14 @@ export type Listing = {
   image: string;
   category: string;
   premium?: boolean;
+  listingType?: ListingType;
+  /** Commercial space: formatted monthly rent e.g. ₹85,000 / month */
+  monthlyRent?: string;
+  areaSqft?: number | null;
+  spaceType?: SpaceType | null;
+  spaceTypeLabel?: string | null;
+  floor?: string | null;
+  parkingSpaces?: number | null;
 };
 
 export type SellerInfo = {

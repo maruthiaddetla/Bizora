@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ListingStatusBadge } from "@/components/dashboard/ListingStatusBadge";
 import { Button } from "@/components/ui/Button";
+import { ListingTypeBadge } from "@/components/search/ListingsMarketplaceTabs";
 import type {
   AdminListingQueueFilter,
   AdminListingQueueItem,
@@ -88,9 +89,12 @@ export function AdminListingsQueue({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="truncate text-lg font-semibold text-foreground">
-                        {listing.title}
-                      </h3>
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <ListingTypeBadge listingType={listing.listingType} />
+                        <h3 className="truncate text-lg font-semibold text-foreground">
+                          {listing.title}
+                        </h3>
+                      </div>
                       <p className="mt-1 text-sm text-muted">
                         {listing.category} · {listing.location}
                       </p>

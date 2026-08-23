@@ -13,6 +13,25 @@ export type BusinessStatus =
   | "rejected"
   | "sold";
 
+export type ListingType = "business" | "commercial_space";
+
+export type SpaceType =
+  | "retail_shop"
+  | "restaurant_cafe"
+  | "office"
+  | "warehouse"
+  | "industrial"
+  | "commercial_land"
+  | "other";
+
+export type ListingPurpose = "rent" | "lease";
+
+export type FurnishedOption =
+  | "furnished"
+  | "semi_furnished"
+  | "unfurnished"
+  | "not_applicable";
+
 export type ProfileRole = "buyer" | "seller" | "broker" | "admin";
 
 export type EnquiryStatus = "new" | "read" | "responded" | "closed";
@@ -241,6 +260,18 @@ export type Database = {
           reviewed_by: string | null;
           created_at: string;
           updated_at: string;
+          listing_type: ListingType;
+          space_type: SpaceType | null;
+          listing_purpose: ListingPurpose | null;
+          monthly_rent: number | null;
+          security_deposit: number | null;
+          area_sqft: number | null;
+          floor: string | null;
+          parking_spaces: number | null;
+          furnished: FurnishedOption | null;
+          lease_term_months: number | null;
+          available_from: string | null;
+          business_usage: string | null;
         };
         Insert: {
           id?: string;
@@ -269,6 +300,18 @@ export type Database = {
           reviewed_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          listing_type?: ListingType;
+          space_type?: SpaceType | null;
+          listing_purpose?: ListingPurpose | null;
+          monthly_rent?: number | null;
+          security_deposit?: number | null;
+          area_sqft?: number | null;
+          floor?: string | null;
+          parking_spaces?: number | null;
+          furnished?: FurnishedOption | null;
+          lease_term_months?: number | null;
+          available_from?: string | null;
+          business_usage?: string | null;
         };
         Update: {
           id?: string;
@@ -297,6 +340,18 @@ export type Database = {
           reviewed_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          listing_type?: ListingType;
+          space_type?: SpaceType | null;
+          listing_purpose?: ListingPurpose | null;
+          monthly_rent?: number | null;
+          security_deposit?: number | null;
+          area_sqft?: number | null;
+          floor?: string | null;
+          parking_spaces?: number | null;
+          furnished?: FurnishedOption | null;
+          lease_term_months?: number | null;
+          available_from?: string | null;
+          business_usage?: string | null;
         };
         Relationships: [
           {

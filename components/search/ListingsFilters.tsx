@@ -9,6 +9,12 @@ import {
   type LocationFilterValue,
 } from "@/components/search/LocationFilterSelect";
 import { Button } from "@/components/ui/Button";
+import {
+  FURNISHED_LABELS,
+  FURNISHED_OPTIONS,
+  SPACE_TYPE_LABELS,
+  SPACE_TYPES,
+} from "@/lib/listing-types";
 import type { CategoryOption } from "@/lib/repositories/categories.repository";
 import type { LocationOption } from "@/lib/repositories/locations.repository";
 import {
@@ -18,6 +24,7 @@ import {
 
 type ListingsFiltersProps = {
   initialFilters: BusinessSearchFilters;
+  listingType: "business" | "commercial_space";
   categories: CategoryOption[];
   states: LocationOption[];
   initialDistricts: LocationOption[];
@@ -27,6 +34,7 @@ type ListingsFiltersProps = {
 
 export function ListingsFilters({
   initialFilters,
+  listingType,
   categories,
   states,
   initialDistricts,
@@ -34,6 +42,7 @@ export function ListingsFilters({
   initialLocalities,
 }: ListingsFiltersProps) {
   const router = useRouter();
+  const isCommercial = listingType === "commercial_space";
   const [keyword, setKeyword] = useState(initialFilters.q ?? "");
   const [categoryIds, setCategoryIds] = useState<string[]>(
     initialFilters.categoryIds ?? [],
@@ -50,6 +59,17 @@ export function ListingsFilters({
   const [maxPrice, setMaxPrice] = useState(
     initialFilters.maxPrice != null ? String(initialFilters.maxPrice) : "",
   );
+  const [spaceType, setSpaceType] = useState(initialFilters.spaceType ?? "");
+  const [furnished, setFurnished] = useState(initialFilters.furnished ?? "");
+  const [minArea, setMinArea] = useState(
+    initialFilters.minArea != null ? String(initialFilters.minArea) : "",
+  );
+  const [maxArea, setMaxArea] = useState(
+    initialFilters.maxArea != null ? String(initialFilters.maxArea) : "",
+  );
+  const [minParking, setMinParking] = useState(
+    initialFilters.minParking != null ? String(initialFilters.minParking) : "",
+  );
 
   function parsePrice(value: string): number | undefined {
     const trimmed = value.trim();
@@ -63,6 +83,7 @@ export function ListingsFilters({
     event.preventDefault();
 
     const nextFilters: BusinessSearchFilters = {
+      listingType,
       q: keyword.trim() || undefined,
       categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
       stateId: location.stateId ?? undefined,
@@ -71,6 +92,11 @@ export function ListingsFilters({
       localityId: location.localityId ?? undefined,
       minPrice: parsePrice(minPrice),
       maxPrice: parsePrice(maxPrice),
+      spaceType: spaceType || undefined,
+      furnished: furnished || undefined,
+      minArea: parsePrice(minArea),
+      maxArea: parsePrice(maxArea),
+      minParking: parsePrice(minParking),
       sort: initialFilters.sort,
       premiumOnly: initialFilters.premiumOnly,
       page: 1,
@@ -78,6 +104,9 @@ export function ListingsFilters({
 
     router.push(buildSearchHref(nextFilters));
   }
+
+  const priceMinLabel = isCommercial ? "Min monthly rent (₹)" : "Min asking price (₹)";
+  const priceMaxLabel = isCommercial ? "Max monthly rent (₹)" : "Max asking price (₹)";
 
   return (
     <form
@@ -95,7 +124,11 @@ export function ListingsFilters({
             type="search"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="Keyword, industry, or business type..."
+            placeholder={
+              isCommercial
+                ? "Shop, office, warehouse..."
+                : "Keyword, industry, or business type..."
+            }
             className="h-12 w-full rounded-xl border border-border bg-white pl-12 pr-4 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </label>
@@ -119,9 +152,84 @@ export function ListingsFilters({
           />
         </div>
 
+        {isCommercial && (
+          <>
+            <label className="block lg:col-span-3">
+              <span className="mb-1.5 block text-xs font-medium text-muted">
+                Space type
+              </span>
+              <select
+                value={spaceType}
+                onChange={(e) => setSpaceType(e.target.value)}
+                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              >
+                <option value="">Any</option>
+                {SPACE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {SPACE_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block lg:col-span-3">
+              <span className="mb-1.5 block text-xs font-medium text-muted">
+                Furnishing
+              </span>
+              <select
+                value={furnished}
+                onChange={(e) => setFurnished(e.target.value)}
+                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              >
+                <option value="">Any</option>
+                {FURNISHED_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {FURNISHED_LABELS[option]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block lg:col-span-2">
+              <span className="mb-1.5 block text-xs font-medium text-muted">
+                Min area (sq.ft)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={minArea}
+                onChange={(e) => setMinArea(e.target.value)}
+                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              />
+            </label>
+            <label className="block lg:col-span-2">
+              <span className="mb-1.5 block text-xs font-medium text-muted">
+                Max area (sq.ft)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={maxArea}
+                onChange={(e) => setMaxArea(e.target.value)}
+                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              />
+            </label>
+            <label className="block lg:col-span-2">
+              <span className="mb-1.5 block text-xs font-medium text-muted">
+                Min parking
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={minParking}
+                onChange={(e) => setMinParking(e.target.value)}
+                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              />
+            </label>
+          </>
+        )}
+
         <label className="block lg:col-span-3">
           <span className="mb-1.5 block text-xs font-medium text-muted">
-            Min asking price (₹)
+            {priceMinLabel}
           </span>
           <input
             type="number"
@@ -129,14 +237,13 @@ export function ListingsFilters({
             inputMode="numeric"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            placeholder="e.g. 5000000"
             className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </label>
 
         <label className="block lg:col-span-3">
           <span className="mb-1.5 block text-xs font-medium text-muted">
-            Max asking price (₹)
+            {priceMaxLabel}
           </span>
           <input
             type="number"
@@ -144,7 +251,6 @@ export function ListingsFilters({
             inputMode="numeric"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            placeholder="e.g. 20000000"
             className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </label>

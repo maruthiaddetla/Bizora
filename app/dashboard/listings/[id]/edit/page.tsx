@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CommercialSpaceForm } from "@/components/listings/CommercialSpaceForm";
 import { ListingForm } from "@/components/listings/ListingForm";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/lib/auth/session";
+import { commercialDefaultsFromRow } from "@/lib/listing-creation/commercial-form-defaults";
 import { listingDefaultsFromRow } from "@/lib/listing-creation/form-defaults";
 import { listBusinessImagesForOwner } from "@/lib/business-images/actions";
 import { fetchOwnedBusinessById } from "@/lib/repositories/businesses.repository";
-import { fetchActiveCategories } from "@/lib/repositories/categories.repository";
+import {
+  fetchBusinessCategories,
+  fetchCommercialCategories,
+} from "@/lib/repositories/categories.repository";
 import {
   fetchCities,
   fetchDistricts,
@@ -19,7 +24,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Edit listing",
-  description: "Edit your business listing draft on Bizora.",
+  description: "Edit your listing draft on Bizora.",
   robots: { index: false, follow: false },
 };
 
@@ -63,6 +68,8 @@ export default async function EditListingPage({
     notFound();
   }
 
+  const isCommercial = business.listing_type === "commercial_space";
+
   const canEdit =
     business.status === "draft" || business.status === "rejected";
 
@@ -77,9 +84,9 @@ export default async function EditListingPage({
                 Editing unavailable
               </h1>
               <p className="mt-3 text-muted">
-                This listing is <span className="font-medium">{business.status}</span>{" "}
-                and cannot be edited. You can still preview it from your
-                dashboard.
+                This listing is{" "}
+                <span className="font-medium">{business.status}</span> and
+                cannot be edited.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button href={`/dashboard/listings/${business.id}/preview`}>
@@ -97,19 +104,25 @@ export default async function EditListingPage({
     );
   }
 
-  const [categories, states, districts, cities, localities, imagesResult] =
-    await Promise.all([
-      fetchActiveCategories(),
-      fetchStates(),
-      business.state_id ? fetchDistricts(business.state_id) : Promise.resolve([]),
-      business.district_id
-        ? fetchCities(business.district_id)
-        : Promise.resolve([]),
-      business.city_id
-        ? fetchLocalities(business.city_id)
-        : Promise.resolve([]),
-      listBusinessImagesForOwner(business.id),
-    ]);
+  const [
+    businessCategories,
+    commercialCategories,
+    states,
+    districts,
+    cities,
+    localities,
+    imagesResult,
+  ] = await Promise.all([
+    fetchBusinessCategories(),
+    fetchCommercialCategories(),
+    fetchStates(),
+    business.state_id ? fetchDistricts(business.state_id) : Promise.resolve([]),
+    business.district_id
+      ? fetchCities(business.district_id)
+      : Promise.resolve([]),
+    business.city_id ? fetchLocalities(business.city_id) : Promise.resolve([]),
+    listBusinessImagesForOwner(business.id),
+  ]);
 
   const initialImages =
     imagesResult.ok && imagesResult.images ? imagesResult.images : [];
@@ -128,14 +141,11 @@ export default async function EditListingPage({
                 Dashboard
               </Link>
               <span className="mx-2">/</span>
-              Edit listing
+              Edit {isCommercial ? "commercial space" : "business"}
             </p>
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Edit listing
             </h1>
-            <p className="mt-2 text-sm text-muted sm:text-base">
-              Update your draft, add photos, and submit for review when ready.
-            </p>
           </div>
 
           {query.saved === "1" && (
@@ -153,21 +163,34 @@ export default async function EditListingPage({
               className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
             >
               Your draft was saved, but submission needs a few more details.
-              Please complete the required fields and photos, then try again.
             </div>
           )}
 
-          <ListingForm
-            mode="edit"
-            categories={categories}
-            states={states}
-            initialDistricts={districts}
-            initialCities={cities}
-            initialLocalities={localities}
-            defaults={listingDefaultsFromRow(business)}
-            rejectionReason={business.rejection_reason}
-            initialImages={initialImages}
-          />
+          {isCommercial ? (
+            <CommercialSpaceForm
+              mode="edit"
+              categories={commercialCategories}
+              states={states}
+              initialDistricts={districts}
+              initialCities={cities}
+              initialLocalities={localities}
+              defaults={commercialDefaultsFromRow(business)}
+              rejectionReason={business.rejection_reason}
+              initialImages={initialImages}
+            />
+          ) : (
+            <ListingForm
+              mode="edit"
+              categories={businessCategories}
+              states={states}
+              initialDistricts={districts}
+              initialCities={cities}
+              initialLocalities={localities}
+              defaults={listingDefaultsFromRow(business)}
+              rejectionReason={business.rejection_reason}
+              initialImages={initialImages}
+            />
+          )}
         </div>
       </main>
       <Footer />

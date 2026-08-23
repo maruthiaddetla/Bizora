@@ -3,11 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminReviewActions } from "@/components/admin/AdminReviewActions";
 import { ListingStatusBadge } from "@/components/dashboard/ListingStatusBadge";
+import { CommercialSpaceMetrics } from "@/components/listing/CommercialSpaceMetrics";
 import { DetailSection } from "@/components/listing/DetailSection";
 import { FinancialMetrics } from "@/components/listing/FinancialMetrics";
 import { ImageGallery } from "@/components/listing/ImageGallery";
+import { ListingTypeBadge } from "@/components/search/ListingsMarketplaceTabs";
 import { Button } from "@/components/ui/Button";
 import { fetchAdminBusinessById } from "@/lib/repositories/admin.repository";
+import { isCommercialSpaceDetail } from "@/lib/repositories/businesses.types";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +71,8 @@ export default async function AdminListingReviewPage({ params }: PageProps) {
     notFound();
   }
 
+  const isCommercial = isCommercialSpaceDetail(listing);
+
   const locationParts = [
     listing.localityName,
     listing.cityName,
@@ -92,6 +97,7 @@ export default async function AdminListingReviewPage({ params }: PageProps) {
           <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="mb-2 flex flex-wrap items-center gap-2">
+                <ListingTypeBadge listingType={listing.listingType} />
                 <ListingStatusBadge status={listing.status} />
                 {listing.isPremium && (
                   <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
@@ -130,16 +136,38 @@ export default async function AdminListingReviewPage({ params }: PageProps) {
             </div>
 
             <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
-              <FinancialMetrics
-                price={listing.askingPrice}
-                location={listing.location}
-                category={listing.category}
-                revenue={listing.annualRevenue}
-                ebitda={listing.ebitda}
-                netProfit={listing.annualProfit}
-                establishedYear={listing.establishedYear}
-                employees={listing.employees}
-              />
+              {isCommercial ? (
+                <CommercialSpaceMetrics
+                  monthlyRent={
+                    listing.monthlyRent
+                      ? `${listing.monthlyRent} / month`
+                      : undefined
+                  }
+                  securityDeposit={listing.securityDeposit}
+                  location={listing.location}
+                  category={listing.category}
+                  areaSqft={listing.areaSqft}
+                  spaceTypeLabel={listing.spaceTypeLabel}
+                  floorLabel={listing.floorLabel}
+                  parkingSpaces={listing.parkingSpaces}
+                  furnishedLabel={listing.furnishedLabel}
+                  leaseTermMonths={listing.leaseTermMonths}
+                  availableFrom={listing.availableFrom}
+                  listingPurposeLabel={listing.listingPurposeLabel}
+                  businessUsage={listing.businessUsage}
+                />
+              ) : (
+                <FinancialMetrics
+                  price={listing.askingPrice}
+                  location={listing.location}
+                  category={listing.category}
+                  revenue={listing.annualRevenue}
+                  ebitda={listing.ebitda}
+                  netProfit={listing.annualProfit}
+                  establishedYear={listing.establishedYear}
+                  employees={listing.employees}
+                />
+              )}
             </div>
 
             {listing.description && (

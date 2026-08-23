@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ListingTypeBadge } from "@/components/search/ListingsMarketplaceTabs";
 import { Button } from "@/components/ui/Button";
 import { removeFavorite } from "@/lib/favorites/actions";
 import type { FavoriteListingView } from "@/lib/repositories/favorites.repository";
@@ -33,7 +34,7 @@ export function FavoritesSection({ favorites }: FavoritesSectionProps) {
     return (
       <div className="rounded-2xl border border-border bg-white px-6 py-14 text-center">
         <h2 className="text-xl font-semibold text-foreground">
-          You haven&apos;t saved any businesses yet.
+          You haven&apos;t saved any listings yet.
         </h2>
         <p className="mx-auto mt-2 max-w-md text-muted">
           Browse published listings and tap Save to keep opportunities you want
@@ -90,6 +91,9 @@ export function FavoritesSection({ favorites }: FavoritesSectionProps) {
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
+                  <ListingTypeBadge
+                    listingType={listing.listingType ?? "business"}
+                  />
                   <span className="rounded-full bg-primary-light px-2.5 py-1 text-xs font-medium text-primary">
                     {listing.category}
                   </span>

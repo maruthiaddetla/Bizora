@@ -6,12 +6,14 @@ import {
   buildActiveFilterChips,
 } from "@/components/search/ActiveFilters";
 import { ListingsFilters } from "@/components/search/ListingsFilters";
+import { ListingsMarketplaceTabs } from "@/components/search/ListingsMarketplaceTabs";
 import { ListingsPagination } from "@/components/search/ListingsPagination";
 import { Button } from "@/components/ui/Button";
 import { fetchBusinesses } from "@/lib/repositories/businesses.repository";
 import {
-  fetchActiveCategories,
+  fetchBusinessCategories,
   fetchCategoriesByIds,
+  fetchCommercialCategories,
 } from "@/lib/repositories/categories.repository";
 import {
   fetchCities,
@@ -35,22 +37,31 @@ type PageProps = {
 export async function generateMetadata({ searchParams }: PageProps) {
   const params = await searchParams;
   const filters = parseSearchParams(params);
+  const resolved = resolveSearchFilters(filters);
+  const isCommercial = resolved.listingType === "commercial_space";
+
   if (filters.q) {
     return {
-      title: `Businesses matching "${filters.q}"`,
-      description: `Browse published businesses for sale matching "${filters.q}".`,
-      openGraph: {
-        title: `Businesses matching "${filters.q}" — Bizora`,
-        description: `Browse published businesses for sale matching "${filters.q}".`,
-      },
+      title: isCommercial
+        ? `Commercial spaces matching "${filters.q}"`
+        : `Businesses matching "${filters.q}"`,
+      description: isCommercial
+        ? `Browse commercial spaces matching "${filters.q}".`
+        : `Browse published businesses for sale matching "${filters.q}".`,
     };
   }
+
   return {
-    title: "Businesses for Sale",
-    description: "Browse published businesses for sale across India.",
+    title: isCommercial
+      ? "Commercial Spaces for Rent & Lease"
+      : "Businesses for Sale",
+    description: isCommercial
+      ? "Browse commercial spaces for rent and lease across India."
+      : "Browse published businesses for sale across India.",
     openGraph: {
-      title: "Businesses for Sale — Bizora",
-      description: "Browse published businesses for sale across India.",
+      title: isCommercial
+        ? "Commercial Spaces — Bizora"
+        : "Businesses for Sale — Bizora",
     },
   };
 }
@@ -59,10 +70,12 @@ export default async function ListingsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const filters = parseSearchParams(params);
   const resolved = resolveSearchFilters(filters);
+  const isCommercial = resolved.listingType === "commercial_space";
 
   const [
     result,
-    categories,
+    businessCategories,
+    commercialCategories,
     states,
     initialDistricts,
     initialCities,
@@ -74,7 +87,8 @@ export default async function ListingsPage({ searchParams }: PageProps) {
     localityName,
   ] = await Promise.all([
     fetchBusinesses(filters),
-    fetchActiveCategories(),
+    fetchBusinessCategories(),
+    fetchCommercialCategories(),
     fetchStates(),
     resolved.stateId ? fetchDistricts(resolved.stateId) : Promise.resolve([]),
     resolved.districtId ? fetchCities(resolved.districtId) : Promise.resolve([]),
@@ -88,6 +102,8 @@ export default async function ListingsPage({ searchParams }: PageProps) {
     fetchLocationNameById("localities", resolved.localityId),
   ]);
 
+  const categories = isCommercial ? commercialCategories : businessCategories;
+
   const activeChips = buildActiveFilterChips(filters, {
     categories: selectedCategories,
     stateName,
@@ -98,14 +114,19 @@ export default async function ListingsPage({ searchParams }: PageProps) {
 
   const formKey = serializeSearchParams(filters).toString();
   const heading = filters.q
-    ? `Businesses matching "${filters.q}"`
-    : "Businesses for Sale";
+    ? isCommercial
+      ? `Commercial spaces matching "${filters.q}"`
+      : `Businesses matching "${filters.q}"`
+    : isCommercial
+      ? "Commercial Spaces"
+      : "Businesses for Sale";
 
+  const entityLabel = isCommercial ? "commercial space" : "business";
   const summary =
     result.error == null
       ? result.total === 1
-        ? "1 business found"
-        : `${result.total.toLocaleString("en-IN")} businesses found`
+        ? `1 ${entityLabel} found`
+        : `${result.total.toLocaleString("en-IN")} ${entityLabel}${result.total === 1 ? "" : "es"} found`
       : null;
 
   return (
@@ -114,7 +135,11 @@ export default async function ListingsPage({ searchParams }: PageProps) {
       <main className="bg-surface">
         <div className="border-b border-border bg-white">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <ListingsMarketplaceTabs
+              activeType={resolved.listingType}
+              filters={filters}
+            />
+            <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               {heading}
             </h1>
             {summary && (
@@ -124,6 +149,7 @@ export default async function ListingsPage({ searchParams }: PageProps) {
             <div className="mt-6">
               <ListingsFilters
                 key={formKey}
+                listingType={resolved.listingType}
                 initialFilters={filters}
                 categories={categories}
                 states={states}
@@ -149,19 +175,27 @@ export default async function ListingsPage({ searchParams }: PageProps) {
             >
               <p className="font-medium text-red-900">Unable to load listings</p>
               <p className="mt-2 text-sm text-red-700">{result.error}</p>
-              <Button href="/listings" size="md" className="mt-6">
+              <Button
+                href={isCommercial ? "/listings?type=commercial_space" : "/listings"}
+                size="md"
+                className="mt-6"
+              >
                 Try again
               </Button>
             </div>
           ) : result.listings.length === 0 ? (
             <div className="rounded-2xl border border-border bg-white px-6 py-14 text-center">
               <h2 className="text-xl font-semibold text-foreground">
-                No businesses found
+                No {isCommercial ? "commercial spaces" : "businesses"} found
               </h2>
               <p className="mx-auto mt-2 max-w-md text-muted">
                 Try adjusting your search criteria or removing some filters.
               </p>
-              <Button href="/listings" size="md" className="mt-6">
+              <Button
+                href={isCommercial ? "/listings?type=commercial_space" : "/listings"}
+                size="md"
+                className="mt-6"
+              >
                 Clear all filters
               </Button>
             </div>

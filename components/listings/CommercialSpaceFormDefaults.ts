@@ -1,0 +1,21 @@
+export type CommercialSpaceFormDefaults = {
+  listingId?: string;
+  title?: string;
+  description?: string;
+  categoryId?: string | null;
+  stateId?: string | null;
+  districtId?: string | null;
+  cityId?: string | null;
+  localityId?: string | null;
+  spaceType?: string | null;
+  listingPurpose?: string | null;
+  monthlyRent?: string;
+  securityDeposit?: string;
+  areaSqft?: string;
+  floor?: string;
+  parkingSpaces?: string;
+  furnished?: string | null;
+  leaseTermMonths?: string;
+  availableFrom?: string;
+  businessUsage?: string;
+};

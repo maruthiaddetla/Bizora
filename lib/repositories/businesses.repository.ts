@@ -5,8 +5,8 @@ import {
 } from "@/lib/repositories/businesses.mapper";
 import {
   BUSINESS_WITH_RELATIONS_SELECT,
-  type BusinessDetailView,
   type BusinessWithRelations,
+  type ListingDetailView,
   type SellerListingSummary,
   type SellerListingView,
 } from "@/lib/repositories/businesses.types";
@@ -14,6 +14,7 @@ import {
   resolveSearchFilters,
   type BusinessSearchFilters,
 } from "@/lib/search/params";
+import { isSpaceType, isFurnishedOption } from "@/lib/listing-types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Listing } from "@/lib/listings";
 
@@ -31,7 +32,7 @@ export type FetchPremiumBusinessesResult =
   | { listings: []; error: string };
 
 export type FetchBusinessByIdResult =
-  | { business: BusinessDetailView; error: null }
+  | { business: ListingDetailView; error: null }
   | { business: null; error: null }
   | { business: null; error: string };
 
@@ -110,6 +111,7 @@ export async function fetchPremiumBusinesses(
     .from("businesses")
     .select(BUSINESS_WITH_RELATIONS_SELECT)
     .eq("status", "published")
+    .eq("listing_type", "business")
     .eq("is_premium", true)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -132,7 +134,49 @@ export async function fetchPremiumBusinesses(
 }
 
 /**
- * Fetches a single published business for the public details page.
+ * Fetches published premium commercial spaces for the homepage.
+ */
+export async function fetchPremiumCommercialSpaces(
+  limit = 6,
+): Promise<FetchPremiumBusinessesResult> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return {
+      listings: [],
+      error:
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(BUSINESS_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .eq("listing_type", "commercial_space")
+    .eq("is_premium", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] Supabase fetch failed:", error.message);
+    }
+    return { listings: [], error: error.message };
+  }
+
+  if (!data || data.length === 0) {
+    return { listings: [], error: null };
+  }
+
+  return {
+    listings: await mapBusinessesToListings(data as BusinessWithRelations[]),
+    error: null,
+  };
+}
+
+/**
+ * Fetches a single published listing for the public details page.
  * Unpublished (draft/pending/sold) records are treated as not found.
  */
 export async function fetchBusinessById(
@@ -178,6 +222,7 @@ export async function fetchBusinessById(
 export async function fetchSimilarBusinesses(
   businessId: string,
   categoryId: string | null,
+  listingType: "business" | "commercial_space" = "business",
   limit = 3,
 ): Promise<Listing[]> {
   if (!categoryId) return [];
@@ -189,6 +234,7 @@ export async function fetchSimilarBusinesses(
     .from("businesses")
     .select(BUSINESS_WITH_RELATIONS_SELECT)
     .eq("status", "published")
+    .eq("listing_type", listingType)
     .eq("category_id", categoryId)
     .neq("id", businessId)
     .order("created_at", { ascending: false })
@@ -237,7 +283,8 @@ export async function fetchBusinesses(
   let query = supabase
     .from("businesses")
     .select(BUSINESS_WITH_RELATIONS_SELECT, { count: "exact" })
-    .eq("status", "published");
+    .eq("status", "published")
+    .eq("listing_type", resolved.listingType);
 
   if (resolved.premiumOnly) {
     query = query.eq("is_premium", true);
@@ -262,12 +309,35 @@ export async function fetchBusinesses(
     query = query.eq(location.column, location.id);
   }
 
-  if (resolved.minPrice != null) {
-    query = query.gte("asking_price", resolved.minPrice);
-  }
-
-  if (resolved.maxPrice != null) {
-    query = query.lte("asking_price", resolved.maxPrice);
+  if (resolved.listingType === "commercial_space") {
+    if (resolved.spaceType && isSpaceType(resolved.spaceType)) {
+      query = query.eq("space_type", resolved.spaceType);
+    }
+    if (resolved.furnished && isFurnishedOption(resolved.furnished)) {
+      query = query.eq("furnished", resolved.furnished);
+    }
+    if (resolved.minPrice != null) {
+      query = query.gte("monthly_rent", resolved.minPrice);
+    }
+    if (resolved.maxPrice != null) {
+      query = query.lte("monthly_rent", resolved.maxPrice);
+    }
+    if (resolved.minArea != null) {
+      query = query.gte("area_sqft", resolved.minArea);
+    }
+    if (resolved.maxArea != null) {
+      query = query.lte("area_sqft", resolved.maxArea);
+    }
+    if (resolved.minParking != null) {
+      query = query.gte("parking_spaces", resolved.minParking);
+    }
+  } else {
+    if (resolved.minPrice != null) {
+      query = query.gte("asking_price", resolved.minPrice);
+    }
+    if (resolved.maxPrice != null) {
+      query = query.lte("asking_price", resolved.maxPrice);
+    }
   }
 
   if (resolved.sort === "newest") {
@@ -325,6 +395,8 @@ function emptySellerSummary(): SellerListingSummary {
     published: 0,
     rejected: 0,
     sold: 0,
+    business: 0,
+    commercialSpace: 0,
   };
 }
 
@@ -338,6 +410,12 @@ function buildSellerSummary(listings: SellerListingView[]): SellerListingSummary
     else if (listing.status === "published") summary.published += 1;
     else if (listing.status === "rejected") summary.rejected += 1;
     else if (listing.status === "sold") summary.sold += 1;
+
+    if (listing.listingType === "commercial_space") {
+      summary.commercialSpace += 1;
+    } else {
+      summary.business += 1;
+    }
   }
 
   return summary;
