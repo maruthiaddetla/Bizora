@@ -27,8 +27,8 @@ export default async function SignInPage({ searchParams }: PageProps) {
 
   return (
     <AuthShell
-      title="Sign in"
-      subtitle="Access your Bizora account to manage listings and enquiries."
+      title="Welcome back"
+      subtitle="Sign in with your mobile number to access your Bizora account."
     >
       <SignInForm nextPath={nextPath} initialError={initialError} />
     </AuthShell>

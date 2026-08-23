@@ -16,13 +16,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+import { formatPhoneDisplay } from "@/lib/auth/phone";
+
 function welcomeName(
   profileName: string | null | undefined,
   email: string | undefined,
+  phone: string | undefined,
 ): string {
   const name = profileName?.trim();
   if (name) return name;
   if (email?.trim()) return email.trim();
+  if (phone?.trim()) return formatPhoneDisplay(phone.trim());
   return "there";
 }
 
@@ -33,7 +37,7 @@ export default async function DashboardPage() {
     fetchSellerEnquiries(user.id),
     countUnreadNotifications(user.id),
   ]);
-  const name = welcomeName(profile?.full_name, user.email);
+  const name = welcomeName(profile?.full_name, user.email, user.phone);
   const newEnquiryCount = sellerEnquiries.enquiries.filter(
     (enquiry) => enquiry.status === "new",
   ).length;

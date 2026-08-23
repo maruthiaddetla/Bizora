@@ -19,8 +19,8 @@ export default async function SignUpPage({ searchParams }: PageProps) {
 
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Register free to buy or sell businesses on Bizora. New accounts start as buyers."
+      title="Welcome to Bizora"
+      subtitle="Create your account using your mobile number."
     >
       <SignUpForm nextPath={nextPath} />
     </AuthShell>

@@ -7,6 +7,7 @@ import {
   createEnquiryFormAction,
   type EnquiryFormActionState,
 } from "@/lib/enquiries/actions";
+import { formatPhoneDisplay } from "@/lib/auth/phone";
 import { Button } from "@/components/ui/Button";
 
 export type ContactSellerMode =
@@ -21,6 +22,7 @@ type EnquiryFormProps = {
   mode: ContactSellerMode;
   buyerName?: string | null;
   buyerEmail?: string | null;
+  buyerPhone?: string | null;
   compact?: boolean;
 };
 
@@ -50,6 +52,7 @@ export function EnquiryForm({
   mode,
   buyerName,
   buyerEmail,
+  buyerPhone,
   compact = false,
 }: EnquiryFormProps) {
   const [state, formAction, pending] = useActionState(
@@ -118,13 +121,19 @@ export function EnquiryForm({
         </p>
       )}
 
-      {(buyerName || buyerEmail) && (
+      {(buyerName || buyerEmail || buyerPhone) && (
         <div className="rounded-xl border border-border bg-surface/60 px-3 py-2 text-sm text-muted">
           Sending as{" "}
           <span className="font-medium text-foreground">
-            {buyerName?.trim() || buyerEmail?.trim() || "your account"}
+            {buyerName?.trim() ||
+              buyerEmail?.trim() ||
+              (buyerPhone ? formatPhoneDisplay(buyerPhone) : "your account")}
           </span>
-          {buyerName && buyerEmail ? ` (${buyerEmail})` : null}
+          {buyerName && buyerEmail
+            ? ` (${buyerEmail})`
+            : buyerName && buyerPhone && !buyerEmail
+              ? ` (${formatPhoneDisplay(buyerPhone)})`
+              : null}
         </div>
       )}
 

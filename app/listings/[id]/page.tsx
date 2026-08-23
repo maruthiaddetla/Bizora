@@ -123,6 +123,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
     mode: enquiryMode,
     buyerName: profile?.full_name,
     buyerEmail: user?.email,
+    buyerPhone: user?.phone,
   };
 
   const listingsBrowseHref = isCommercial

@@ -27,6 +27,7 @@ export function NavbarClient({
 }: NavbarClientProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [listMenuOpen, setListMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -100,9 +101,50 @@ export function NavbarClient({
           </Link>
 
           {isAuthenticated ? (
-            <Button href="/dashboard" variant="secondary" size="sm">
-              Dashboard
-            </Button>
+            <div className="relative">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setAccountMenuOpen((open) => !open);
+                  setListMenuOpen(false);
+                }}
+                className="inline-flex items-center gap-1"
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+              >
+                Account
+                <ChevronDown className="h-4 w-4" aria-hidden />
+              </Button>
+              {accountMenuOpen && (
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-40 cursor-default bg-transparent"
+                    aria-label="Close account menu"
+                    onClick={() => setAccountMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full z-50 mt-2 min-w-[180px] rounded-xl border border-border bg-white py-1 shadow-lg">
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2.5 text-sm font-medium text-navy hover:bg-surface"
+                      onClick={() => setAccountMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <form action={signOutAction}>
+                      <button
+                        type="submit"
+                        className="block w-full px-4 py-2.5 text-left text-sm font-medium text-navy hover:bg-surface"
+                      >
+                        Sign Out
+                      </button>
+                    </form>
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
             <Button href="/sign-in" variant="secondary" size="sm">
               Login
@@ -113,7 +155,10 @@ export function NavbarClient({
             <Button
               type="button"
               size="sm"
-              onClick={() => setListMenuOpen((open) => !open)}
+              onClick={() => {
+                setListMenuOpen((open) => !open);
+                setAccountMenuOpen(false);
+              }}
               className="inline-flex items-center gap-1 bg-primary hover:bg-primary-hover"
               aria-expanded={listMenuOpen}
               aria-haspopup="menu"

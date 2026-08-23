@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { completeAuthProfile } from "@/lib/auth/post-auth";
 import { getSafeNextPath } from "@/lib/auth/redirect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -16,6 +17,14 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       return NextResponse.redirect(`${origin}/sign-in?error=auth`);
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      await completeAuthProfile(supabase, user);
     }
   }
 
