@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { AuthMethodDivider } from "@/components/auth/AuthMethodDivider";
 import { EmailSignInForm } from "@/components/auth/EmailSignInForm";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
-import { PhoneOtpFlow } from "@/components/auth/PhoneOtpFlow";
+import { PhoneSignInForm } from "@/components/auth/PhoneSignInForm";
+import { getSafeNextPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/Button";
 
 type SignInFormProps = {
@@ -16,6 +18,7 @@ export function SignInForm({
   nextPath = "/",
   initialError = null,
 }: SignInFormProps) {
+  const safeNext = getSafeNextPath(nextPath, "/");
   const [showEmail, setShowEmail] = useState(false);
 
   if (showEmail) {
@@ -38,7 +41,10 @@ export function SignInForm({
         </div>
       )}
 
-      <PhoneOtpFlow nextPath={nextPath} />
+      <PhoneSignInForm
+        nextPath={nextPath}
+        onContinueWithEmail={() => setShowEmail(true)}
+      />
 
       <AuthMethodDivider />
 
@@ -53,6 +59,16 @@ export function SignInForm({
       >
         Continue with Email
       </Button>
+
+      <p className="text-center text-sm text-muted">
+        New to Bizora?{" "}
+        <Link
+          href={`/sign-up?next=${encodeURIComponent(safeNext)}`}
+          className="font-semibold text-primary hover:text-primary-hover"
+        >
+          Create an account
+        </Link>
+      </p>
     </div>
   );
 }

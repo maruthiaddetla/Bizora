@@ -82,7 +82,7 @@ export function EmailSignUpForm({
       });
 
       if (signUpError) {
-        setError(mapAuthErrorMessage(signUpError));
+        setError(mapAuthErrorMessage(signUpError, "email"));
         return;
       }
 

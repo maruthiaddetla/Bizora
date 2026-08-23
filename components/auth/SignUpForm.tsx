@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AuthMethodDivider } from "@/components/auth/AuthMethodDivider";
 import { EmailSignUpForm } from "@/components/auth/EmailSignUpForm";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
-import { PhoneOtpFlow } from "@/components/auth/PhoneOtpFlow";
+import { PhoneSignUpFlow } from "@/components/auth/PhoneSignUpFlow";
 import { getSafeNextPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/Button";
 
@@ -28,7 +28,10 @@ export function SignUpForm({ nextPath = "/" }: SignUpFormProps) {
 
   return (
     <div className="space-y-4">
-      <PhoneOtpFlow nextPath={nextPath} isSignUp />
+      <PhoneSignUpFlow
+        nextPath={nextPath}
+        onContinueWithEmail={() => setShowEmail(true)}
+      />
 
       <AuthMethodDivider />
 

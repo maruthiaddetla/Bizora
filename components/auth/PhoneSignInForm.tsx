@@ -3,48 +3,51 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { authFieldClass } from "@/components/auth/PhoneInput";
+import { SmsUnavailableNotice } from "@/components/auth/SmsUnavailableNotice";
+import { PhoneInput, authFieldClass } from "@/components/auth/PhoneInput";
 import {
+  AUTH_INVALID_PHONE,
   AUTH_UNEXPECTED_ERROR,
+  isPhoneProviderDisabledError,
+  isSmsProviderError,
   mapAuthErrorMessage,
 } from "@/lib/auth/errors";
 import { completeAuthProfile } from "@/lib/auth/post-auth";
+import { normalizeIndianPhone } from "@/lib/auth/phone";
 import { getSafeNextPath } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/Button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type EmailSignInFormProps = {
+type PhoneSignInFormProps = {
   nextPath?: string;
-  onBack?: () => void;
+  onContinueWithEmail?: () => void;
 };
 
-export function EmailSignInForm({
+export function PhoneSignInForm({
   nextPath = "/",
-  onBack,
-}: EmailSignInFormProps) {
+  onContinueWithEmail,
+}: PhoneSignInFormProps) {
   const router = useRouter();
   const safeNext = getSafeNextPath(nextPath, "/");
 
-  const [email, setEmail] = useState("");
+  const [localPhone, setLocalPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [providerUnavailable, setProviderUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setProviderUnavailable(false);
 
-    const trimmedEmail = email.trim().toLowerCase();
-
-    if (!trimmedEmail || !password) {
-      setError("Please enter your email and password.");
+    const phone = normalizeIndianPhone(localPhone);
+    if (!phone) {
+      setError(AUTH_INVALID_PHONE);
       return;
     }
-
-    if (!EMAIL_PATTERN.test(trimmedEmail)) {
-      setError("Please enter a valid email address.");
+    if (!password) {
+      setError("Please enter your password.");
       return;
     }
 
@@ -53,12 +56,20 @@ export function EmailSignInForm({
     try {
       const supabase = createSupabaseBrowserClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
+        phone,
         password,
       });
 
       if (signInError) {
-        setError(mapAuthErrorMessage(signInError, "email"));
+        if (
+          isSmsProviderError(signInError) ||
+          isPhoneProviderDisabledError(signInError)
+        ) {
+          setProviderUnavailable(true);
+          setError(mapAuthErrorMessage(signInError, "phone"));
+          return;
+        }
+        setError(mapAuthErrorMessage(signInError, "phone"));
         return;
       }
 
@@ -86,29 +97,37 @@ export function EmailSignInForm({
     }
   }
 
+  const forgotHref = `/forgot-password?next=${encodeURIComponent(safeNext)}`;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      {error && (
+      {providerUnavailable ? (
+        <SmsUnavailableNotice
+          message={error ?? undefined}
+          onContinueWithEmail={onContinueWithEmail}
+          emailHref={
+            onContinueWithEmail
+              ? undefined
+              : `/sign-in?next=${encodeURIComponent(safeNext)}`
+          }
+        />
+      ) : error ? (
         <div
           role="alert"
           className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
         >
           {error}
         </div>
-      )}
+      ) : null}
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-foreground">
-          Email
+          Mobile number
         </span>
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={authFieldClass}
-          required
+        <PhoneInput
+          value={localPhone}
+          onChange={setLocalPhone}
+          disabled={loading}
         />
       </label>
 
@@ -124,32 +143,27 @@ export function EmailSignInForm({
           onChange={(e) => setPassword(e.target.value)}
           className={authFieldClass}
           required
+          disabled={loading}
         />
       </label>
 
-      <Button type="submit" size="lg" className="w-full" disabled={loading}>
-        {loading ? "Signing in…" : "Sign In with Email"}
-      </Button>
-
-      {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          className="w-full text-center text-sm font-medium text-muted hover:text-foreground"
-        >
-          Back to mobile sign-in
-        </button>
-      )}
-
-      <p className="text-center text-sm text-muted">
-        New to Bizora?{" "}
+      <div className="text-right">
         <Link
-          href={`/sign-up?next=${encodeURIComponent(safeNext)}`}
-          className="font-semibold text-primary hover:text-primary-hover"
+          href={forgotHref}
+          className="text-sm font-medium text-primary hover:text-primary-hover"
         >
-          Register free
+          Forgot password?
         </Link>
-      </p>
+      </div>
+
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        disabled={loading || localPhone.length < 10 || !password}
+      >
+        {loading ? "Signing in…" : "Sign in"}
+      </Button>
     </form>
   );
 }
