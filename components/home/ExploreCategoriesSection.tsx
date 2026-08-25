@@ -7,25 +7,28 @@ import {
 import { buildSearchHref } from "@/lib/search/params";
 
 const BUSINESS_ORDER = [
-  "restaurant",
-  "cafe",
-  "food-hospitality",
-  "retail",
+  "restaurants-cafes",
+  "retail-shops",
   "manufacturing",
-  "engineering",
   "it-technology",
-  "saas",
-  "services",
-  "education",
-  "healthcare",
+  "healthcare-medical",
+  "education-training",
+  "hotels-hospitality",
+  "construction-engineering",
+  "saas-software",
+  "beauty-wellness",
+  "automotive",
+  "professional-services",
 ];
 
 const COMMERCIAL_ORDER = [
-  "commercial-retail-shop",
+  "commercial-retail-shops",
   "commercial-office",
   "commercial-restaurant-cafe",
   "commercial-warehouse",
   "commercial-industrial",
+  "commercial-showrooms",
+  "commercial-coworking",
   "commercial-land",
 ];
 
@@ -114,7 +117,7 @@ export async function ExploreCategoriesSection() {
             id="browse-categories-heading"
             className="text-lg font-bold tracking-tight text-navy sm:text-xl"
           >
-            Browse by Category
+            Popular Categories
           </h2>
           <Link
             href="/listings?type=business"

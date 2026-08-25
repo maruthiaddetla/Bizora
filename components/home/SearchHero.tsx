@@ -3,19 +3,19 @@
 import {
   Briefcase,
   Building2,
-  ChevronDown,
   Grid2x2,
   Search,
   Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import {
   EMPTY_LOCATION,
   LocationSelector,
   type LocationSelection,
 } from "@/components/home/LocationSelector";
+import { HeroFieldSelect } from "@/components/home/HeroFieldSelect";
 import type { CategoryOption } from "@/lib/repositories/categories.repository";
 import type { LocationOption } from "@/lib/repositories/locations.repository";
 import type { ListingType } from "@/lib/listing-types";
@@ -46,11 +46,8 @@ const COMMERCIAL_BUDGETS = [
   { label: "₹5L+/mo", min: 500_000, max: undefined },
 ] as const;
 
-const fieldSelectClass =
-  "h-9 w-full min-w-0 appearance-none rounded-md border-0 bg-transparent pr-6 text-sm font-medium text-navy focus:outline-none focus:ring-0";
-
 const fieldCellClass =
-  "flex min-w-0 items-center gap-2 rounded-lg border border-border px-2.5 lg:rounded-none lg:border-0 lg:border-r lg:border-border lg:px-3";
+  "relative flex min-w-0 items-center gap-2 overflow-visible rounded-lg border border-border px-2.5 lg:rounded-none lg:border-0 lg:border-r lg:border-border lg:px-3";
 
 export function SearchHero({
   businessCategories,
@@ -69,6 +66,26 @@ export function SearchHero({
       : businessCategories;
   const budgets =
     marketplace === "commercial_space" ? COMMERCIAL_BUDGETS : BUSINESS_BUDGETS;
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: "", label: "All Categories" },
+      ...categories.map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+    ],
+    [categories],
+  );
+
+  const budgetOptions = useMemo(
+    () =>
+      budgets.map((budget, index) => ({
+        value: String(index),
+        label: budget.label,
+      })),
+    [budgets],
+  );
 
   function switchMarketplace(next: ListingType) {
     setMarketplace(next);
@@ -155,9 +172,9 @@ export function SearchHero({
 
         <form
           onSubmit={handleSearchSubmit}
-          className="mx-auto mt-3 max-w-5xl rounded-xl border border-border bg-white p-1.5 shadow-md shadow-navy/5"
+          className="relative z-20 mx-auto mt-3 max-w-5xl overflow-visible rounded-xl border border-border bg-white p-1.5 shadow-md shadow-navy/5"
         >
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[1.15fr_1.15fr_1fr_auto] lg:items-stretch lg:gap-0">
+          <div className="grid grid-cols-1 gap-1.5 overflow-visible sm:grid-cols-2 lg:grid-cols-[1.15fr_1.15fr_1fr_auto] lg:items-stretch lg:gap-0">
             <div className={`${fieldCellClass} h-11`}>
               <LocationSelector
                 states={states}
@@ -167,58 +184,35 @@ export function SearchHero({
               />
             </div>
 
-            <label className={`${fieldCellClass} h-11`}>
-              <Grid2x2
-                className="h-3.5 w-3.5 shrink-0 text-primary"
-                aria-hidden
+            <div className={`${fieldCellClass} h-11`}>
+              <HeroFieldSelect
+                label="Category"
+                value={categoryId}
+                options={categoryOptions}
+                onChange={setCategoryId}
+                icon={
+                  <Grid2x2
+                    className="h-3.5 w-3.5 shrink-0 text-primary"
+                    aria-hidden
+                  />
+                }
               />
-              <span className="relative min-w-0 flex-1">
-                <span className="sr-only">Category</span>
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className={fieldSelectClass}
-                  aria-label="Category"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted"
-                  aria-hidden
-                />
-              </span>
-            </label>
+            </div>
 
-            <label className={`${fieldCellClass} h-11`}>
-              <Wallet
-                className="h-3.5 w-3.5 shrink-0 text-primary"
-                aria-hidden
+            <div className={`${fieldCellClass} h-11`}>
+              <HeroFieldSelect
+                label="Budget"
+                value={String(budgetIndex)}
+                options={budgetOptions}
+                onChange={(next) => setBudgetIndex(Number(next))}
+                icon={
+                  <Wallet
+                    className="h-3.5 w-3.5 shrink-0 text-primary"
+                    aria-hidden
+                  />
+                }
               />
-              <span className="relative min-w-0 flex-1">
-                <span className="sr-only">Budget</span>
-                <select
-                  value={budgetIndex}
-                  onChange={(e) => setBudgetIndex(Number(e.target.value))}
-                  className={fieldSelectClass}
-                  aria-label="Budget"
-                >
-                  {budgets.map((budget, index) => (
-                    <option key={budget.label} value={index}>
-                      {budget.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted"
-                  aria-hidden
-                />
-              </span>
-            </label>
+            </div>
 
             <button
               type="submit"
