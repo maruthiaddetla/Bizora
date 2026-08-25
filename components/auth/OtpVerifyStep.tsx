@@ -33,13 +33,14 @@ export function OtpVerifyStep({
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-foreground">
-          Verify your mobile
+          Verify your mobile number
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Enter the 6-digit code sent to{" "}
+          We&apos;ve sent a 6-digit verification code to{" "}
           <span className="font-medium text-foreground">
             {formatPhoneDisplay(e164Phone)}
           </span>
+          .
         </p>
       </div>
 
@@ -67,7 +68,7 @@ export function OtpVerifyStep({
       <div className="flex flex-col items-center gap-2 text-sm">
         {resendSeconds > 0 ? (
           <p className="text-muted">
-            Resend code in{" "}
+            Resend OTP in{" "}
             <span className="font-medium text-foreground">{resendSeconds}s</span>
           </p>
         ) : (

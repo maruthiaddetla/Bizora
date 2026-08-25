@@ -6,15 +6,18 @@ import { OnboardingForm } from "@/components/auth/OnboardingForm";
 import { OtpVerifyStep } from "@/components/auth/OtpVerifyStep";
 import { PasswordCreateForm } from "@/components/auth/PasswordCreateForm";
 import { PhoneInput } from "@/components/auth/PhoneInput";
-import { SmsUnavailableNotice } from "@/components/auth/SmsUnavailableNotice";
 import {
   AUTH_INVALID_OTP,
   AUTH_INVALID_PHONE,
   AUTH_UNEXPECTED_ERROR,
-  isSmsProviderError,
-  mapAuthErrorMessage,
 } from "@/lib/auth/errors";
 import type { OnboardingIntentId } from "@/lib/auth/onboarding";
+import {
+  clearPhoneSignupPendingAction,
+  resendPhoneSignupOtpAction,
+  sendPhoneSignupOtpAction,
+  verifyPhoneSignupOtpAction,
+} from "@/lib/auth/phone-signup.actions";
 import { completeAuthProfile } from "@/lib/auth/post-auth";
 import {
   isValidOtpCode,
@@ -32,8 +35,6 @@ type PhoneSignUpFlowProps = {
   onContinueWithEmail?: () => void;
 };
 
-type OtpChannel = "sms";
-
 export function PhoneSignUpFlow({
   nextPath = "/",
   onContinueWithEmail,
@@ -44,11 +45,8 @@ export function PhoneSignUpFlow({
   const [step, setStep] = useState<SignUpStep>("phone");
   const [localPhone, setLocalPhone] = useState("");
   const [e164Phone, setE164Phone] = useState("");
-  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [channel, setChannel] = useState<OtpChannel>("sms");
   const [error, setError] = useState<string | null>(null);
-  const [smsUnavailable, setSmsUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
 
@@ -60,47 +58,16 @@ export function PhoneSignUpFlow({
     return () => window.clearInterval(timer);
   }, [resendSeconds]);
 
-  const requestSignupOtp = useCallback(
-    async (phone: string, userPassword: string, nextChannel: OtpChannel) => {
-      const supabase = createSupabaseBrowserClient();
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        phone,
-        password: userPassword,
-        options: { channel: nextChannel },
-      });
-
-      if (signUpError) {
-        return {
-          ok: false as const,
-          message: mapAuthErrorMessage(signUpError, "phone"),
-          smsUnavailable: isSmsProviderError(signUpError),
-        };
-      }
-
-      if (
-        data.user &&
-        Array.isArray(data.user.identities) &&
-        data.user.identities.length === 0
-      ) {
-        return {
-          ok: false as const,
-          message:
-            "Unable to create an account with this number. Try signing in instead.",
-          smsUnavailable: false,
-        };
-      }
-
-      return {
-        ok: true as const,
-        session: data.session,
-      };
-    },
-    [],
-  );
+  const resetPendingSignup = useCallback(async () => {
+    try {
+      await clearPhoneSignupPendingAction();
+    } catch {
+      // Best-effort cleanup when changing number.
+    }
+  }, []);
 
   async function handlePhoneContinue() {
     setError(null);
-    setSmsUnavailable(false);
     const normalized = normalizeIndianPhone(localPhone);
     if (!normalized) {
       setError(AUTH_INVALID_PHONE);
@@ -112,30 +79,18 @@ export function PhoneSignUpFlow({
 
   async function handlePasswordSubmit(userPassword: string) {
     setError(null);
-    setSmsUnavailable(false);
     setLoading(true);
-    setPassword(userPassword);
-    setChannel("sms");
 
     try {
-      const result = await requestSignupOtp(e164Phone, userPassword, "sms");
+      const result = await sendPhoneSignupOtpAction(localPhone, userPassword);
       if (!result.ok) {
         setError(result.message);
-        setSmsUnavailable(result.smsUnavailable);
-        // Stay on password step — do not pretend OTP was sent.
-        return;
-      }
-
-      // Only advance when Supabase accepted signup. Session without OTP
-      // means phone confirmation is disabled in the project (not a mock).
-      if (result.session) {
-        setStep("onboarding");
         return;
       }
 
       setOtp("");
       setStep("verify");
-      setResendSeconds(OTP_RESEND_COOLDOWN_SECONDS);
+      setResendSeconds(result.resendCooldownSeconds ?? OTP_RESEND_COOLDOWN_SECONDS);
     } catch {
       setError(AUTH_UNEXPECTED_ERROR);
     } finally {
@@ -145,7 +100,6 @@ export function PhoneSignUpFlow({
 
   async function handleVerifyOtp() {
     setError(null);
-    setSmsUnavailable(false);
 
     if (!isValidOtpCode(otp)) {
       setError(AUTH_INVALID_OTP);
@@ -155,16 +109,9 @@ export function PhoneSignUpFlow({
     setLoading(true);
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        phone: e164Phone,
-        token: otp.trim(),
-        type: "sms",
-      });
-
-      if (verifyError) {
-        setError(mapAuthErrorMessage(verifyError, "phone"));
-        setSmsUnavailable(isSmsProviderError(verifyError));
+      const result = await verifyPhoneSignupOtpAction(otp.trim());
+      if (!result.ok) {
+        setError(result.message);
         return;
       }
 
@@ -177,19 +124,19 @@ export function PhoneSignUpFlow({
   }
 
   async function handleResendOtp() {
-    if (!password) return;
     setError(null);
-    setSmsUnavailable(false);
     setLoading(true);
 
     try {
-      const result = await requestSignupOtp(e164Phone, password, channel);
+      const result = await resendPhoneSignupOtpAction();
       if (!result.ok) {
         setError(result.message);
-        setSmsUnavailable(result.smsUnavailable);
+        if (result.resendCooldownSeconds) {
+          setResendSeconds(result.resendCooldownSeconds);
+        }
         return;
       }
-      setResendSeconds(OTP_RESEND_COOLDOWN_SECONDS);
+      setResendSeconds(result.resendCooldownSeconds ?? OTP_RESEND_COOLDOWN_SECONDS);
     } catch {
       setError(AUTH_UNEXPECTED_ERROR);
     } finally {
@@ -247,28 +194,21 @@ export function PhoneSignUpFlow({
   if (step === "verify") {
     return (
       <div className="space-y-4">
-        {smsUnavailable && (
-          <SmsUnavailableNotice
-            message={error ?? undefined}
-            onContinueWithEmail={onContinueWithEmail}
-          />
-        )}
         <OtpVerifyStep
           e164Phone={e164Phone}
           otp={otp}
           onOtpChange={setOtp}
           onVerify={handleVerifyOtp}
           onResend={handleResendOtp}
-          onChangeNumber={() => {
+          onChangeNumber={async () => {
+            await resetPendingSignup();
             setStep("phone");
             setOtp("");
-            setPassword("");
             setError(null);
-            setSmsUnavailable(false);
           }}
           resendSeconds={resendSeconds}
           loading={loading}
-          error={smsUnavailable ? null : error}
+          error={error}
         />
       </div>
     );
@@ -277,18 +217,12 @@ export function PhoneSignUpFlow({
   if (step === "password") {
     return (
       <div className="space-y-4">
-        {smsUnavailable ? (
-          <SmsUnavailableNotice
-            message={error ?? undefined}
-            onContinueWithEmail={onContinueWithEmail}
-          />
-        ) : null}
         <PasswordCreateForm
           title="Create password"
           subtitle="You'll use this password to sign in. We'll verify your mobile next."
           submitLabel="Continue"
           loading={loading}
-          error={smsUnavailable ? null : error}
+          error={error}
           onSubmit={handlePasswordSubmit}
         />
         <button
@@ -296,24 +230,27 @@ export function PhoneSignUpFlow({
           onClick={() => {
             setStep("phone");
             setError(null);
-            setSmsUnavailable(false);
           }}
           className="w-full text-center text-sm font-medium text-muted hover:text-foreground"
         >
           Change mobile number
         </button>
+        {error && onContinueWithEmail ? (
+          <button
+            type="button"
+            onClick={onContinueWithEmail}
+            className="w-full text-center text-sm font-medium text-primary hover:text-primary-hover"
+          >
+            Continue with email instead
+          </button>
+        ) : null}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {smsUnavailable ? (
-        <SmsUnavailableNotice
-          message={error ?? undefined}
-          onContinueWithEmail={onContinueWithEmail}
-        />
-      ) : error ? (
+      {error ? (
         <div
           role="alert"
           className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -334,8 +271,8 @@ export function PhoneSignUpFlow({
       </label>
 
       <p className="text-xs text-muted">
-        We&apos;ll send a verification code to confirm your mobile. If SMS is
-        unavailable, you can create an account with email instead.
+        We&apos;ll send a verification code to confirm your mobile. You can also
+        create an account with email instead.
       </p>
 
       <Button

@@ -27,6 +27,29 @@ export const AUTH_INVALID_PHONE =
 export const AUTH_INVALID_OTP =
   "Please enter the 6-digit verification code.";
 
+export const AUTH_INVALID_PASSWORD =
+  "Password must be at least 8 characters.";
+
+export const AUTH_PASSWORD_MISMATCH = "Passwords do not match.";
+
+export const AUTH_OTP_SEND_FAILED =
+  "We couldn't send a verification code right now. Please try again in a moment.";
+
+export const AUTH_OTP_EXPIRED =
+  "That verification code has expired. Please request a new code.";
+
+export const AUTH_OTP_INVALID =
+  "That verification code is incorrect. Please try again.";
+
+export const AUTH_OTP_RATE_LIMITED =
+  "Too many attempts. Please wait a moment and try again.";
+
+export const AUTH_PHONE_ALREADY_REGISTERED =
+  "This mobile number is already registered. Please sign in instead.";
+
+export const AUTH_SIGNUP_CREATION_FAILED =
+  "We couldn't finish creating your account. Please try again.";
+
 /**
  * Detect Supabase / provider errors that mean SMS cannot be sent.
  * Used to keep the UI on the current step and offer an email fallback.
@@ -176,4 +199,36 @@ export function mapAuthErrorMessage(
   }
 
   return "Authentication failed. Please try again.";
+}
+
+export function mapTwoFactorSendError(
+  reason: "provider_error" | "network_error" | "misconfigured",
+): string {
+  if (reason === "misconfigured") {
+    return AUTH_OTP_SEND_FAILED;
+  }
+  if (reason === "network_error") {
+    return AUTH_UNEXPECTED_ERROR;
+  }
+  return AUTH_OTP_SEND_FAILED;
+}
+
+export function mapTwoFactorVerifyError(
+  reason:
+    | "invalid_otp"
+    | "expired_otp"
+    | "provider_error"
+    | "network_error"
+    | "misconfigured",
+): string {
+  if (reason === "expired_otp") {
+    return AUTH_OTP_EXPIRED;
+  }
+  if (reason === "invalid_otp") {
+    return AUTH_OTP_INVALID;
+  }
+  if (reason === "network_error" || reason === "misconfigured") {
+    return AUTH_UNEXPECTED_ERROR;
+  }
+  return AUTH_OTP_INVALID;
 }
