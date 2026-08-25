@@ -1,6 +1,6 @@
 import {
-  fetchCities,
-  fetchDistricts,
+  fetchCitiesByState,
+  fetchCityWithDistrict,
   fetchLocalities,
   fetchStates,
 } from "@/lib/repositories/locations.repository";
@@ -130,7 +130,7 @@ export function parseCommercialFormInput(input: CommercialSpaceFormInput): {
     errors.stateId = "Please select a valid state.";
   }
   if (input.districtId && !districtId) {
-    errors.districtId = "Please select a valid district.";
+    // District is internal; ignore malformed values — city selection will re-derive it.
   }
   if (input.cityId && !cityId) {
     errors.cityId = "Please select a valid city.";
@@ -232,6 +232,19 @@ export function parseCommercialFormInput(input: CommercialSpaceFormInput): {
   return { fields, errors };
 }
 
+/**
+ * Fills districtId from the selected city for DB integrity.
+ * District is not a user-facing selection.
+ */
+export async function ensureCommercialDistrictFromCity(
+  fields: ParsedCommercialFields,
+): Promise<ParsedCommercialFields> {
+  if (!fields.cityId) return fields;
+  const city = await fetchCityWithDistrict(fields.cityId);
+  if (!city) return fields;
+  return { ...fields, districtId: city.districtId };
+}
+
 export function validateCommercialDraftFields(
   fields: ParsedCommercialFields,
   baseErrors: CommercialFieldErrors,
@@ -283,9 +296,6 @@ export async function validateCommercialSubmitFields(
   if (!fields.stateId) {
     errors.stateId = "Please select a state.";
   }
-  if (!fields.districtId) {
-    errors.districtId = "Please select a district.";
-  }
   if (!fields.cityId) {
     errors.cityId = "Please select a city.";
   }
@@ -305,17 +315,20 @@ export async function validateCommercialSubmitFields(
     }
   }
 
-  if (fields.stateId && fields.districtId) {
-    const districts = await fetchDistricts(fields.stateId);
-    if (!districts.some((district) => district.id === fields.districtId)) {
-      errors.districtId = "Please select a valid district for the selected state.";
-    }
-  }
+  // District is not user-facing; derive/verify from the selected city.
+  if (fields.cityId) {
+    const city = await fetchCityWithDistrict(fields.cityId);
+    if (!city) {
+      errors.cityId = "Please select a valid city.";
+    } else {
+      fields.districtId = city.districtId;
 
-  if (fields.districtId && fields.cityId) {
-    const cities = await fetchCities(fields.districtId);
-    if (!cities.some((city) => city.id === fields.cityId)) {
-      errors.cityId = "Please select a valid city for the selected district.";
+      if (fields.stateId) {
+        const citiesInState = await fetchCitiesByState(fields.stateId);
+        if (!citiesInState.some((item) => item.id === fields.cityId)) {
+          errors.cityId = "Please select a valid city for the selected state.";
+        }
+      }
     }
   }
 

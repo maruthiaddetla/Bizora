@@ -9,6 +9,7 @@ import {
   parseCommercialFormInput,
   validateCommercialDraftFields,
   validateCommercialSubmitFields,
+  ensureCommercialDistrictFromCity,
   type CommercialFieldErrors,
   type CommercialSpaceFormInput,
   type ParsedCommercialFields,
@@ -90,10 +91,10 @@ function toCommercialDbRow(fields: ParsedCommercialFields) {
 function mapDbError(message: string | undefined): string {
   const text = (message ?? "").toLowerCase();
   if (text.includes("district does not belong")) {
-    return "Please select a valid district for the selected state.";
+    return "Please select a valid city for the selected state.";
   }
   if (text.includes("city does not belong")) {
-    return "Please select a valid city for the selected district.";
+    return "Please select a valid city for the selected state.";
   }
   if (text.includes("locality does not belong")) {
     return "Please select a valid locality for the selected city.";
@@ -102,7 +103,7 @@ function mapDbError(message: string | undefined): string {
     return "Please select a state.";
   }
   if (text.includes("district is required")) {
-    return "Please select a district.";
+    return "Please select a city.";
   }
   if (text.includes("city is required")) {
     return "Please select a city.";
@@ -165,7 +166,9 @@ export async function createCommercialDraftListing(
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { fields, errors: parseErrors } = parseCommercialFormInput(input);
+  const { fields: parsedFields, errors: parseErrors } =
+    parseCommercialFormInput(input);
+  const fields = await ensureCommercialDistrictFromCity(parsedFields);
   const fieldErrors = validateCommercialDraftFields(fields, parseErrors);
   if (hasCommercialFieldErrors(fieldErrors)) {
     return {
@@ -220,7 +223,9 @@ export async function updateCommercialDraftListing(
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { fields, errors: parseErrors } = parseCommercialFormInput(input);
+  const { fields: parsedFields, errors: parseErrors } =
+    parseCommercialFormInput(input);
+  const fields = await ensureCommercialDistrictFromCity(parsedFields);
   const fieldErrors = validateCommercialDraftFields(fields, parseErrors);
   if (hasCommercialFieldErrors(fieldErrors)) {
     return {
@@ -324,10 +329,10 @@ export async function submitCommercialListingForReview(
 
   if (input) {
     const parsed = parseCommercialFormInput(input);
-    fields = parsed.fields;
+    fields = await ensureCommercialDistrictFromCity(parsed.fields);
     parseErrors = parsed.errors;
   } else {
-    fields = {
+    fields = await ensureCommercialDistrictFromCity({
       title: existing.title,
       description: existing.description,
       categoryId: existing.category_id,
@@ -346,7 +351,7 @@ export async function submitCommercialListingForReview(
       leaseTermMonths: existing.lease_term_months,
       availableFrom: existing.available_from,
       businessUsage: existing.business_usage,
-    };
+    });
   }
 
   const imageState = await getBusinessImageSubmitState(listingId);
@@ -432,7 +437,9 @@ export async function createCommercialFormAction(
     redirect(`/dashboard/listings/${result.listingId}/edit?saved=1`);
   }
 
-  const { fields, errors: parseErrors } = parseCommercialFormInput(input);
+  const { fields: parsedFields, errors: parseErrors } =
+    parseCommercialFormInput(input);
+  const fields = await ensureCommercialDistrictFromCity(parsedFields);
   const submitErrors = await validateCommercialSubmitFields(fields, parseErrors, {
     requirePrimaryImage: true,
     hasPrimaryImage: false,

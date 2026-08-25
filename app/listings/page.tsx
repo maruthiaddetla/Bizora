@@ -16,8 +16,7 @@ import {
   fetchCommercialCategories,
 } from "@/lib/repositories/categories.repository";
 import {
-  fetchCities,
-  fetchDistricts,
+  fetchCitiesByState,
   fetchLocalities,
   fetchLocationNameById,
   fetchStates,
@@ -77,12 +76,10 @@ export default async function ListingsPage({ searchParams }: PageProps) {
     businessCategories,
     commercialCategories,
     states,
-    initialDistricts,
     initialCities,
     initialLocalities,
     selectedCategories,
     stateName,
-    districtName,
     cityName,
     localityName,
   ] = await Promise.all([
@@ -90,14 +87,12 @@ export default async function ListingsPage({ searchParams }: PageProps) {
     fetchBusinessCategories(),
     fetchCommercialCategories(),
     fetchStates(),
-    resolved.stateId ? fetchDistricts(resolved.stateId) : Promise.resolve([]),
-    resolved.districtId ? fetchCities(resolved.districtId) : Promise.resolve([]),
+    resolved.stateId ? fetchCitiesByState(resolved.stateId) : Promise.resolve([]),
     resolved.cityId ? fetchLocalities(resolved.cityId) : Promise.resolve([]),
     resolved.categoryIds?.length
       ? fetchCategoriesByIds(resolved.categoryIds)
       : Promise.resolve([]),
     fetchLocationNameById("states", resolved.stateId),
-    fetchLocationNameById("districts", resolved.districtId),
     fetchLocationNameById("cities", resolved.cityId),
     fetchLocationNameById("localities", resolved.localityId),
   ]);
@@ -107,7 +102,6 @@ export default async function ListingsPage({ searchParams }: PageProps) {
   const activeChips = buildActiveFilterChips(filters, {
     categories: selectedCategories,
     stateName,
-    districtName,
     cityName,
     localityName,
   });
@@ -153,7 +147,6 @@ export default async function ListingsPage({ searchParams }: PageProps) {
                 initialFilters={filters}
                 categories={categories}
                 states={states}
-                initialDistricts={initialDistricts}
                 initialCities={initialCities}
                 initialLocalities={initialLocalities}
               />

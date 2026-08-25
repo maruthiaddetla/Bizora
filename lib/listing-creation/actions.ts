@@ -9,6 +9,7 @@ import {
   parseListingFormInput,
   validateDraftFields,
   validateSubmitFields,
+  ensureDistrictFromCity,
   type ListingFieldErrors,
   type ListingFormInput,
   type ParsedListingFields,
@@ -77,10 +78,10 @@ function toDbRow(fields: ParsedListingFields) {
 function mapDbError(message: string | undefined): string {
   const text = (message ?? "").toLowerCase();
   if (text.includes("district does not belong")) {
-    return "Please select a valid district for the selected state.";
+    return "Please select a valid city for the selected state.";
   }
   if (text.includes("city does not belong")) {
-    return "Please select a valid city for the selected district.";
+    return "Please select a valid city for the selected state.";
   }
   if (text.includes("locality does not belong")) {
     return "Please select a valid locality for the selected city.";
@@ -89,7 +90,7 @@ function mapDbError(message: string | undefined): string {
     return "Please select a state.";
   }
   if (text.includes("district is required")) {
-    return "Please select a district.";
+    return "Please select a city.";
   }
   if (text.includes("city is required")) {
     return "Please select a city.";
@@ -150,7 +151,9 @@ export async function createDraftListing(
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { fields, errors: parseErrors } = parseListingFormInput(input);
+  const { fields: parsedFields, errors: parseErrors } =
+    parseListingFormInput(input);
+  const fields = await ensureDistrictFromCity(parsedFields);
   const fieldErrors = validateDraftFields(fields, parseErrors);
   if (hasFieldErrors(fieldErrors)) {
     return {
@@ -208,7 +211,9 @@ export async function updateDraftListing(
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { fields, errors: parseErrors } = parseListingFormInput(input);
+  const { fields: parsedFields, errors: parseErrors } =
+    parseListingFormInput(input);
+  const fields = await ensureDistrictFromCity(parsedFields);
   const fieldErrors = validateDraftFields(fields, parseErrors);
   if (hasFieldErrors(fieldErrors)) {
     return {
@@ -310,10 +315,10 @@ export async function submitListingForReview(
 
   if (input) {
     const parsed = parseListingFormInput(input);
-    fields = parsed.fields;
+    fields = await ensureDistrictFromCity(parsed.fields);
     parseErrors = parsed.errors;
   } else {
-    fields = {
+    fields = await ensureDistrictFromCity({
       title: existing.title,
       description: existing.description,
       categoryId: existing.category_id,
@@ -328,7 +333,7 @@ export async function submitListingForReview(
       establishedYear: existing.established_year,
       employees: existing.employees,
       reasonForSale: existing.reason_for_sale,
-    };
+    });
   }
 
   const imageState = await getBusinessImageSubmitState(listingId);
@@ -412,7 +417,9 @@ export async function createListingFormAction(
   }
 
   // Pre-validate submit rules before creating so the user keeps form state on errors
-  const { fields, errors: parseErrors } = parseListingFormInput(input);
+  const { fields: parsedFields, errors: parseErrors } =
+    parseListingFormInput(input);
+  const fields = await ensureDistrictFromCity(parsedFields);
   const submitErrors = await validateSubmitFields(fields, parseErrors, {
     requirePrimaryImage: true,
     hasPrimaryImage: false,

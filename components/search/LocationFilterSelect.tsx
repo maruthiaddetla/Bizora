@@ -3,14 +3,17 @@
 import { ChevronDown, MapPin } from "lucide-react";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import {
-  loadCitiesAction,
-  loadDistrictsAction,
+  loadCitiesByStateAction,
   loadLocalitiesAction,
 } from "@/lib/repositories/locations.actions";
-import type { LocationOption } from "@/lib/repositories/locations.repository";
+import type {
+  CityOption,
+  LocationOption,
+} from "@/lib/repositories/locations.repository";
 
 export type LocationFilterValue = {
   stateId: string | null;
+  /** Kept for legacy ?district= URLs; not shown in the UI. */
   districtId: string | null;
   cityId: string | null;
   localityId: string | null;
@@ -18,8 +21,7 @@ export type LocationFilterValue = {
 
 type LocationFilterSelectProps = {
   states: LocationOption[];
-  initialDistricts?: LocationOption[];
-  initialCities?: LocationOption[];
+  initialCities?: CityOption[];
   initialLocalities?: LocationOption[];
   value: LocationFilterValue;
   onChange: (value: LocationFilterValue) => void;
@@ -28,17 +30,15 @@ type LocationFilterSelectProps = {
 const selectClass =
   "h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-/** UUID-based cascading location selector (State → District → City → Locality). */
+/** UUID-based cascading location selector (State → City → Locality). */
 export function LocationFilterSelect({
   states,
-  initialDistricts = [],
   initialCities = [],
   initialLocalities = [],
   value,
   onChange,
 }: LocationFilterSelectProps) {
   const [open, setOpen] = useState(false);
-  const [districts, setDistricts] = useState(initialDistricts);
   const [cities, setCities] = useState(initialCities);
   const [localities, setLocalities] = useState(initialLocalities);
   const [isPending, startTransition] = useTransition();
@@ -63,11 +63,12 @@ export function LocationFilterSelect({
 
   function summaryLabel() {
     const stateName = states.find((item) => item.id === value.stateId)?.name;
-    const districtName = districts.find((item) => item.id === value.districtId)?.name;
     const cityName = cities.find((item) => item.id === value.cityId)?.name;
-    const localityName = localities.find((item) => item.id === value.localityId)?.name;
+    const localityName = localities.find(
+      (item) => item.id === value.localityId,
+    )?.name;
 
-    const parts = [localityName, cityName, districtName, stateName].filter(Boolean);
+    const parts = [localityName, cityName, stateName].filter(Boolean);
     return parts.length > 0 ? parts.join(", ") : "Select location";
   }
 
@@ -79,43 +80,22 @@ export function LocationFilterSelect({
       localityId: null,
     };
     onChange(next);
-    setCities([]);
     setLocalities([]);
 
     if (!stateId) {
-      setDistricts([]);
-      return;
-    }
-
-    startTransition(async () => {
-      const nextDistricts = await loadDistrictsAction(stateId);
-      setDistricts(nextDistricts);
-    });
-  }
-
-  function handleDistrictChange(districtId: string) {
-    onChange({
-      ...value,
-      districtId: districtId || null,
-      cityId: null,
-      localityId: null,
-    });
-    setLocalities([]);
-
-    if (!districtId) {
       setCities([]);
       return;
     }
 
     startTransition(async () => {
-      const nextCities = await loadCitiesAction(districtId);
-      setCities(nextCities);
+      setCities(await loadCitiesByStateAction(stateId));
     });
   }
 
   function handleCityChange(cityId: string) {
     onChange({
       ...value,
+      districtId: null,
       cityId: cityId || null,
       localityId: null,
     });
@@ -126,8 +106,7 @@ export function LocationFilterSelect({
     }
 
     startTransition(async () => {
-      const nextLocalities = await loadLocalitiesAction(cityId);
-      setLocalities(nextLocalities);
+      setLocalities(await loadLocalitiesAction(cityId));
     });
   }
 
@@ -138,7 +117,6 @@ export function LocationFilterSelect({
       cityId: null,
       localityId: null,
     });
-    setDistricts([]);
     setCities([]);
     setLocalities([]);
     setOpen(false);
@@ -222,30 +200,6 @@ export function LocationFilterSelect({
             {value.stateId && (
               <div>
                 <label
-                  htmlFor={`${listboxId}-district`}
-                  className="mb-1 block text-xs font-medium text-muted"
-                >
-                  District
-                </label>
-                <select
-                  id={`${listboxId}-district`}
-                  value={value.districtId ?? ""}
-                  onChange={(e) => handleDistrictChange(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select district</option>
-                  {districts.map((district) => (
-                    <option key={district.id} value={district.id}>
-                      {district.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {value.districtId && (
-              <div>
-                <label
                   htmlFor={`${listboxId}-city`}
                   className="mb-1 block text-xs font-medium text-muted"
                 >
@@ -256,6 +210,7 @@ export function LocationFilterSelect({
                   value={value.cityId ?? ""}
                   onChange={(e) => handleCityChange(e.target.value)}
                   className={selectClass}
+                  disabled={isPending && cities.length === 0}
                 >
                   <option value="">Select city</option>
                   {cities.map((city) => (

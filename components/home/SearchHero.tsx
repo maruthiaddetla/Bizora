@@ -84,7 +84,6 @@ export function SearchHero({
       listingType: marketplace,
       categoryIds: categoryId ? [categoryId] : undefined,
       stateId: location.stateId ?? undefined,
-      districtId: location.districtId ?? undefined,
       cityId: location.cityId ?? undefined,
       localityId: location.localityId ?? undefined,
       minPrice: budget.min,

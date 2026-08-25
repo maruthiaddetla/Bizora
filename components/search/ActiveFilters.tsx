@@ -47,7 +47,6 @@ export function buildActiveFilterChips(
   labels: {
     categories: { id: string; name: string }[];
     stateName?: string;
-    districtName?: string;
     cityName?: string;
     localityName?: string;
   },
@@ -88,20 +87,6 @@ export function buildActiveFilterChips(
       label: labels.cityName,
       href: buildSearchHref({
         ...filters,
-        cityId: undefined,
-        localityId: undefined,
-        page: 1,
-      }),
-    });
-  }
-
-  if (filters.districtId && labels.districtName) {
-    chips.push({
-      key: "district",
-      label: labels.districtName,
-      href: buildSearchHref({
-        ...filters,
-        districtId: undefined,
         cityId: undefined,
         localityId: undefined,
         page: 1,

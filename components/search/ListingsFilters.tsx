@@ -16,7 +16,10 @@ import {
   SPACE_TYPES,
 } from "@/lib/listing-types";
 import type { CategoryOption } from "@/lib/repositories/categories.repository";
-import type { LocationOption } from "@/lib/repositories/locations.repository";
+import type {
+  CityOption,
+  LocationOption,
+} from "@/lib/repositories/locations.repository";
 import {
   buildSearchHref,
   type BusinessSearchFilters,
@@ -27,8 +30,7 @@ type ListingsFiltersProps = {
   listingType: "business" | "commercial_space";
   categories: CategoryOption[];
   states: LocationOption[];
-  initialDistricts: LocationOption[];
-  initialCities: LocationOption[];
+  initialCities: CityOption[];
   initialLocalities: LocationOption[];
 };
 
@@ -37,7 +39,6 @@ export function ListingsFilters({
   listingType,
   categories,
   states,
-  initialDistricts,
   initialCities,
   initialLocalities,
 }: ListingsFiltersProps) {
@@ -87,7 +88,8 @@ export function ListingsFilters({
       q: keyword.trim() || undefined,
       categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
       stateId: location.stateId ?? undefined,
-      districtId: location.districtId ?? undefined,
+      // Preserve legacy ?district= filters until the user changes location.
+      districtId: location.cityId ? undefined : location.districtId ?? undefined,
       cityId: location.cityId ?? undefined,
       localityId: location.localityId ?? undefined,
       minPrice: parsePrice(minPrice),
@@ -136,7 +138,6 @@ export function ListingsFilters({
         <div className="lg:col-span-4">
           <LocationFilterSelect
             states={states}
-            initialDistricts={initialDistricts}
             initialCities={initialCities}
             initialLocalities={initialLocalities}
             value={location}

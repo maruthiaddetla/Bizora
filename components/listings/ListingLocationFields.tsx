@@ -2,14 +2,17 @@
 
 import { useId, useState, useTransition } from "react";
 import {
-  loadCitiesAction,
-  loadDistrictsAction,
+  loadCitiesByStateAction,
   loadLocalitiesAction,
 } from "@/lib/repositories/locations.actions";
-import type { LocationOption } from "@/lib/repositories/locations.repository";
+import type {
+  CityOption,
+  LocationOption,
+} from "@/lib/repositories/locations.repository";
 
 export type ListingLocationValue = {
   stateId: string | null;
+  /** Auto-derived from the selected city for DB integrity; not shown in the UI. */
   districtId: string | null;
   cityId: string | null;
   localityId: string | null;
@@ -17,8 +20,7 @@ export type ListingLocationValue = {
 
 type ListingLocationFieldsProps = {
   states: LocationOption[];
-  initialDistricts?: LocationOption[];
-  initialCities?: LocationOption[];
+  initialCities?: CityOption[];
   initialLocalities?: LocationOption[];
   value: ListingLocationValue;
   onChange: (value: ListingLocationValue) => void;
@@ -32,14 +34,12 @@ const selectClass =
 
 export function ListingLocationFields({
   states,
-  initialDistricts = [],
   initialCities = [],
   initialLocalities = [],
   value,
   onChange,
   errors,
 }: ListingLocationFieldsProps) {
-  const [districts, setDistricts] = useState(initialDistricts);
   const [cities, setCities] = useState(initialCities);
   const [localities, setLocalities] = useState(initialLocalities);
   const [isPending, startTransition] = useTransition();
@@ -52,41 +52,23 @@ export function ListingLocationFields({
       cityId: null,
       localityId: null,
     });
-    setCities([]);
     setLocalities([]);
 
     if (!stateId) {
-      setDistricts([]);
-      return;
-    }
-
-    startTransition(async () => {
-      setDistricts(await loadDistrictsAction(stateId));
-    });
-  }
-
-  function handleDistrictChange(districtId: string) {
-    onChange({
-      ...value,
-      districtId: districtId || null,
-      cityId: null,
-      localityId: null,
-    });
-    setLocalities([]);
-
-    if (!districtId) {
       setCities([]);
       return;
     }
 
     startTransition(async () => {
-      setCities(await loadCitiesAction(districtId));
+      setCities(await loadCitiesByStateAction(stateId));
     });
   }
 
   function handleCityChange(cityId: string) {
+    const city = cities.find((item) => item.id === cityId);
     onChange({
       ...value,
+      districtId: city?.districtId ?? null,
       cityId: cityId || null,
       localityId: null,
     });
@@ -101,8 +83,13 @@ export function ListingLocationFields({
     });
   }
 
+  const cityError = errors?.cityId ?? errors?.districtId;
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
+      {/* District is derived from city and required by the DB; keep it in the form. */}
+      <input type="hidden" name="districtId" value={value.districtId ?? ""} />
+
       <div>
         <label
           htmlFor={`${baseId}-state`}
@@ -132,34 +119,6 @@ export function ListingLocationFields({
 
       <div>
         <label
-          htmlFor={`${baseId}-district`}
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          District <span className="text-red-600">*</span>
-        </label>
-        <select
-          id={`${baseId}-district`}
-          name="districtId"
-          className={selectClass}
-          value={value.districtId ?? ""}
-          onChange={(event) => handleDistrictChange(event.target.value)}
-          disabled={!value.stateId || isPending}
-          aria-invalid={Boolean(errors?.districtId)}
-        >
-          <option value="">Select district</option>
-          {districts.map((district) => (
-            <option key={district.id} value={district.id}>
-              {district.name}
-            </option>
-          ))}
-        </select>
-        {errors?.districtId && (
-          <p className="mt-1 text-sm text-red-700">{errors.districtId}</p>
-        )}
-      </div>
-
-      <div>
-        <label
           htmlFor={`${baseId}-city`}
           className="mb-1.5 block text-sm font-medium text-foreground"
         >
@@ -171,8 +130,8 @@ export function ListingLocationFields({
           className={selectClass}
           value={value.cityId ?? ""}
           onChange={(event) => handleCityChange(event.target.value)}
-          disabled={!value.districtId || isPending}
-          aria-invalid={Boolean(errors?.cityId)}
+          disabled={!value.stateId || isPending}
+          aria-invalid={Boolean(cityError)}
         >
           <option value="">Select city</option>
           {cities.map((city) => (
@@ -181,12 +140,10 @@ export function ListingLocationFields({
             </option>
           ))}
         </select>
-        {errors?.cityId && (
-          <p className="mt-1 text-sm text-red-700">{errors.cityId}</p>
-        )}
+        {cityError && <p className="mt-1 text-sm text-red-700">{cityError}</p>}
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label
           htmlFor={`${baseId}-locality`}
           className="mb-1.5 block text-sm font-medium text-foreground"

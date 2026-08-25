@@ -3,14 +3,17 @@
 import { ChevronDown, MapPin } from "lucide-react";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import {
-  loadCitiesAction,
-  loadDistrictsAction,
+  loadCitiesByStateAction,
   loadLocalitiesAction,
 } from "@/lib/repositories/locations.actions";
-import type { LocationOption } from "@/lib/repositories/locations.repository";
+import type {
+  CityOption,
+  LocationOption,
+} from "@/lib/repositories/locations.repository";
 
 export type LocationSelection = {
   stateId: string | null;
+  /** Kept for search URL compatibility; not shown in the UI. */
   districtId: string | null;
   cityId: string | null;
   localityId: string | null;
@@ -41,8 +44,7 @@ export function LocationSelector({
   triggerClassName = "",
 }: LocationSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [districts, setDistricts] = useState<LocationOption[]>([]);
-  const [cities, setCities] = useState<LocationOption[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
   const [localities, setLocalities] = useState<LocationOption[]>([]);
   const [isPending, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -63,11 +65,12 @@ export function LocationSelector({
 
   function summaryLabel() {
     const stateName = states.find((item) => item.id === value.stateId)?.name;
-    const districtName = districts.find((item) => item.id === value.districtId)?.name;
     const cityName = cities.find((item) => item.id === value.cityId)?.name;
-    const localityName = localities.find((item) => item.id === value.localityId)?.name;
+    const localityName = localities.find(
+      (item) => item.id === value.localityId,
+    )?.name;
 
-    const parts = [localityName, cityName, districtName, stateName].filter(Boolean);
+    const parts = [localityName, cityName, stateName].filter(Boolean);
     return parts.length > 0 ? parts.join(", ") : "Select location";
   }
 
@@ -78,43 +81,23 @@ export function LocationSelector({
       cityId: null,
       localityId: null,
     });
-    setCities([]);
     setLocalities([]);
 
     if (!stateId) {
-      setDistricts([]);
-      return;
-    }
-
-    startTransition(async () => {
-      const nextDistricts = await loadDistrictsAction(stateId);
-      setDistricts(nextDistricts);
-    });
-  }
-
-  function handleDistrictChange(districtId: string) {
-    onChange({
-      ...value,
-      districtId: districtId || null,
-      cityId: null,
-      localityId: null,
-    });
-    setLocalities([]);
-
-    if (!districtId) {
       setCities([]);
       return;
     }
 
     startTransition(async () => {
-      const nextCities = await loadCitiesAction(districtId);
-      setCities(nextCities);
+      setCities(await loadCitiesByStateAction(stateId));
     });
   }
 
   function handleCityChange(cityId: string) {
     onChange({
       ...value,
+      // Search uses city_id; district is not required in the URL.
+      districtId: null,
       cityId: cityId || null,
       localityId: null,
     });
@@ -125,21 +108,19 @@ export function LocationSelector({
     }
 
     startTransition(async () => {
-      const nextLocalities = await loadLocalitiesAction(cityId);
-      setLocalities(nextLocalities);
+      setLocalities(await loadLocalitiesAction(cityId));
     });
   }
 
   function handleClear() {
     onChange(EMPTY_LOCATION);
-    setDistricts([]);
     setCities([]);
     setLocalities([]);
     setOpen(false);
   }
 
   return (
-    <div ref={containerRef} className="relative w-full min-w-0">
+    <div ref={containerRef} className="relative z-50 w-full min-w-0">
       <label className="sr-only" htmlFor={`${listboxId}-trigger`}>
         Location
       </label>
@@ -174,7 +155,7 @@ export function LocationSelector({
         <div
           role="listbox"
           aria-label="Location selection"
-          className="absolute left-0 right-0 z-50 mt-2 max-h-[min(24rem,70vh)] overflow-y-auto rounded-xl border border-border bg-white p-4 shadow-lg"
+          className="absolute left-0 right-0 z-[60] mt-2 max-h-[min(24rem,70vh)] overflow-y-auto rounded-xl border border-border bg-white p-4 shadow-lg"
         >
           {isPending && (
             <p className="mb-2 text-xs text-muted">Updating locations…</p>
@@ -223,30 +204,6 @@ export function LocationSelector({
             {value.stateId && (
               <div>
                 <label
-                  htmlFor={`${listboxId}-district`}
-                  className="mb-1 block text-xs font-medium text-muted"
-                >
-                  District
-                </label>
-                <select
-                  id={`${listboxId}-district`}
-                  value={value.districtId ?? ""}
-                  onChange={(e) => handleDistrictChange(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select district</option>
-                  {districts.map((district) => (
-                    <option key={district.id} value={district.id}>
-                      {district.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {value.districtId && (
-              <div>
-                <label
                   htmlFor={`${listboxId}-city`}
                   className="mb-1 block text-xs font-medium text-muted"
                 >
@@ -257,6 +214,7 @@ export function LocationSelector({
                   value={value.cityId ?? ""}
                   onChange={(e) => handleCityChange(e.target.value)}
                   className={selectClass}
+                  disabled={isPending && cities.length === 0}
                 >
                   <option value="">Select city</option>
                   {cities.map((city) => (

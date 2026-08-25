@@ -1,17 +1,12 @@
 "use server";
 
 import {
-  fetchCities,
-  fetchDistricts,
+  fetchCitiesByState,
   fetchLocalities,
 } from "@/lib/repositories/locations.repository";
 
-export async function loadDistrictsAction(stateId: string) {
-  return fetchDistricts(stateId);
-}
-
-export async function loadCitiesAction(districtId: string) {
-  return fetchCities(districtId);
+export async function loadCitiesByStateAction(stateId: string) {
+  return fetchCitiesByState(stateId);
 }
 
 export async function loadLocalitiesAction(cityId: string) {

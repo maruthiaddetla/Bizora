@@ -8,7 +8,10 @@ import {
 } from "@/lib/listing-creation/actions";
 import type { ListingFieldErrors } from "@/lib/listing-creation/validation";
 import type { CategoryOption } from "@/lib/repositories/categories.repository";
-import type { LocationOption } from "@/lib/repositories/locations.repository";
+import type {
+  CityOption,
+  LocationOption,
+} from "@/lib/repositories/locations.repository";
 import {
   ListingLocationFields,
   type ListingLocationValue,
@@ -24,8 +27,7 @@ type ListingFormProps = {
   mode: "create" | "edit";
   categories: CategoryOption[];
   states: LocationOption[];
-  initialDistricts?: LocationOption[];
-  initialCities?: LocationOption[];
+  initialCities?: CityOption[];
   initialLocalities?: LocationOption[];
   defaults?: ListingFormDefaults;
   rejectionReason?: string | null;
@@ -67,7 +69,6 @@ export function ListingForm({
   mode,
   categories,
   states,
-  initialDistricts = [],
   initialCities = [],
   initialLocalities = [],
   defaults,
@@ -231,7 +232,6 @@ export function ListingForm({
       >
         <ListingLocationFields
           states={states}
-          initialDistricts={initialDistricts}
           initialCities={initialCities}
           initialLocalities={initialLocalities}
           value={location}
