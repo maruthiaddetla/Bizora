@@ -1,6 +1,7 @@
 /** 2Factor.in SMS OTP — server-only. Never import from client components. */
 
-export const TWOFACTOR_SIGNUP_TEMPLATE = "New user sign up";
+/** Approved 2Factor SMS template name for phone signup OTP. */
+export const TWOFACTOR_SIGNUP_TEMPLATE = "OTP1";
 
 const TWOFACTOR_BASE_URL = "https://2factor.in/API/V1";
 
@@ -23,6 +24,15 @@ export type TwoFactorVerifyResult =
 function getTwoFactorApiKey(): string | null {
   const key = process.env.TWOFACTOR_API_KEY?.trim();
   return key || null;
+}
+
+/**
+ * Template name for AUTOGEN. Prefer server-only TWOFACTOR_SMS_TEMPLATE when set;
+ * otherwise use the approved default OTP1.
+ */
+export function getTwoFactorSignupTemplate(): string {
+  const fromEnv = process.env.TWOFACTOR_SMS_TEMPLATE?.trim();
+  return fromEnv || TWOFACTOR_SIGNUP_TEMPLATE;
 }
 
 function parseTwoFactorResponse(body: unknown): TwoFactorResponse | null {
@@ -54,11 +64,11 @@ function classifyVerifyFailure(details: string | undefined): TwoFactorVerifyResu
 }
 
 /**
- * Send OTP via 2Factor AUTOGEN. Returns session ID on success; never returns OTP.
+ * Send OTP via 2Factor AUTOGEN with approved template. Returns session ID; never returns OTP.
  */
 export async function sendTwoFactorOtp(
   e164Phone: string,
-  templateName: string = TWOFACTOR_SIGNUP_TEMPLATE,
+  templateName: string = getTwoFactorSignupTemplate(),
 ): Promise<TwoFactorSendResult> {
   const apiKey = getTwoFactorApiKey();
   if (!apiKey) {
