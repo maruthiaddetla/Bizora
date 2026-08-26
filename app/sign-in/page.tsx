@@ -5,7 +5,7 @@ import { getSafeNextPath } from "@/lib/auth/redirect";
 
 export const metadata: Metadata = {
   title: "Sign In",
-  description: "Sign in to your Bizora account.",
+  description: "Sign in to your Bizora account or create a new one.",
   robots: { index: false, follow: false },
 };
 
@@ -26,10 +26,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
   }
 
   return (
-    <AuthShell
-      title="Welcome back"
-      subtitle="Sign in with your mobile number to access your Bizora account."
-    >
+    <AuthShell subtitle="Sign in to your Bizora account or create a new one.">
       <SignInForm nextPath={nextPath} initialError={initialError} />
     </AuthShell>
   );

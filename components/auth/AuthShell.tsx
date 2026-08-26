@@ -2,8 +2,8 @@ import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 
 type AuthShellProps = {
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   children: React.ReactNode;
 };
 
@@ -14,11 +14,25 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       <main className="flex-1 bg-surface">
         <div className="mx-auto flex w-full max-w-md flex-col px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {title}
-            </h1>
-            <p className="mt-2 text-sm text-muted sm:text-base">{subtitle}</p>
-            <div className="mt-6">{children}</div>
+            {title ? (
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                {title}
+              </h1>
+            ) : null}
+            {subtitle ? (
+              <p
+                className={
+                  title
+                    ? "mt-2 text-sm text-muted sm:text-base"
+                    : "text-sm text-muted sm:text-base"
+                }
+              >
+                {subtitle}
+              </p>
+            ) : null}
+            <div className={title || subtitle ? "mt-6" : undefined}>
+              {children}
+            </div>
           </div>
         </div>
       </main>

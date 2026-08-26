@@ -41,6 +41,16 @@ export function SignInForm({
         </div>
       )}
 
+      <p className="rounded-xl border border-border bg-surface px-4 py-3 text-center text-sm text-muted">
+        New to Bizora?{" "}
+        <Link
+          href={`/sign-up?next=${encodeURIComponent(safeNext)}`}
+          className="font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          Create an account
+        </Link>
+      </p>
+
       <PhoneSignInForm
         nextPath={nextPath}
         onContinueWithEmail={() => setShowEmail(true)}
@@ -59,16 +69,6 @@ export function SignInForm({
       >
         Continue with Email
       </Button>
-
-      <p className="text-center text-sm text-muted">
-        New to Bizora?{" "}
-        <Link
-          href={`/sign-up?next=${encodeURIComponent(safeNext)}`}
-          className="font-semibold text-primary hover:text-primary-hover"
-        >
-          Create an account
-        </Link>
-      </p>
     </div>
   );
 }

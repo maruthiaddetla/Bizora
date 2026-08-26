@@ -147,7 +147,7 @@ export function NavbarClient({
             </div>
           ) : (
             <Button href="/sign-in" variant="secondary" size="sm">
-              Login
+              Login / Register
             </Button>
           )}
 
@@ -202,8 +202,8 @@ export function NavbarClient({
           <Link
             href={isAuthenticated ? "/dashboard" : "/sign-in"}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface text-sm font-semibold text-navy"
-            aria-label={isAuthenticated ? "Dashboard" : "Login"}
-          >
+            aria-label={isAuthenticated ? "Dashboard" : "Login / Register"}
+            >
             {isAuthenticated ? "D" : "L"}
           </Link>
         </div>
@@ -256,7 +256,7 @@ export function NavbarClient({
               </>
             ) : (
               <Button href="/sign-in" variant="secondary" size="lg" className="w-full">
-                Login
+                Login / Register
               </Button>
             )}
           </div>
