@@ -16,3 +16,8 @@ export function getSiteUrl(): string {
 
   return "http://localhost:3000";
 }
+
+/** Public Bizora business contact email (user-facing). */
+export const BIZORA_CONTACT_EMAIL = "enquire@bizoraindia.com";
+
+export const BIZORA_CONTACT_MAILTO = `mailto:${BIZORA_CONTACT_EMAIL}`;

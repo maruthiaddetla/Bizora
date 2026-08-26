@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  BIZORA_CONTACT_EMAIL,
+  BIZORA_CONTACT_MAILTO,
+} from "@/lib/site";
 
 const footerSections = {
   "Listing Tools": [
@@ -40,6 +44,14 @@ export function Footer() {
               Buy a business. Find the right space. An India-focused marketplace
               for businesses for sale and commercial premises in Hyderabad.
             </p>
+            <p className="mt-4 text-sm text-slate-400">
+              <a
+                href={BIZORA_CONTACT_MAILTO}
+                className="rounded-sm font-medium text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              >
+                {BIZORA_CONTACT_EMAIL}
+              </a>
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:gap-12">
@@ -53,7 +65,7 @@ export function Footer() {
                     <li key={`${title}-${link.href}`}>
                       <Link
                         href={link.href}
-                        className="text-sm text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-sm"
+                        className="rounded-sm text-sm text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                       >
                         {link.label}
                       </Link>

@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
+import {
+  BIZORA_CONTACT_EMAIL,
+  BIZORA_CONTACT_MAILTO,
+} from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions",
@@ -134,7 +138,14 @@ export default function TermsPage() {
                 9. Contact
               </h2>
               <p className="mt-2">
-                Questions about these terms can be raised via the{" "}
+                Questions about these terms can be raised by emailing{" "}
+                <a
+                  href={BIZORA_CONTACT_MAILTO}
+                  className="font-medium text-primary hover:text-primary-hover"
+                >
+                  {BIZORA_CONTACT_EMAIL}
+                </a>{" "}
+                or via the{" "}
                 <Link href="/contact" className="font-medium text-primary hover:text-primary-hover">
                   Contact
                 </Link>{" "}

@@ -12,6 +12,10 @@ import {
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
+import {
+  BIZORA_CONTACT_EMAIL,
+  BIZORA_CONTACT_MAILTO,
+} from "@/lib/site";
 
 export const metadata: Metadata = {
   title: {
@@ -314,6 +318,13 @@ export default function AboutPage() {
                 >
                   Contact Us
                 </Link>
+                {" · "}
+                <a
+                  href={BIZORA_CONTACT_MAILTO}
+                  className="font-semibold text-white underline-offset-2 hover:underline"
+                >
+                  {BIZORA_CONTACT_EMAIL}
+                </a>
               </p>
             </div>
           </div>

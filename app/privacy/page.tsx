@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
+import {
+  BIZORA_CONTACT_EMAIL,
+  BIZORA_CONTACT_MAILTO,
+} from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -130,8 +134,14 @@ export default function PrivacyPage() {
               <p className="mt-2">
                 You can update profile fields available in the product, manage
                 your listings from the dashboard, and stop using the service by
-                signing out. For broader account or deletion requests, use the
-                guidance on the{" "}
+                signing out. For broader account or deletion requests, email{" "}
+                <a
+                  href={BIZORA_CONTACT_MAILTO}
+                  className="font-medium text-primary hover:text-primary-hover"
+                >
+                  {BIZORA_CONTACT_EMAIL}
+                </a>{" "}
+                or use the guidance on the{" "}
                 <Link href="/contact" className="font-medium text-primary hover:text-primary-hover">
                   Contact
                 </Link>{" "}
