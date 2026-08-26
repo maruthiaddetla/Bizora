@@ -1,7 +1,6 @@
 import {
   fetchCitiesByState,
   fetchCityWithDistrict,
-  fetchLocalities,
   fetchStates,
 } from "@/lib/repositories/locations.repository";
 import { fetchCommercialCategories } from "@/lib/repositories/categories.repository";
@@ -10,6 +9,7 @@ import {
   isListingPurpose,
   isSpaceType,
 } from "@/lib/listing-types";
+import { MAX_LOCALITY_NAME_LENGTH } from "@/lib/listing-creation/locality";
 
 export type CommercialSpaceFormInput = {
   title?: string | null;
@@ -18,7 +18,7 @@ export type CommercialSpaceFormInput = {
   stateId?: string | null;
   districtId?: string | null;
   cityId?: string | null;
-  localityId?: string | null;
+  locality?: string | null;
   spaceType?: string | null;
   listingPurpose?: string | null;
   monthlyRent?: number | string | null;
@@ -40,7 +40,7 @@ export type CommercialFieldErrors = Partial<
     | "stateId"
     | "districtId"
     | "cityId"
-    | "localityId"
+    | "locality"
     | "spaceType"
     | "listingPurpose"
     | "monthlyRent"
@@ -65,7 +65,7 @@ export type ParsedCommercialFields = {
   stateId: string | null;
   districtId: string | null;
   cityId: string | null;
-  localityId: string | null;
+  locality: string | null;
   spaceType: string | null;
   listingPurpose: string | null;
   monthlyRent: number | null;
@@ -113,6 +113,12 @@ export function parseCommercialFormInput(input: CommercialSpaceFormInput): {
   const descriptionRaw = (input.description ?? "").trim();
   const floorRaw = (input.floor ?? "").trim();
   const businessUsageRaw = (input.businessUsage ?? "").trim();
+  const localityRaw = (input.locality ?? "").trim();
+  const locality =
+    localityRaw.length > 0 ? localityRaw.slice(0, MAX_LOCALITY_NAME_LENGTH) : null;
+  if (localityRaw.length > MAX_LOCALITY_NAME_LENGTH) {
+    errors.locality = `Locality must be ${MAX_LOCALITY_NAME_LENGTH} characters or fewer.`;
+  }
 
   const categoryId =
     input.categoryId && isUuid(input.categoryId) ? input.categoryId : null;
@@ -120,8 +126,6 @@ export function parseCommercialFormInput(input: CommercialSpaceFormInput): {
   const districtId =
     input.districtId && isUuid(input.districtId) ? input.districtId : null;
   const cityId = input.cityId && isUuid(input.cityId) ? input.cityId : null;
-  const localityId =
-    input.localityId && isUuid(input.localityId) ? input.localityId : null;
 
   if (input.categoryId && !categoryId) {
     errors.categoryId = "Please select a valid category.";
@@ -134,9 +138,6 @@ export function parseCommercialFormInput(input: CommercialSpaceFormInput): {
   }
   if (input.cityId && !cityId) {
     errors.cityId = "Please select a valid city.";
-  }
-  if (input.localityId && !localityId) {
-    errors.localityId = "Please select a valid locality.";
   }
 
   const spaceType =
@@ -215,7 +216,7 @@ export function parseCommercialFormInput(input: CommercialSpaceFormInput): {
     stateId,
     districtId,
     cityId,
-    localityId,
+    locality: localityRaw.length > MAX_LOCALITY_NAME_LENGTH ? null : locality,
     spaceType,
     listingPurpose,
     monthlyRent: monthlyRent === "invalid" ? null : monthlyRent,
@@ -329,14 +330,6 @@ export async function validateCommercialSubmitFields(
           errors.cityId = "Please select a valid city for the selected state.";
         }
       }
-    }
-  }
-
-  if (fields.cityId && fields.localityId) {
-    const localities = await fetchLocalities(fields.cityId);
-    if (!localities.some((locality) => locality.id === fields.localityId)) {
-      errors.localityId =
-        "Please select a valid locality for the selected city.";
     }
   }
 

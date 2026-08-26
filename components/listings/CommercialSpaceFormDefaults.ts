@@ -6,7 +6,8 @@ export type CommercialSpaceFormDefaults = {
   stateId?: string | null;
   districtId?: string | null;
   cityId?: string | null;
-  localityId?: string | null;
+  /** Optional free-text locality; prefers locality_name, else legacy localities.name */
+  locality?: string;
   spaceType?: string | null;
   listingPurpose?: string | null;
   monthlyRent?: string;

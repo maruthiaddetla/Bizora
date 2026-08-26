@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import {
   createListingFormAction,
   updateListingFormAction,
@@ -19,7 +19,11 @@ import {
 import { BusinessPhotosManager } from "@/components/listings/BusinessPhotosManager";
 import { Button } from "@/components/ui/Button";
 import type { ListingFormDefaults } from "@/components/listings/ListingFormDefaults";
-import type { BusinessImageView } from "@/lib/business-images/actions";
+import { PHOTO_UPLOADS_PENDING } from "@/lib/business-images/messages";
+import type {
+  BusinessImageView,
+  BusinessPhotosUploadState,
+} from "@/lib/business-images/types";
 
 export type { ListingFormDefaults };
 
@@ -28,7 +32,6 @@ type ListingFormProps = {
   categories: CategoryOption[];
   states: LocationOption[];
   initialCities?: CityOption[];
-  initialLocalities?: LocationOption[];
   defaults?: ListingFormDefaults;
   rejectionReason?: string | null;
   initialImages?: BusinessImageView[];
@@ -70,7 +73,6 @@ export function ListingForm({
   categories,
   states,
   initialCities = [],
-  initialLocalities = [],
   defaults,
   rejectionReason,
   initialImages = [],
@@ -86,7 +88,7 @@ export function ListingForm({
     stateId: defaults?.stateId ?? null,
     districtId: defaults?.districtId ?? null,
     cityId: defaults?.cityId ?? null,
-    localityId: defaults?.localityId ?? null,
+    locality: defaults?.locality ?? "",
   });
   const [askingPrice, setAskingPrice] = useState(defaults?.askingPrice ?? "");
   const [annualRevenue, setAnnualRevenue] = useState(
@@ -103,10 +105,22 @@ export function ListingForm({
   const [reasonForSale, setReasonForSale] = useState(
     defaults?.reasonForSale ?? "",
   );
+  const [photosBusy, setPhotosBusy] = useState(false);
+  const [photosGuardMessage, setPhotosGuardMessage] = useState<string | null>(
+    null,
+  );
+
+  const onUploadStateChange = useCallback((uploadState: BusinessPhotosUploadState) => {
+    setPhotosBusy(uploadState.hasPendingUploads);
+    if (!uploadState.hasPendingUploads) {
+      setPhotosGuardMessage(null);
+    }
+  }, []);
 
   const fieldErrors: ListingFieldErrors = state.fieldErrors ?? {};
   const successMessage = state.ok ? state.message : undefined;
   const generalError = !state.ok ? state.message : undefined;
+  const formBlocked = pending || photosBusy;
 
   const parentIds = new Set(
     categories
@@ -119,7 +133,16 @@ export function ListingForm({
     : categories;
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form
+      action={formAction}
+      className="space-y-6"
+      onSubmit={(event) => {
+        if (photosBusy) {
+          event.preventDefault();
+          setPhotosGuardMessage(PHOTO_UPLOADS_PENDING);
+        }
+      }}
+    >
       {mode === "edit" && defaults?.listingId && (
         <input type="hidden" name="listingId" value={defaults.listingId} />
       )}
@@ -149,6 +172,15 @@ export function ListingForm({
           className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
         >
           {generalError}
+        </div>
+      )}
+
+      {photosGuardMessage && (
+        <div
+          role="alert"
+          className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          {photosGuardMessage}
         </div>
       )}
 
@@ -233,14 +265,13 @@ export function ListingForm({
         <ListingLocationFields
           states={states}
           initialCities={initialCities}
-          initialLocalities={initialLocalities}
           value={location}
           onChange={setLocation}
           errors={{
             stateId: fieldErrors.stateId,
             districtId: fieldErrors.districtId,
             cityId: fieldErrors.cityId,
-            localityId: fieldErrors.localityId,
+            locality: fieldErrors.locality,
           }}
         />
       </Section>
@@ -425,6 +456,7 @@ export function ListingForm({
             <BusinessPhotosManager
               businessId={defaults.listingId}
               initialImages={initialImages}
+              onUploadStateChange={onUploadStateChange}
             />
             <FieldError message={fieldErrors.images} />
           </>
@@ -438,23 +470,29 @@ export function ListingForm({
           value="draft"
           variant="secondary"
           size="md"
-          disabled={pending}
+          disabled={formBlocked}
         >
-          {pending ? "Working…" : "Save Draft"}
+          {pending ? "Working…" : photosBusy ? "Uploading photos…" : "Save Draft"}
         </Button>
         <Button
           type="submit"
           name="intent"
           value="submit"
           size="md"
-          disabled={pending || mode === "create"}
+          disabled={formBlocked || mode === "create"}
           title={
             mode === "create"
               ? "Save a draft and upload photos before submitting"
-              : undefined
+              : photosBusy
+                ? PHOTO_UPLOADS_PENDING
+                : undefined
           }
         >
-          {pending ? "Working…" : "Submit for Review"}
+          {pending
+            ? "Working…"
+            : photosBusy
+              ? "Uploading photos…"
+              : "Submit for Review"}
         </Button>
       </div>
     </form>

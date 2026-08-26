@@ -253,6 +253,7 @@ export type Database = {
           district_id: string | null;
           city_id: string | null;
           locality_id: string | null;
+          locality_name: string | null;
           reason_for_sale: string | null;
           status: BusinessStatus;
           is_premium: boolean;
@@ -295,6 +296,7 @@ export type Database = {
           district_id?: string | null;
           city_id?: string | null;
           locality_id?: string | null;
+          locality_name?: string | null;
           reason_for_sale?: string | null;
           status?: BusinessStatus;
           is_premium?: boolean;
@@ -337,6 +339,7 @@ export type Database = {
           district_id?: string | null;
           city_id?: string | null;
           locality_id?: string | null;
+          locality_name?: string | null;
           reason_for_sale?: string | null;
           status?: BusinessStatus;
           is_premium?: boolean;

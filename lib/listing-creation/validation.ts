@@ -1,10 +1,12 @@
 import {
   fetchCitiesByState,
   fetchCityWithDistrict,
-  fetchLocalities,
   fetchStates,
 } from "@/lib/repositories/locations.repository";
 import { fetchBusinessCategories } from "@/lib/repositories/categories.repository";
+import { MAX_LOCALITY_NAME_LENGTH } from "@/lib/listing-creation/locality";
+
+export { MAX_LOCALITY_NAME_LENGTH };
 
 export type ListingFormInput = {
   title?: string | null;
@@ -13,7 +15,7 @@ export type ListingFormInput = {
   stateId?: string | null;
   districtId?: string | null;
   cityId?: string | null;
-  localityId?: string | null;
+  locality?: string | null;
   askingPrice?: number | string | null;
   annualRevenue?: number | string | null;
   annualProfit?: number | string | null;
@@ -31,7 +33,7 @@ export type ListingFieldErrors = Partial<
     | "stateId"
     | "districtId"
     | "cityId"
-    | "localityId"
+    | "locality"
     | "askingPrice"
     | "annualRevenue"
     | "annualProfit"
@@ -52,7 +54,8 @@ export type ParsedListingFields = {
   stateId: string | null;
   districtId: string | null;
   cityId: string | null;
-  localityId: string | null;
+  /** Optional free-text locality name. */
+  locality: string | null;
   askingPrice: number | null;
   annualRevenue: number | null;
   annualProfit: number | null;
@@ -78,6 +81,20 @@ function parseOptionalNumber(
   return parsed;
 }
 
+function parseOptionalLocality(
+  value: string | null | undefined,
+): { locality: string | null; error?: string } {
+  const locality = (value ?? "").trim();
+  if (!locality) return { locality: null };
+  if (locality.length > MAX_LOCALITY_NAME_LENGTH) {
+    return {
+      locality: null,
+      error: `Locality must be ${MAX_LOCALITY_NAME_LENGTH} characters or fewer.`,
+    };
+  }
+  return { locality };
+}
+
 export function parseListingFormInput(input: ListingFormInput): {
   fields: ParsedListingFields;
   errors: ListingFieldErrors;
@@ -87,6 +104,10 @@ export function parseListingFormInput(input: ListingFormInput): {
   const title = (input.title ?? "").trim();
   const descriptionRaw = (input.description ?? "").trim();
   const reasonForSaleRaw = (input.reasonForSale ?? "").trim();
+  const localityParsed = parseOptionalLocality(input.locality);
+  if (localityParsed.error) {
+    errors.locality = localityParsed.error;
+  }
 
   const categoryId =
     input.categoryId && isUuid(input.categoryId) ? input.categoryId : null;
@@ -94,8 +115,6 @@ export function parseListingFormInput(input: ListingFormInput): {
   const districtId =
     input.districtId && isUuid(input.districtId) ? input.districtId : null;
   const cityId = input.cityId && isUuid(input.cityId) ? input.cityId : null;
-  const localityId =
-    input.localityId && isUuid(input.localityId) ? input.localityId : null;
 
   if (input.categoryId && !categoryId) {
     errors.categoryId = "Please select a valid category.";
@@ -108,9 +127,6 @@ export function parseListingFormInput(input: ListingFormInput): {
   }
   if (input.cityId && !cityId) {
     errors.cityId = "Please select a valid city.";
-  }
-  if (input.localityId && !localityId) {
-    errors.localityId = "Please select a valid locality.";
   }
 
   const askingPrice = parseOptionalNumber(input.askingPrice);
@@ -163,7 +179,7 @@ export function parseListingFormInput(input: ListingFormInput): {
     stateId,
     districtId,
     cityId,
-    localityId,
+    locality: localityParsed.locality,
     askingPrice: askingPrice === "invalid" ? null : askingPrice,
     annualRevenue: annualRevenue === "invalid" ? null : annualRevenue,
     annualProfit: annualProfit === "invalid" ? null : annualProfit,
@@ -268,14 +284,6 @@ export async function validateSubmitFields(
           errors.cityId = "Please select a valid city for the selected state.";
         }
       }
-    }
-  }
-
-  if (fields.cityId && fields.localityId) {
-    const localities = await fetchLocalities(fields.cityId);
-    if (!localities.some((locality) => locality.id === fields.localityId)) {
-      errors.localityId =
-        "Please select a valid locality for the selected city.";
     }
   }
 

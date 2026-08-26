@@ -231,7 +231,7 @@ export async function fetchAdminBusinessById(id: string): Promise<{
       stateName: row.state?.name ?? null,
       districtName: row.district?.name ?? null,
       cityName: row.city?.name ?? null,
-      localityName: row.locality?.name ?? null,
+      localityName: row.locality_name?.trim() || row.locality?.name || null,
       askingPriceRaw: toNumber(row.asking_price) ?? null,
       annualRevenueRaw: toNumber(row.annual_revenue) ?? null,
       annualProfitRaw: toNumber(row.annual_profit) ?? null,

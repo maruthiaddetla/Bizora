@@ -17,7 +17,7 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const GENERIC_ERROR =
-  "We couldn't save your listing right now. Please try again shortly.";
+  "We couldn't save your listing right now. Your entered information is still here — please try again.";
 
 export type ListingActionResult =
   | {
@@ -45,7 +45,7 @@ function formDataToInput(formData: FormData): ListingFormInput {
     stateId: read("stateId") || null,
     districtId: read("districtId") || null,
     cityId: read("cityId") || null,
-    localityId: read("localityId") || null,
+    locality: read("locality"),
     askingPrice: read("askingPrice"),
     annualRevenue: read("annualRevenue"),
     annualProfit: read("annualProfit"),
@@ -64,7 +64,8 @@ function toDbRow(fields: ParsedListingFields) {
     state_id: fields.stateId,
     district_id: fields.districtId,
     city_id: fields.cityId,
-    locality_id: fields.localityId,
+    locality_id: null,
+    locality_name: fields.locality,
     asking_price: fields.askingPrice,
     annual_revenue: fields.annualRevenue,
     annual_profit: fields.annualProfit,
@@ -82,9 +83,6 @@ function mapDbError(message: string | undefined): string {
   }
   if (text.includes("city does not belong")) {
     return "Please select a valid city for the selected state.";
-  }
-  if (text.includes("locality does not belong")) {
-    return "Please select a valid locality for the selected city.";
   }
   if (text.includes("state is required")) {
     return "Please select a state.";
@@ -293,7 +291,7 @@ export async function submitListingForReview(
   const { data: existing, error: loadError } = await supabase
     .from("businesses")
     .select(
-      "id, seller_id, status, title, description, category_id, state_id, district_id, city_id, locality_id, asking_price, annual_revenue, annual_profit, ebitda, established_year, employees, reason_for_sale, slug",
+      "id, seller_id, status, title, description, category_id, state_id, district_id, city_id, locality_id, locality_name, asking_price, annual_revenue, annual_profit, ebitda, established_year, employees, reason_for_sale, slug",
     )
     .eq("id", listingId)
     .eq("seller_id", user.id)
@@ -325,7 +323,7 @@ export async function submitListingForReview(
       stateId: existing.state_id,
       districtId: existing.district_id,
       cityId: existing.city_id,
-      localityId: existing.locality_id,
+      locality: existing.locality_name,
       askingPrice: existing.asking_price,
       annualRevenue: existing.annual_revenue,
       annualProfit: existing.annual_profit,

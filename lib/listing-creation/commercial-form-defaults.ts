@@ -5,6 +5,15 @@ function numberToFormValue(value: number | null | undefined): string {
   return String(value);
 }
 
+function resolveLocalityName(row: {
+  locality_name?: string | null;
+  locality?: { name: string } | null;
+}): string {
+  const fromText = row.locality_name?.trim();
+  if (fromText) return fromText;
+  return row.locality?.name?.trim() ?? "";
+}
+
 export function commercialDefaultsFromRow(row: {
   id: string;
   title: string;
@@ -13,7 +22,9 @@ export function commercialDefaultsFromRow(row: {
   state_id: string | null;
   district_id: string | null;
   city_id: string | null;
-  locality_id: string | null;
+  locality_id?: string | null;
+  locality_name?: string | null;
+  locality?: { name: string } | null;
   space_type: string | null;
   listing_purpose: string | null;
   monthly_rent: number | null;
@@ -34,7 +45,7 @@ export function commercialDefaultsFromRow(row: {
     stateId: row.state_id,
     districtId: row.district_id,
     cityId: row.city_id,
-    localityId: row.locality_id,
+    locality: resolveLocalityName(row),
     spaceType: row.space_type,
     listingPurpose: row.listing_purpose,
     monthlyRent: numberToFormValue(row.monthly_rent),

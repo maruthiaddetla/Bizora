@@ -22,7 +22,7 @@ import type {
 } from "@/lib/listing-types";
 
 const GENERIC_ERROR =
-  "We couldn't save your listing right now. Please try again shortly.";
+  "We couldn't save your listing right now. Your entered information is still here — please try again.";
 
 export type CommercialListingActionResult =
   | {
@@ -50,7 +50,7 @@ function formDataToCommercialInput(formData: FormData): CommercialSpaceFormInput
     stateId: read("stateId") || null,
     districtId: read("districtId") || null,
     cityId: read("cityId") || null,
-    localityId: read("localityId") || null,
+    locality: read("locality"),
     spaceType: read("spaceType") || null,
     listingPurpose: read("listingPurpose") || null,
     monthlyRent: read("monthlyRent"),
@@ -73,7 +73,8 @@ function toCommercialDbRow(fields: ParsedCommercialFields) {
     state_id: fields.stateId,
     district_id: fields.districtId,
     city_id: fields.cityId,
-    locality_id: fields.localityId,
+    locality_id: null,
+    locality_name: fields.locality,
     space_type: fields.spaceType as SpaceType | null,
     listing_purpose: fields.listingPurpose as ListingPurpose | null,
     monthly_rent: fields.monthlyRent,
@@ -95,9 +96,6 @@ function mapDbError(message: string | undefined): string {
   }
   if (text.includes("city does not belong")) {
     return "Please select a valid city for the selected state.";
-  }
-  if (text.includes("locality does not belong")) {
-    return "Please select a valid locality for the selected city.";
   }
   if (text.includes("state is required")) {
     return "Please select a state.";
@@ -339,7 +337,7 @@ export async function submitCommercialListingForReview(
       stateId: existing.state_id,
       districtId: existing.district_id,
       cityId: existing.city_id,
-      localityId: existing.locality_id,
+      locality: existing.locality_name,
       spaceType: existing.space_type,
       listingPurpose: existing.listing_purpose,
       monthlyRent: existing.monthly_rent,

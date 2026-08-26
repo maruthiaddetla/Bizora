@@ -1,0 +1,1 @@
+export const MAX_LOCALITY_NAME_LENGTH = 120;

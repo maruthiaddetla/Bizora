@@ -1,33 +1,26 @@
 "use server";
 
-import { randomUUID } from "crypto";
 import {
   BUSINESS_IMAGES_BUCKET,
   MAX_BUSINESS_IMAGES,
 } from "@/lib/business-images/constants";
+import { PHOTO_REGISTER_FAILED } from "@/lib/business-images/messages";
+import { parseBusinessImageStoragePath } from "@/lib/business-images/storage-path";
 import { resolveBusinessImageDisplayUrl } from "@/lib/business-images/resolve-url";
-import { validateBusinessImageFile } from "@/lib/business-images/validate-file";
+import type {
+  BusinessImageActionResult,
+  BusinessImageView,
+} from "@/lib/business-images/types";
 import { requireUser } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export type { BusinessImageActionResult, BusinessImageView };
 
 const GENERIC_ERROR =
   "We couldn't update photos right now. Please try again shortly.";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export type BusinessImageView = {
-  id: string;
-  businessId: string;
-  sortOrder: number;
-  isPrimary: boolean;
-  displayUrl: string;
-  storagePath: string | null;
-};
-
-export type BusinessImageActionResult =
-  | { ok: true; message?: string; images?: BusinessImageView[]; image?: BusinessImageView }
-  | { ok: false; message: string };
 
 function isUuid(value: string): boolean {
   return UUID_PATTERN.test(value);
@@ -134,11 +127,24 @@ export async function listBusinessImagesForOwner(
   return { ok: true, images };
 }
 
-export async function uploadBusinessImage(
-  formData: FormData,
+export type RegisterBusinessImageInput = {
+  businessId: string;
+  imageId: string;
+  storagePath: string;
+  mime: string;
+};
+
+/**
+ * Registers a photo after the browser uploaded bytes directly to Storage.
+ * Accepts only metadata — never image binary / base64.
+ */
+export async function registerBusinessImage(
+  input: RegisterBusinessImageInput,
 ): Promise<BusinessImageActionResult> {
-  const businessId = String(formData.get("businessId") ?? "");
-  const fileValue = formData.get("file");
+  const businessId = String(input.businessId ?? "");
+  const imageId = String(input.imageId ?? "");
+  const storagePath = String(input.storagePath ?? "");
+  const mime = String(input.mime ?? "").toLowerCase().trim();
 
   const { user } = await requireUser(
     businessId
@@ -146,17 +152,25 @@ export async function uploadBusinessImage(
       : "/dashboard/listings/new",
   );
 
-  if (!isUuid(businessId)) {
-    return { ok: false, message: "Invalid listing." };
+  if (!isUuid(businessId) || !isUuid(imageId)) {
+    return { ok: false, message: "Invalid listing photo." };
   }
 
-  if (!(fileValue instanceof File)) {
-    return { ok: false, message: "Please choose a photo to upload." };
+  const parsed = parseBusinessImageStoragePath(storagePath, {
+    userId: user.id,
+    businessId,
+    imageId,
+  });
+
+  if (!parsed) {
+    return {
+      ok: false,
+      message: "Invalid photo storage path.",
+    };
   }
 
-  const validation = await validateBusinessImageFile(fileValue, fileValue.type);
-  if (!validation.ok) {
-    return { ok: false, message: validation.message };
+  if (mime && mime !== parsed.mime) {
+    return { ok: false, message: "Photo type does not match the uploaded file." };
   }
 
   const { supabase, business, error } = await loadEditableBusiness(
@@ -165,6 +179,21 @@ export async function uploadBusinessImage(
   );
   if (!supabase || !business || error) {
     return { ok: false, message: error ?? GENERIC_ERROR };
+  }
+
+  // Confirm the object exists in Storage under the caller's path (RLS-scoped).
+  const { data: signed, error: signedError } = await supabase.storage
+    .from(BUSINESS_IMAGES_BUCKET)
+    .createSignedUrl(storagePath, 60);
+
+  if (signedError || !signed?.signedUrl) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[Bizora] registerBusinessImage missing storage object:",
+        signedError?.message,
+      );
+    }
+    return { ok: false, message: PHOTO_REGISTER_FAILED };
   }
 
   const { count, error: countError } = await supabase
@@ -177,30 +206,10 @@ export async function uploadBusinessImage(
   }
 
   if ((count ?? 0) >= MAX_BUSINESS_IMAGES) {
+    await supabase.storage.from(BUSINESS_IMAGES_BUCKET).remove([storagePath]);
     return {
       ok: false,
       message: `You can upload up to ${MAX_BUSINESS_IMAGES} photos per listing.`,
-    };
-  }
-
-  const imageId = randomUUID();
-  const storagePath = `${user.id}/${businessId}/${imageId}.${validation.extension}`;
-
-  const bytes = new Uint8Array(await fileValue.arrayBuffer());
-  const { error: uploadError } = await supabase.storage
-    .from(BUSINESS_IMAGES_BUCKET)
-    .upload(storagePath, bytes, {
-      contentType: validation.mime,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] storage upload failed:", uploadError.message);
-    }
-    return {
-      ok: false,
-      message: "We couldn't upload that photo. Please try another file.",
     };
   }
 
@@ -228,7 +237,7 @@ export async function uploadBusinessImage(
     const message =
       insertError?.message?.toLowerCase().includes("maximum of 8")
         ? `You can upload up to ${MAX_BUSINESS_IMAGES} photos per listing.`
-        : GENERIC_ERROR;
+        : PHOTO_REGISTER_FAILED;
     return { ok: false, message };
   }
 

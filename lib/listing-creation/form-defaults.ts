@@ -5,6 +5,15 @@ function numberToFormValue(value: number | null | undefined): string {
   return String(value);
 }
 
+function resolveLocalityName(row: {
+  locality_name?: string | null;
+  locality?: { name: string } | null;
+}): string {
+  const fromText = row.locality_name?.trim();
+  if (fromText) return fromText;
+  return row.locality?.name?.trim() ?? "";
+}
+
 export function listingDefaultsFromRow(row: {
   id: string;
   title: string;
@@ -13,7 +22,9 @@ export function listingDefaultsFromRow(row: {
   state_id: string | null;
   district_id: string | null;
   city_id: string | null;
-  locality_id: string | null;
+  locality_id?: string | null;
+  locality_name?: string | null;
+  locality?: { name: string } | null;
   asking_price: number | null;
   annual_revenue: number | null;
   annual_profit: number | null;
@@ -30,7 +41,7 @@ export function listingDefaultsFromRow(row: {
     stateId: row.state_id,
     districtId: row.district_id,
     cityId: row.city_id,
-    localityId: row.locality_id,
+    locality: resolveLocalityName(row),
     askingPrice: numberToFormValue(row.asking_price),
     annualRevenue: numberToFormValue(row.annual_revenue),
     annualProfit: numberToFormValue(row.annual_profit),

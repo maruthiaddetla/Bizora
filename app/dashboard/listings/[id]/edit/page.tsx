@@ -17,7 +17,6 @@ import {
 } from "@/lib/repositories/categories.repository";
 import {
   fetchCitiesByState,
-  fetchLocalities,
   fetchStates,
 } from "@/lib/repositories/locations.repository";
 
@@ -108,7 +107,6 @@ export default async function EditListingPage({
     commercialCategories,
     states,
     cities,
-    localities,
     imagesResult,
   ] = await Promise.all([
     fetchBusinessCategories(),
@@ -117,7 +115,6 @@ export default async function EditListingPage({
     business.state_id
       ? fetchCitiesByState(business.state_id)
       : Promise.resolve([]),
-    business.city_id ? fetchLocalities(business.city_id) : Promise.resolve([]),
     listBusinessImagesForOwner(business.id),
   ]);
 
@@ -169,7 +166,6 @@ export default async function EditListingPage({
               categories={commercialCategories}
               states={states}
               initialCities={cities}
-              initialLocalities={localities}
               defaults={commercialDefaultsFromRow(business)}
               rejectionReason={business.rejection_reason}
               initialImages={initialImages}
@@ -180,7 +176,6 @@ export default async function EditListingPage({
               categories={businessCategories}
               states={states}
               initialCities={cities}
-              initialLocalities={localities}
               defaults={listingDefaultsFromRow(business)}
               rejectionReason={business.rejection_reason}
               initialImages={initialImages}

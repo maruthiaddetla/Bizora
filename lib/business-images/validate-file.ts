@@ -3,6 +3,11 @@ import {
   MAX_BUSINESS_IMAGE_BYTES,
   type AllowedBusinessImageMime,
 } from "@/lib/business-images/constants";
+import {
+  PHOTO_EMPTY,
+  PHOTO_TOO_LARGE,
+  PHOTO_TYPE_INVALID,
+} from "@/lib/business-images/messages";
 
 export type ImageFileValidationResult =
   | {
@@ -60,13 +65,13 @@ export async function validateBusinessImageFile(
   declaredType?: string | null,
 ): Promise<ImageFileValidationResult> {
   if (file.size <= 0) {
-    return { ok: false, message: "Please choose a photo to upload." };
+    return { ok: false, message: PHOTO_EMPTY };
   }
 
   if (file.size > MAX_BUSINESS_IMAGE_BYTES) {
     return {
       ok: false,
-      message: "Each photo must be 5 MB or smaller.",
+      message: PHOTO_TOO_LARGE,
     };
   }
 
@@ -76,7 +81,7 @@ export async function validateBusinessImageFile(
   if (!magicMime) {
     return {
       ok: false,
-      message: "Please upload a JPEG, PNG, or WebP photo.",
+      message: PHOTO_TYPE_INVALID,
     };
   }
 
@@ -90,7 +95,7 @@ export async function validateBusinessImageFile(
   ) {
     return {
       ok: false,
-      message: "Please upload a JPEG, PNG, or WebP photo.",
+      message: PHOTO_TYPE_INVALID,
     };
   }
 
@@ -98,7 +103,7 @@ export async function validateBusinessImageFile(
   if (declared && declared !== magicMime) {
     return {
       ok: false,
-      message: "Please upload a JPEG, PNG, or WebP photo.",
+      message: PHOTO_TYPE_INVALID,
     };
   }
 
@@ -109,17 +114,17 @@ export async function validateBusinessImageFile(
   };
 }
 
-/** Lightweight client-side pre-check (still re-validated on the server). */
+/** Lightweight client-side pre-check (still re-validated with magic bytes before upload). */
 export function validateBusinessImageFileClient(file: File): string | null {
-  if (file.size <= 0) return "Please choose a photo to upload.";
+  if (file.size <= 0) return PHOTO_EMPTY;
   if (file.size > MAX_BUSINESS_IMAGE_BYTES) {
-    return "Each photo must be 5 MB or smaller.";
+    return PHOTO_TOO_LARGE;
   }
   const type = file.type.toLowerCase();
   if (
     !(ALLOWED_BUSINESS_IMAGE_MIME_TYPES as readonly string[]).includes(type)
   ) {
-    return "Please upload a JPEG, PNG, or WebP photo.";
+    return PHOTO_TYPE_INVALID;
   }
   return null;
 }

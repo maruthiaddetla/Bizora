@@ -1,10 +1,7 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
-import {
-  loadCitiesByStateAction,
-  loadLocalitiesAction,
-} from "@/lib/repositories/locations.actions";
+import { loadCitiesByStateAction } from "@/lib/repositories/locations.actions";
 import type {
   CityOption,
   LocationOption,
@@ -15,33 +12,34 @@ export type ListingLocationValue = {
   /** Auto-derived from the selected city for DB integrity; not shown in the UI. */
   districtId: string | null;
   cityId: string | null;
-  localityId: string | null;
+  /** Optional free-text locality / area name. */
+  locality: string;
 };
 
 type ListingLocationFieldsProps = {
   states: LocationOption[];
   initialCities?: CityOption[];
-  initialLocalities?: LocationOption[];
   value: ListingLocationValue;
   onChange: (value: ListingLocationValue) => void;
   errors?: Partial<
-    Record<"stateId" | "districtId" | "cityId" | "localityId", string>
+    Record<"stateId" | "districtId" | "cityId" | "locality", string>
   >;
 };
 
 const selectClass =
   "h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted";
 
+const inputClass =
+  "h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+
 export function ListingLocationFields({
   states,
   initialCities = [],
-  initialLocalities = [],
   value,
   onChange,
   errors,
 }: ListingLocationFieldsProps) {
   const [cities, setCities] = useState(initialCities);
-  const [localities, setLocalities] = useState(initialLocalities);
   const [isPending, startTransition] = useTransition();
   const baseId = useId();
 
@@ -50,9 +48,8 @@ export function ListingLocationFields({
       stateId: stateId || null,
       districtId: null,
       cityId: null,
-      localityId: null,
+      locality: value.locality,
     });
-    setLocalities([]);
 
     if (!stateId) {
       setCities([]);
@@ -70,16 +67,6 @@ export function ListingLocationFields({
       ...value,
       districtId: city?.districtId ?? null,
       cityId: cityId || null,
-      localityId: null,
-    });
-
-    if (!cityId) {
-      setLocalities([]);
-      return;
-    }
-
-    startTransition(async () => {
-      setLocalities(await loadLocalitiesAction(cityId));
     });
   }
 
@@ -150,29 +137,24 @@ export function ListingLocationFields({
         >
           Locality <span className="text-muted font-normal">(optional)</span>
         </label>
-        <select
+        <input
           id={`${baseId}-locality`}
-          name="localityId"
-          className={selectClass}
-          value={value.localityId ?? ""}
+          name="locality"
+          type="text"
+          className={inputClass}
+          value={value.locality}
           onChange={(event) =>
             onChange({
               ...value,
-              localityId: event.target.value || null,
+              locality: event.target.value,
             })
           }
-          disabled={!value.cityId || isPending}
-          aria-invalid={Boolean(errors?.localityId)}
-        >
-          <option value="">Select locality</option>
-          {localities.map((locality) => (
-            <option key={locality.id} value={locality.id}>
-              {locality.name}
-            </option>
-          ))}
-        </select>
-        {errors?.localityId && (
-          <p className="mt-1 text-sm text-red-700">{errors.localityId}</p>
+          placeholder="e.g. Banjara Hills, Madhapur, Kukatpally"
+          maxLength={120}
+          aria-invalid={Boolean(errors?.locality)}
+        />
+        {errors?.locality && (
+          <p className="mt-1 text-sm text-red-700">{errors.locality}</p>
         )}
       </div>
     </div>

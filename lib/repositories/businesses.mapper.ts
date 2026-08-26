@@ -22,8 +22,10 @@ import type { Listing } from "@/lib/listings";
 
 /** Locality, City, State — skips missing parts and duplicate names */
 export function buildLocationLabel(business: BusinessWithRelations): string {
+  const localityLabel =
+    business.locality_name?.trim() || business.locality?.name || null;
   const parts = [
-    business.locality?.name,
+    localityLabel,
     business.city?.name,
     business.state?.name,
   ].filter((part): part is string => Boolean(part));
