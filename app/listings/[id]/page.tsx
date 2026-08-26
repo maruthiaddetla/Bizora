@@ -2,6 +2,7 @@ import { BadgeCheck, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CommercialSpaceMetrics } from "@/components/listing/CommercialSpaceMetrics";
+import { ClosedListingPage } from "@/components/listing/ClosedListingPage";
 import { DetailSection } from "@/components/listing/DetailSection";
 import {
   EnquiryForm,
@@ -22,6 +23,7 @@ import {
   fetchSimilarBusinesses,
 } from "@/lib/repositories/businesses.repository";
 import { isCommercialSpaceDetail } from "@/lib/repositories/businesses.types";
+import { fetchPublicClosedListing } from "@/lib/repositories/closed-listings.repository";
 import { isBusinessFavorited } from "@/lib/repositories/favorites.repository";
 import { fetchPublicSellerSummary } from "@/lib/repositories/profiles.repository";
 
@@ -35,25 +37,38 @@ export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   const { business } = await fetchBusinessById(id);
 
-  if (!business) {
-    return { title: "Listing not found" };
+  if (business) {
+    const isCommercial = business.listingType === "commercial_space";
+    const description =
+      business.description?.slice(0, 160) ??
+      (isCommercial
+        ? `${business.title} — commercial space on Bizora.`
+        : `${business.title} for sale on Bizora.`);
+
+    return {
+      title: business.title,
+      description,
+      openGraph: {
+        title: `${business.title} — Bizora`,
+        description,
+      },
+    };
   }
 
-  const isCommercial = business.listingType === "commercial_space";
-  const description =
-    business.description?.slice(0, 160) ??
-    (isCommercial
-      ? `${business.title} — commercial space on Bizora.`
-      : `${business.title} for sale on Bizora.`);
+  const closed = await fetchPublicClosedListing(id);
+  if (closed.listing) {
+    return {
+      title: `${closed.listing.title} (No longer available)`,
+      description: "This listing is no longer available on Bizora.",
+      robots: { index: false, follow: true },
+      openGraph: {
+        title: `${closed.listing.title} — Bizora`,
+        description: "This listing is no longer available on Bizora.",
+      },
+    };
+  }
 
-  return {
-    title: business.title,
-    description,
-    openGraph: {
-      title: `${business.title} — Bizora`,
-      description,
-    },
-  };
+  return { title: "Listing not found" };
 }
 
 function ListingDetailError() {
@@ -85,6 +100,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
   }
 
   if (!business) {
+    const closed = await fetchPublicClosedListing(id);
+    if (closed.error) {
+      return <ListingDetailError />;
+    }
+    if (closed.listing) {
+      return <ClosedListingPage listing={closed.listing} />;
+    }
     notFound();
   }
 

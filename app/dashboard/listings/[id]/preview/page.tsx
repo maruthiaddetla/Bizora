@@ -66,7 +66,10 @@ export default async function OwnerListingPreviewPage({
   const business = await mapBusinessToDetail(row);
   const canEdit = row.status === "draft" || row.status === "rejected";
   const canViewPublic =
-    row.status === "published" || row.status === "sold";
+    row.status === "published" ||
+    row.status === "sold" ||
+    row.status === "leased" ||
+    row.status === "withdrawn";
 
   return (
     <>

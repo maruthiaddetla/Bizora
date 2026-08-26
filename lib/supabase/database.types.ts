@@ -11,7 +11,9 @@ export type BusinessStatus =
   | "pending"
   | "published"
   | "rejected"
-  | "sold";
+  | "sold"
+  | "leased"
+  | "withdrawn";
 
 export type ListingType = "business" | "commercial_space";
 
@@ -43,6 +45,7 @@ export type NotificationType =
   | "new_enquiry"
   | "enquiry_response"
   | "listing_sold"
+  | "listing_leased"
   | "listing_resubmitted";
 
 export type Database = {
@@ -272,6 +275,8 @@ export type Database = {
           lease_term_months: number | null;
           available_from: string | null;
           business_usage: string | null;
+          closed_at: string | null;
+          published_at: string | null;
         };
         Insert: {
           id?: string;
@@ -312,6 +317,8 @@ export type Database = {
           lease_term_months?: number | null;
           available_from?: string | null;
           business_usage?: string | null;
+          closed_at?: string | null;
+          published_at?: string | null;
         };
         Update: {
           id?: string;
@@ -352,6 +359,8 @@ export type Database = {
           lease_term_months?: number | null;
           available_from?: string | null;
           business_usage?: string | null;
+          closed_at?: string | null;
+          published_at?: string | null;
         };
         Relationships: [
           {
@@ -606,6 +615,23 @@ export type Database = {
       owner_can_edit_business_images: {
         Args: { p_business_id: string };
         Returns: boolean;
+      };
+      transition_listing_status: {
+        Args: { p_listing_id: string; p_new_status: string };
+        Returns: Database["public"]["Tables"]["businesses"]["Row"];
+      };
+      get_public_closed_listing: {
+        Args: { p_listing_id: string };
+        Returns: {
+          id: string;
+          title: string;
+          status: string;
+          listing_type: string;
+          category_name: string | null;
+          location_label: string | null;
+          primary_image_url: string | null;
+          closed_at: string | null;
+        }[];
       };
     };
     Enums: Record<string, never>;

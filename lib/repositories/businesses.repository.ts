@@ -480,6 +480,8 @@ function emptySellerSummary(): SellerListingSummary {
     published: 0,
     rejected: 0,
     sold: 0,
+    leased: 0,
+    withdrawn: 0,
     business: 0,
     commercialSpace: 0,
   };
@@ -495,6 +497,8 @@ function buildSellerSummary(listings: SellerListingView[]): SellerListingSummary
     else if (listing.status === "published") summary.published += 1;
     else if (listing.status === "rejected") summary.rejected += 1;
     else if (listing.status === "sold") summary.sold += 1;
+    else if (listing.status === "leased") summary.leased += 1;
+    else if (listing.status === "withdrawn") summary.withdrawn += 1;
 
     if (listing.listingType === "commercial_space") {
       summary.commercialSpace += 1;

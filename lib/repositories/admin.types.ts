@@ -8,12 +8,17 @@ export type AdminListingSummary = {
   total: number;
   draft: number;
   sold: number;
+  leased: number;
+  withdrawn: number;
 };
 
 export type AdminListingQueueFilter =
   | "pending"
   | "published"
   | "rejected"
+  | "sold"
+  | "leased"
+  | "withdrawn"
   | "all";
 
 export type AdminListingQueueItem = {

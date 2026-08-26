@@ -52,6 +52,8 @@ function emptySummary(): AdminListingSummary {
     total: 0,
     draft: 0,
     sold: 0,
+    leased: 0,
+    withdrawn: 0,
   };
 }
 
@@ -91,6 +93,8 @@ export async function fetchAdminListingSummary(): Promise<{
     else if (row.status === "rejected") summary.rejected += 1;
     else if (row.status === "draft") summary.draft += 1;
     else if (row.status === "sold") summary.sold += 1;
+    else if (row.status === "leased") summary.leased += 1;
+    else if (row.status === "withdrawn") summary.withdrawn += 1;
   }
 
   return { summary, error: null };

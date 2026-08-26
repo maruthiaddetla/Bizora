@@ -113,6 +113,8 @@ export type SellerListingSummary = {
   published: number;
   rejected: number;
   sold: number;
+  leased: number;
+  withdrawn: number;
   business: number;
   commercialSpace: number;
 };

@@ -18,6 +18,9 @@ function parseFilter(value: string | undefined): AdminListingQueueFilter {
     value === "pending" ||
     value === "published" ||
     value === "rejected" ||
+    value === "sold" ||
+    value === "leased" ||
+    value === "withdrawn" ||
     value === "all"
   ) {
     return value;

@@ -17,6 +17,9 @@ const filters: { value: AdminListingQueueFilter; label: string }[] = [
   { value: "pending", label: "Pending" },
   { value: "published", label: "Published" },
   { value: "rejected", label: "Rejected" },
+  { value: "sold", label: "Sold" },
+  { value: "leased", label: "Leased" },
+  { value: "withdrawn", label: "Withdrawn" },
   { value: "all", label: "All" },
 ];
 

@@ -5,7 +5,10 @@ type DashboardSummaryCardsProps = {
 };
 
 const cards: {
-  key: keyof Omit<SellerListingSummary, "sold">;
+  key: keyof Omit<
+    SellerListingSummary,
+    "sold" | "leased" | "withdrawn" | "business" | "commercialSpace"
+  >;
   label: string;
 }[] = [
   { key: "total", label: "Total Listings" },

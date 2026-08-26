@@ -58,6 +58,7 @@ export function notificationHref(params: {
         ? `/dashboard/listings/${businessId}/edit`
         : "/dashboard";
     case "listing_sold":
+    case "listing_leased":
       return "/dashboard/favorites";
     case "new_enquiry":
     case "enquiry_response":

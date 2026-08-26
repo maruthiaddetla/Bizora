@@ -6,6 +6,8 @@ const statusStyles: Record<BusinessStatus, string> = {
   published: "border-emerald-200 bg-emerald-50 text-emerald-800",
   rejected: "border-red-200 bg-red-50 text-red-800",
   sold: "border-blue-200 bg-blue-50 text-blue-800",
+  leased: "border-indigo-200 bg-indigo-50 text-indigo-800",
+  withdrawn: "border-slate-300 bg-slate-100 text-slate-700",
 };
 
 const adminLabels: Record<BusinessStatus, string> = {
@@ -14,6 +16,8 @@ const adminLabels: Record<BusinessStatus, string> = {
   published: "Published",
   rejected: "Rejected",
   sold: "Sold",
+  leased: "Leased",
+  withdrawn: "Withdrawn",
 };
 
 const sellerLabels: Record<BusinessStatus, string> = {
@@ -22,6 +26,8 @@ const sellerLabels: Record<BusinessStatus, string> = {
   published: "Published",
   rejected: "Changes required",
   sold: "Sold",
+  leased: "Leased",
+  withdrawn: "Withdrawn",
 };
 
 type ListingStatusBadgeProps = {

@@ -156,10 +156,12 @@ export async function rejectListing(
 }
 
 /**
- * Mark a published listing as sold (admin only).
+ * Close or reopen a listing via controlled RPC (admin only).
  */
-export async function markListingSold(
+async function adminTransitionListing(
   listingId: string,
+  newStatus: "sold" | "leased" | "withdrawn" | "published" | "pending",
+  successMessage: string,
 ): Promise<AdminReviewActionResult> {
   if (!isUuid(listingId)) {
     return { ok: false, message: "Listing not found." };
@@ -172,33 +174,79 @@ export async function markListingSold(
     return { ok: false, message: error ?? GENERIC_ERROR };
   }
 
-  const { data, error: updateError } = await supabase
-    .from("businesses")
-    .update({
-      status: "sold",
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: user.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", listingId)
-    .eq("status", "published")
-    .select("id")
-    .maybeSingle();
+  const { error: rpcError } = await supabase.rpc("transition_listing_status", {
+    p_listing_id: listingId,
+    p_new_status: newStatus,
+  });
 
-  if (updateError) {
+  if (rpcError) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] markListingSold failed:", updateError.message);
+      console.warn("[Bizora] admin transition failed:", rpcError.message);
     }
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  if (!data) {
-    return {
-      ok: false,
-      message: "Only published listings can be marked as sold.",
-    };
-  }
-
   revalidateListingPaths(listingId);
-  return { ok: true, message: "Listing marked as sold." };
+  return { ok: true, message: successMessage };
+}
+
+/**
+ * Mark a listing as sold (admin).
+ */
+export async function markListingSold(
+  listingId: string,
+): Promise<AdminReviewActionResult> {
+  return adminTransitionListing(listingId, "sold", "Listing marked as sold.");
+}
+
+/**
+ * Mark a listing as leased (admin).
+ */
+export async function markListingLeased(
+  listingId: string,
+): Promise<AdminReviewActionResult> {
+  return adminTransitionListing(
+    listingId,
+    "leased",
+    "Listing marked as leased.",
+  );
+}
+
+/**
+ * Withdraw a listing from public search (admin).
+ */
+export async function withdrawListing(
+  listingId: string,
+): Promise<AdminReviewActionResult> {
+  return adminTransitionListing(
+    listingId,
+    "withdrawn",
+    "Listing withdrawn from public search.",
+  );
+}
+
+/**
+ * Correct a closed listing back to published (admin).
+ */
+export async function reopenListingPublished(
+  listingId: string,
+): Promise<AdminReviewActionResult> {
+  return adminTransitionListing(
+    listingId,
+    "published",
+    "Listing reopened and published.",
+  );
+}
+
+/**
+ * Send a closed listing back through review (admin).
+ */
+export async function reopenListingPending(
+  listingId: string,
+): Promise<AdminReviewActionResult> {
+  return adminTransitionListing(
+    listingId,
+    "pending",
+    "Listing moved to pending review.",
+  );
 }
