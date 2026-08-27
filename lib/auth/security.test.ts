@@ -23,6 +23,7 @@ describe("security invariants", () => {
       "lib/auth/twofactor.ts",
       "lib/auth/phone-signup.actions.ts",
       "lib/auth/pending-signup.ts",
+      "lib/auth/send-sms-hook.ts",
     ];
 
     for (const file of authFiles) {
