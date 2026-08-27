@@ -16,12 +16,15 @@ const navLinks = [
 
 type NavbarClientProps = {
   isAuthenticated: boolean;
+  /** True only when server has resolved profiles.role === "admin". */
+  showAdminDashboard?: boolean;
   postListingHref: string;
   unreadNotificationCount?: number;
 };
 
 export function NavbarClient({
   isAuthenticated,
+  showAdminDashboard = false,
   postListingHref,
   unreadNotificationCount = 0,
 }: NavbarClientProps) {
@@ -133,6 +136,15 @@ export function NavbarClient({
                     >
                       Dashboard
                     </Link>
+                    {showAdminDashboard ? (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2.5 text-sm font-medium text-navy hover:bg-surface"
+                        onClick={() => setAccountMenuOpen(false)}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    ) : null}
                     <form action={signOutAction}>
                       <button
                         type="submit"
@@ -248,6 +260,11 @@ export function NavbarClient({
                 <Button href="/dashboard" variant="secondary" size="lg" className="w-full">
                   Dashboard
                 </Button>
+                {showAdminDashboard ? (
+                  <Button href="/admin" variant="secondary" size="lg" className="w-full">
+                    Admin Dashboard
+                  </Button>
+                ) : null}
                 <form action={signOutAction} className="w-full">
                   <Button type="submit" variant="ghost" size="lg" className="w-full">
                     Sign Out
