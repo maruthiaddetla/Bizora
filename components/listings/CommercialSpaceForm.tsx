@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useCallback, useState } from "react";
+import { useActionState, useCallback, useMemo, useState } from "react";
+import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import {
   createCommercialFormAction,
   updateCommercialFormAction,
@@ -136,6 +137,42 @@ export function CommercialSpaceForm({
   const generalError = !state.ok ? state.message : undefined;
   const formBlocked = pending || photosBusy;
 
+  const categorySelectOptions = useMemo(
+    () =>
+      categories.map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+    [categories],
+  );
+
+  const spaceTypeOptions = useMemo(
+    () =>
+      SPACE_TYPES.map((type) => ({
+        value: type,
+        label: SPACE_TYPE_LABELS[type],
+      })),
+    [],
+  );
+
+  const listingPurposeOptions = useMemo(
+    () =>
+      LISTING_PURPOSES.map((purpose) => ({
+        value: purpose,
+        label: LISTING_PURPOSE_LABELS[purpose],
+      })),
+    [],
+  );
+
+  const furnishedOptions = useMemo(
+    () =>
+      FURNISHED_OPTIONS.map((option) => ({
+        value: option,
+        label: FURNISHED_LABELS[option],
+      })),
+    [],
+  );
+
   return (
     <form
       action={formAction}
@@ -199,46 +236,29 @@ export function CommercialSpaceForm({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="spaceType" className="mb-1.5 block text-sm font-medium">
-              Space type <span className="text-red-600">*</span>
-            </label>
-            <select
-              id="spaceType"
-              name="spaceType"
-              className={inputClass}
-              value={spaceType}
-              onChange={(e) => setSpaceType(e.target.value)}
-            >
-              <option value="">Select type</option>
-              {SPACE_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {SPACE_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-            <FieldError message={fieldErrors.spaceType} />
-          </div>
-          <div>
-            <label htmlFor="categoryId" className="mb-1.5 block text-sm font-medium">
-              Category <span className="text-red-600">*</span>
-            </label>
-            <select
-              id="categoryId"
-              name="categoryId"
-              className={inputClass}
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-            >
-              <option value="">Select category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <FieldError message={fieldErrors.categoryId} />
-          </div>
+          <ResponsiveSelect
+            id="spaceType"
+            name="spaceType"
+            label="Space type"
+            required
+            value={spaceType}
+            options={spaceTypeOptions}
+            onChange={setSpaceType}
+            emptyOption={{ value: "", label: "Select type" }}
+            error={fieldErrors.spaceType}
+          />
+          <ResponsiveSelect
+            id="categoryId"
+            name="categoryId"
+            label="Category"
+            required
+            searchable
+            value={categoryId}
+            options={categorySelectOptions}
+            onChange={setCategoryId}
+            emptyOption={{ value: "", label: "Select category" }}
+            error={fieldErrors.categoryId}
+          />
         </div>
 
         <div>
@@ -274,26 +294,17 @@ export function CommercialSpaceForm({
 
       <Section title="Rental details">
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="listingPurpose" className="mb-1.5 block text-sm font-medium">
-              Listing purpose <span className="text-red-600">*</span>
-            </label>
-            <select
-              id="listingPurpose"
-              name="listingPurpose"
-              className={inputClass}
-              value={listingPurpose}
-              onChange={(e) => setListingPurpose(e.target.value)}
-            >
-              <option value="">Select</option>
-              {LISTING_PURPOSES.map((purpose) => (
-                <option key={purpose} value={purpose}>
-                  {LISTING_PURPOSE_LABELS[purpose]}
-                </option>
-              ))}
-            </select>
-            <FieldError message={fieldErrors.listingPurpose} />
-          </div>
+          <ResponsiveSelect
+            id="listingPurpose"
+            name="listingPurpose"
+            label="Listing purpose"
+            required
+            value={listingPurpose}
+            options={listingPurposeOptions}
+            onChange={setListingPurpose}
+            emptyOption={{ value: "", label: "Select" }}
+            error={fieldErrors.listingPurpose}
+          />
           <div>
             <label htmlFor="monthlyRent" className="mb-1.5 block text-sm font-medium">
               Monthly rent (INR) <span className="text-red-600">*</span>
@@ -408,26 +419,16 @@ export function CommercialSpaceForm({
             />
             <FieldError message={fieldErrors.parkingSpaces} />
           </div>
-          <div>
-            <label htmlFor="furnished" className="mb-1.5 block text-sm font-medium">
-              Furnishing
-            </label>
-            <select
-              id="furnished"
-              name="furnished"
-              className={inputClass}
-              value={furnished}
-              onChange={(e) => setFurnished(e.target.value)}
-            >
-              <option value="">Select</option>
-              {FURNISHED_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {FURNISHED_LABELS[option]}
-                </option>
-              ))}
-            </select>
-            <FieldError message={fieldErrors.furnished} />
-          </div>
+          <ResponsiveSelect
+            id="furnished"
+            name="furnished"
+            label="Furnishing"
+            value={furnished}
+            options={furnishedOptions}
+            onChange={setFurnished}
+            emptyOption={{ value: "", label: "Select" }}
+            error={fieldErrors.furnished}
+          />
         </div>
         <div>
           <label htmlFor="businessUsage" className="mb-1.5 block text-sm font-medium">

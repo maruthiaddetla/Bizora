@@ -2,12 +2,13 @@
 
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { CategoryFilterSelect } from "@/components/search/CategoryFilterSelect";
 import {
   LocationFilterSelect,
   type LocationFilterValue,
 } from "@/components/search/LocationFilterSelect";
+import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import { Button } from "@/components/ui/Button";
 import {
   FURNISHED_LABELS,
@@ -110,6 +111,28 @@ export function ListingsFilters({
   const priceMinLabel = isCommercial ? "Min monthly rent (₹)" : "Min asking price (₹)";
   const priceMaxLabel = isCommercial ? "Max monthly rent (₹)" : "Max asking price (₹)";
 
+  const spaceTypeOptions = useMemo(
+    () => [
+      { value: "", label: "Any" },
+      ...SPACE_TYPES.map((type) => ({
+        value: type,
+        label: SPACE_TYPE_LABELS[type],
+      })),
+    ],
+    [],
+  );
+
+  const furnishedOptions = useMemo(
+    () => [
+      { value: "", label: "Any" },
+      ...FURNISHED_OPTIONS.map((option) => ({
+        value: option,
+        label: FURNISHED_LABELS[option],
+      })),
+    ],
+    [],
+  );
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -155,40 +178,26 @@ export function ListingsFilters({
 
         {isCommercial && (
           <>
-            <label className="block lg:col-span-3">
-              <span className="mb-1.5 block text-xs font-medium text-muted">
-                Space type
-              </span>
-              <select
+            <div className="lg:col-span-3">
+              <ResponsiveSelect
+                label="Space type"
+                labelClassName="mb-1.5 block text-xs font-medium text-muted"
                 value={spaceType}
-                onChange={(e) => setSpaceType(e.target.value)}
-                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
-              >
-                <option value="">Any</option>
-                {SPACE_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {SPACE_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block lg:col-span-3">
-              <span className="mb-1.5 block text-xs font-medium text-muted">
-                Furnishing
-              </span>
-              <select
+                options={spaceTypeOptions}
+                onChange={setSpaceType}
+                triggerClassName="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              />
+            </div>
+            <div className="lg:col-span-3">
+              <ResponsiveSelect
+                label="Furnishing"
+                labelClassName="mb-1.5 block text-xs font-medium text-muted"
                 value={furnished}
-                onChange={(e) => setFurnished(e.target.value)}
-                className="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
-              >
-                <option value="">Any</option>
-                {FURNISHED_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {FURNISHED_LABELS[option]}
-                  </option>
-                ))}
-              </select>
-            </label>
+                options={furnishedOptions}
+                onChange={setFurnished}
+                triggerClassName="h-12 w-full rounded-xl border border-border bg-white px-4 text-sm"
+              />
+            </div>
             <label className="block lg:col-span-2">
               <span className="mb-1.5 block text-xs font-medium text-muted">
                 Min area (sq.ft)

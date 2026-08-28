@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
+import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import { loadCitiesByStateAction } from "@/lib/repositories/locations.actions";
 import type {
   CityOption,
@@ -26,9 +27,6 @@ type ListingLocationFieldsProps = {
   >;
 };
 
-const selectClass =
-  "h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted";
-
 const inputClass =
   "h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-foreground placeholder:text-muted/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
@@ -42,6 +40,16 @@ export function ListingLocationFields({
   const [cities, setCities] = useState(initialCities);
   const [isPending, startTransition] = useTransition();
   const baseId = useId();
+
+  const stateOptions = useMemo(
+    () => states.map((state) => ({ value: state.id, label: state.name })),
+    [states],
+  );
+
+  const cityOptions = useMemo(
+    () => cities.map((city) => ({ value: city.id, label: city.name })),
+    [cities],
+  );
 
   function handleStateChange(stateId: string) {
     onChange({
@@ -77,65 +85,39 @@ export function ListingLocationFields({
       {/* District is derived from city and required by the DB; keep it in the form. */}
       <input type="hidden" name="districtId" value={value.districtId ?? ""} />
 
-      <div>
-        <label
-          htmlFor={`${baseId}-state`}
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          State <span className="text-red-600">*</span>
-        </label>
-        <select
-          id={`${baseId}-state`}
-          name="stateId"
-          className={selectClass}
-          value={value.stateId ?? ""}
-          onChange={(event) => handleStateChange(event.target.value)}
-          aria-invalid={Boolean(errors?.stateId)}
-        >
-          <option value="">Select state</option>
-          {states.map((state) => (
-            <option key={state.id} value={state.id}>
-              {state.name}
-            </option>
-          ))}
-        </select>
-        {errors?.stateId && (
-          <p className="mt-1 text-sm text-red-700">{errors.stateId}</p>
-        )}
-      </div>
+      <ResponsiveSelect
+        id={`${baseId}-state`}
+        name="stateId"
+        label="State"
+        required
+        searchable
+        value={value.stateId ?? ""}
+        options={stateOptions}
+        onChange={handleStateChange}
+        emptyOption={{ value: "", label: "Select state" }}
+        error={errors?.stateId}
+      />
 
-      <div>
-        <label
-          htmlFor={`${baseId}-city`}
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          City <span className="text-red-600">*</span>
-        </label>
-        <select
-          id={`${baseId}-city`}
-          name="cityId"
-          className={selectClass}
-          value={value.cityId ?? ""}
-          onChange={(event) => handleCityChange(event.target.value)}
-          disabled={!value.stateId || isPending}
-          aria-invalid={Boolean(cityError)}
-        >
-          <option value="">Select city</option>
-          {cities.map((city) => (
-            <option key={city.id} value={city.id}>
-              {city.name}
-            </option>
-          ))}
-        </select>
-        {cityError && <p className="mt-1 text-sm text-red-700">{cityError}</p>}
-      </div>
+      <ResponsiveSelect
+        id={`${baseId}-city`}
+        name="cityId"
+        label="City"
+        required
+        searchable
+        value={value.cityId ?? ""}
+        options={cityOptions}
+        onChange={handleCityChange}
+        emptyOption={{ value: "", label: "Select city" }}
+        disabled={!value.stateId || isPending}
+        error={cityError}
+      />
 
       <div className="sm:col-span-2">
         <label
           htmlFor={`${baseId}-locality`}
           className="mb-1.5 block text-sm font-medium text-foreground"
         >
-          Locality <span className="text-muted font-normal">(optional)</span>
+          Locality <span className="font-normal text-muted">(optional)</span>
         </label>
         <input
           id={`${baseId}-locality`}

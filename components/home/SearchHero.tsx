@@ -112,7 +112,7 @@ export function SearchHero({
   }
 
   return (
-    <section className="relative z-10 bg-surface">
+    <section className="relative isolate z-30 bg-surface">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <Image
           src="/images/hero-hyderabad.jpg"
@@ -172,7 +172,7 @@ export function SearchHero({
 
         <form
           onSubmit={handleSearchSubmit}
-          className="relative z-20 mx-auto mt-3 max-w-5xl overflow-visible rounded-xl border border-border bg-white p-1.5 shadow-md shadow-navy/5"
+          className="relative isolate z-0 mx-auto mt-3 max-w-5xl overflow-visible rounded-xl border border-border bg-white p-1.5 shadow-md shadow-navy/5"
         >
           <div className="grid grid-cols-1 gap-1.5 overflow-visible sm:grid-cols-2 lg:grid-cols-[1.15fr_1.15fr_1fr_auto] lg:items-stretch lg:gap-0">
             <div className={`${fieldCellClass} h-11`}>
@@ -190,6 +190,7 @@ export function SearchHero({
                 value={categoryId}
                 options={categoryOptions}
                 onChange={setCategoryId}
+                searchable
                 icon={
                   <Grid2x2
                     className="h-3.5 w-3.5 shrink-0 text-primary"

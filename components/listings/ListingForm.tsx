@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useState } from "react";
+import { useActionState, useCallback, useMemo, useState } from "react";
 import {
   createListingFormAction,
   updateListingFormAction,
@@ -17,6 +17,7 @@ import {
   type ListingLocationValue,
 } from "@/components/listings/ListingLocationFields";
 import { BusinessPhotosManager } from "@/components/listings/BusinessPhotosManager";
+import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import { Button } from "@/components/ui/Button";
 import type { ListingFormDefaults } from "@/components/listings/ListingFormDefaults";
 import { PHOTO_UPLOADS_PENDING } from "@/lib/business-images/messages";
@@ -132,6 +133,15 @@ export function ListingForm({
     ? categories.filter((category) => !parentIds.has(category.id))
     : categories;
 
+  const categorySelectOptions = useMemo(
+    () =>
+      categoryOptions.map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+    [categoryOptions],
+  );
+
   return (
     <form
       action={formAction}
@@ -210,30 +220,18 @@ export function ListingForm({
           <FieldError message={fieldErrors.title} />
         </div>
 
-        <div>
-          <label
-            htmlFor="categoryId"
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
-            Category <span className="text-red-600">*</span>
-          </label>
-          <select
-            id="categoryId"
-            name="categoryId"
-            className={inputClass}
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-            aria-invalid={Boolean(fieldErrors.categoryId)}
-          >
-            <option value="">Select category</option>
-            {categoryOptions.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <FieldError message={fieldErrors.categoryId} />
-        </div>
+        <ResponsiveSelect
+          id="categoryId"
+          name="categoryId"
+          label="Category"
+          required
+          searchable
+          value={categoryId}
+          options={categorySelectOptions}
+          onChange={setCategoryId}
+          emptyOption={{ value: "", label: "Select category" }}
+          error={fieldErrors.categoryId}
+        />
 
         <div>
           <label

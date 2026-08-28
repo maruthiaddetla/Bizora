@@ -57,7 +57,7 @@ export function ListingSection({
   return (
     <section
       id={id}
-      className={`py-6 sm:py-7 ${className}`}
+      className={`relative z-0 py-6 sm:py-7 ${className}`}
       aria-labelledby={id ? `${id}-heading` : undefined}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
