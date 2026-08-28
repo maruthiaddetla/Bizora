@@ -533,6 +533,91 @@ export type Database = {
           },
         ];
       };
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          email_enabled: boolean;
+          in_app_enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          email_enabled?: boolean;
+          in_app_enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          email_enabled?: boolean;
+          in_app_enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      notification_deliveries: {
+        Row: {
+          id: string;
+          notification_id: string;
+          channel: "email";
+          status:
+            | "PENDING"
+            | "SENT"
+            | "FAILED"
+            | "SKIPPED"
+            | "DISABLED";
+          provider_message_id: string | null;
+          attempts: number;
+          last_error_code: string | null;
+          sent_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          notification_id: string;
+          channel: "email";
+          status?:
+            | "PENDING"
+            | "SENT"
+            | "FAILED"
+            | "SKIPPED"
+            | "DISABLED";
+          provider_message_id?: string | null;
+          attempts?: number;
+          last_error_code?: string | null;
+          sent_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          notification_id?: string;
+          channel?: "email";
+          status?:
+            | "PENDING"
+            | "SENT"
+            | "FAILED"
+            | "SKIPPED"
+            | "DISABLED";
+          provider_message_id?: string | null;
+          attempts?: number;
+          last_error_code?: string | null;
+          sent_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey";
+            columns: ["notification_id"];
+            referencedRelation: "notifications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notifications: {
         Row: {
           id: string;
@@ -648,3 +733,7 @@ export type EnquiryRow = Database["public"]["Tables"]["enquiries"]["Row"];
 export type FavoriteRow = Database["public"]["Tables"]["favorites"]["Row"];
 export type NotificationRow =
   Database["public"]["Tables"]["notifications"]["Row"];
+export type NotificationPreferencesRow =
+  Database["public"]["Tables"]["notification_preferences"]["Row"];
+export type NotificationDeliveryRow =
+  Database["public"]["Tables"]["notification_deliveries"]["Row"];

@@ -7,6 +7,7 @@ import {
   fetchPublishedBusinessForEnquiry,
   hasRecentEnquiry,
 } from "@/lib/repositories/enquiries.repository";
+import { scheduleSellerEnquiryEmail } from "@/lib/notifications/enquiry-email-delivery";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const GENERIC_ERROR =
@@ -99,18 +100,24 @@ export async function createEnquiry(
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  const { error } = await supabase.from("enquiries").insert({
-    business_id: businessId,
-    buyer_id: user.id,
-    message: trimmed,
-  });
+  const { data: inserted, error } = await supabase
+    .from("enquiries")
+    .insert({
+      business_id: businessId,
+      buyer_id: user.id,
+      message: trimmed,
+    })
+    .select("id")
+    .single();
 
-  if (error) {
+  if (error || !inserted?.id) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] createEnquiry failed:", error.message);
+      console.warn("[Bizora] createEnquiry failed:", error?.message);
     }
-    return { ok: false, message: mapDbError(error.message) };
+    return { ok: false, message: mapDbError(error?.message) };
   }
+
+  scheduleSellerEnquiryEmail(inserted.id);
 
   revalidatePath("/dashboard/enquiries");
   revalidatePath(`/listings/${businessId}`);

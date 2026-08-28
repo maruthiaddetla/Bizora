@@ -32,6 +32,19 @@ describe("security invariants", () => {
     }
   });
 
+  it("keeps RESEND_API_KEY server-only", () => {
+    const clientFiles = [
+      "components/listing/EnquiryForm.tsx",
+      "lib/supabase/client.ts",
+    ];
+
+    for (const file of clientFiles) {
+      const source = readFileSync(resolve(process.cwd(), file), "utf8");
+      expect(source).not.toContain("RESEND_API_KEY");
+      expect(source).not.toContain("NEXT_PUBLIC_RESEND");
+    }
+  });
+
   it("does not expose fake OTP success paths in signup flow", () => {
     const source = readFileSync(
       resolve(process.cwd(), "components/auth/PhoneSignUpFlow.tsx"),
