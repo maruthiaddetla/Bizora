@@ -74,19 +74,19 @@ export function NavbarClient({
               <span className="block text-lg font-bold tracking-tight text-navy sm:text-xl">
                 BIZORA
               </span>
-              <span className="hidden text-[11px] font-medium text-primary sm:block">
+              <span className="hidden text-[11px] font-medium text-primary xl:block">
                 Buy a Business. Find a Space.
               </span>
             </span>
           </Link>
         </div>
 
-        <ul className="hidden items-center gap-1 lg:flex">
+        <ul className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
           {navLinks.map((link) => (
-            <li key={link.href + link.label}>
+            <li key={link.href + link.label} className="shrink-0">
               <Link
                 href={link.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-navy/80 transition-colors hover:bg-surface hover:text-navy"
+                className="block whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium text-navy/80 transition-colors hover:bg-surface hover:text-navy xl:px-3"
               >
                 {link.label}
               </Link>
@@ -94,10 +94,10 @@ export function NavbarClient({
           ))}
         </ul>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <Link
             href={favouritesHref}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-navy/80 hover:bg-surface hover:text-navy"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium text-navy/80 hover:bg-surface hover:text-navy xl:px-3"
           >
             <Heart className="h-4 w-4" aria-hidden />
             Favourites
@@ -113,7 +113,7 @@ export function NavbarClient({
                   setAccountMenuOpen((open) => !open);
                   setListMenuOpen(false);
                 }}
-                className="inline-flex items-center gap-1"
+                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap"
                 aria-expanded={accountMenuOpen}
                 aria-haspopup="menu"
               >
@@ -158,7 +158,12 @@ export function NavbarClient({
               )}
             </div>
           ) : (
-            <Button href="/sign-in" variant="secondary" size="sm">
+            <Button
+              href="/sign-in"
+              variant="secondary"
+              size="sm"
+              className="shrink-0 whitespace-nowrap px-3 xl:px-4"
+            >
               Login / Register
             </Button>
           )}
@@ -171,11 +176,11 @@ export function NavbarClient({
                 setListMenuOpen((open) => !open);
                 setAccountMenuOpen(false);
               }}
-              className="inline-flex items-center gap-1 bg-primary hover:bg-primary-hover"
+              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap bg-primary px-3 hover:bg-primary-hover xl:px-4"
               aria-expanded={listMenuOpen}
               aria-haspopup="menu"
             >
-              List Your Business
+              List a Business or Space
               <ChevronDown className="h-4 w-4" aria-hidden />
             </Button>
             {listMenuOpen && (
