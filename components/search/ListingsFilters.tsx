@@ -108,8 +108,8 @@ export function ListingsFilters({
     router.push(buildSearchHref(nextFilters));
   }
 
-  const priceMinLabel = isCommercial ? "Min monthly rent (₹)" : "Min asking price (₹)";
-  const priceMaxLabel = isCommercial ? "Max monthly rent (₹)" : "Max asking price (₹)";
+  const priceMinLabel = isCommercial ? "Min monthly rent (₹)" : "Min Price (₹)";
+  const priceMaxLabel = isCommercial ? "Max monthly rent (₹)" : "Max Price (₹)";
 
   const spaceTypeOptions = useMemo(
     () => [

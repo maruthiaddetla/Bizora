@@ -133,7 +133,7 @@ export function SearchHero({
             <span className="text-primary">Find the Right Space.</span>
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-sm text-muted sm:text-base">
-            Discover businesses for sale and commercial spaces in Hyderabad.
+            Discover businesses for sale and commercial spaces across India.
           </p>
         </div>
 
