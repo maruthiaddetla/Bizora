@@ -177,7 +177,8 @@ export default function AboutPage() {
 
         {/* How Bizora Works */}
         <section
-          className="border-b border-border"
+          id="how-it-works"
+          className="scroll-mt-24 border-b border-border"
           aria-labelledby="how-it-works-heading"
         >
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">

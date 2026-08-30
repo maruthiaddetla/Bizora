@@ -11,7 +11,7 @@ const navLinks = [
   { label: "Businesses for Sale", href: "/listings?type=business" },
   { label: "Commercial Spaces", href: "/listings?type=commercial_space" },
   { label: "How It Works", href: "/about" },
-  { label: "Resources", href: "/sell" },
+  { label: "Resources", href: "/resources" },
 ];
 
 type NavbarClientProps = {

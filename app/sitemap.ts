@@ -11,6 +11,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: `${siteUrl}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/listings`, lastModified: now, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${siteUrl}/resources`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    {
+      url: `${siteUrl}/resources/how-to-buy-a-business-in-india`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/resources/business-buying-checklist`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/resources/how-to-sell-a-business-in-india`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/resources/how-to-value-a-business`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/resources/how-to-find-a-commercial-space-in-india`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/resources/faq`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
     { url: `${siteUrl}/sell`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     { url: `${siteUrl}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
