@@ -14,6 +14,11 @@ import {
   type CommercialSpaceFormInput,
   type ParsedCommercialFields,
 } from "@/lib/listing-creation/commercial-validation";
+import {
+  logListingDbError,
+  mapCommercialListingDbError,
+} from "@/lib/listing-creation/db-error";
+import { LISTING_SAVE_FAILED_PRESERVE } from "@/lib/business-images/messages";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   FurnishedOption,
@@ -21,8 +26,7 @@ import type {
   SpaceType,
 } from "@/lib/listing-types";
 
-const GENERIC_ERROR =
-  "We couldn't save your listing right now. Your entered information is still here — please try again.";
+const GENERIC_ERROR = LISTING_SAVE_FAILED_PRESERVE;
 
 export type CommercialListingActionResult =
   | {
@@ -87,35 +91,6 @@ function toCommercialDbRow(fields: ParsedCommercialFields) {
     available_from: fields.availableFrom,
     business_usage: fields.businessUsage,
   };
-}
-
-function mapDbError(message: string | undefined): string {
-  const text = (message ?? "").toLowerCase();
-  if (text.includes("district does not belong")) {
-    return "Please select a valid city for the selected state.";
-  }
-  if (text.includes("city does not belong")) {
-    return "Please select a valid city for the selected state.";
-  }
-  if (text.includes("state is required")) {
-    return "Please select a state.";
-  }
-  if (text.includes("district is required")) {
-    return "Please select a city.";
-  }
-  if (text.includes("city is required")) {
-    return "Please select a city.";
-  }
-  if (text.includes("monthly_rent")) {
-    return "Please enter a monthly rent greater than zero.";
-  }
-  if (text.includes("area_sqft")) {
-    return "Please enter an area greater than zero.";
-  }
-  if (text.includes("duplicate") && text.includes("slug")) {
-    return "That title is already in use. Please adjust the title.";
-  }
-  return GENERIC_ERROR;
 }
 
 async function slugTaken(
@@ -195,10 +170,11 @@ export async function createCommercialDraftListing(
     .single();
 
   if (error || !data) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] createCommercialDraftListing failed:", error?.message);
-    }
-    return { ok: false, message: mapDbError(error?.message) };
+    logListingDbError("createCommercialDraftListing", error);
+    return {
+      ok: false,
+      message: mapCommercialListingDbError(error?.message, error?.code),
+    };
   }
 
   await promoteCallerToSeller();
@@ -276,10 +252,11 @@ export async function updateCommercialDraftListing(
     .single();
 
   if (error || !data) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] updateCommercialDraftListing failed:", error?.message);
-    }
-    return { ok: false, message: mapDbError(error?.message) };
+    logListingDbError("updateCommercialDraftListing", error);
+    return {
+      ok: false,
+      message: mapCommercialListingDbError(error?.message, error?.code),
+    };
   }
 
   return {
@@ -390,13 +367,11 @@ export async function submitCommercialListingForReview(
     .single();
 
   if (error || !data) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[Bizora] submitCommercialListingForReview failed:",
-        error?.message,
-      );
-    }
-    return { ok: false, message: mapDbError(error?.message) };
+    logListingDbError("submitCommercialListingForReview", error);
+    return {
+      ok: false,
+      message: mapCommercialListingDbError(error?.message, error?.code),
+    };
   }
 
   return {

@@ -22,6 +22,14 @@ describe("listing locality free text", () => {
     expect(errors.locality).toBeUndefined();
   });
 
+  it("persists locality via locality_name on draft insert (requires migration 016)", () => {
+    const { fields } = parseListingFormInput({
+      title: "Cafe for sale",
+      locality: "Banjara Hills",
+    });
+    expect(fields.locality).toBe("Banjara Hills");
+  });
+
   it("rejects overly long locality text", () => {
     const { fields, errors } = parseListingFormInput({
       title: "Cafe for sale",

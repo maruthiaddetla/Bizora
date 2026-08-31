@@ -14,10 +14,14 @@ import {
   type ListingFormInput,
   type ParsedListingFields,
 } from "@/lib/listing-creation/validation";
+import {
+  logListingDbError,
+  mapListingDbError,
+} from "@/lib/listing-creation/db-error";
+import { LISTING_SAVE_FAILED_PRESERVE } from "@/lib/business-images/messages";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const GENERIC_ERROR =
-  "We couldn't save your listing right now. Your entered information is still here — please try again.";
+const GENERIC_ERROR = LISTING_SAVE_FAILED_PRESERVE;
 
 export type ListingActionResult =
   | {
@@ -74,29 +78,6 @@ function toDbRow(fields: ParsedListingFields) {
     employees: fields.employees,
     reason_for_sale: fields.reasonForSale,
   };
-}
-
-function mapDbError(message: string | undefined): string {
-  const text = (message ?? "").toLowerCase();
-  if (text.includes("district does not belong")) {
-    return "Please select a valid city for the selected state.";
-  }
-  if (text.includes("city does not belong")) {
-    return "Please select a valid city for the selected state.";
-  }
-  if (text.includes("state is required")) {
-    return "Please select a state.";
-  }
-  if (text.includes("district is required")) {
-    return "Please select a city.";
-  }
-  if (text.includes("city is required")) {
-    return "Please select a city.";
-  }
-  if (text.includes("duplicate") && text.includes("slug")) {
-    return "That business title is already in use. Please adjust the title.";
-  }
-  return GENERIC_ERROR;
 }
 
 async function slugTaken(
@@ -180,10 +161,11 @@ export async function createDraftListing(
     .single();
 
   if (error || !data) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] createDraftListing failed:", error?.message);
-    }
-    return { ok: false, message: mapDbError(error?.message) };
+    logListingDbError("createDraftListing", error);
+    return {
+      ok: false,
+      message: mapListingDbError(error?.message, error?.code),
+    };
   }
 
   await promoteCallerToSeller();
@@ -260,10 +242,11 @@ export async function updateDraftListing(
     .single();
 
   if (error || !data) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] updateDraftListing failed:", error?.message);
-    }
-    return { ok: false, message: mapDbError(error?.message) };
+    logListingDbError("updateDraftListing", error);
+    return {
+      ok: false,
+      message: mapListingDbError(error?.message, error?.code),
+    };
   }
 
   return {
@@ -372,10 +355,11 @@ export async function submitListingForReview(
     .single();
 
   if (error || !data) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Bizora] submitListingForReview failed:", error?.message);
-    }
-    return { ok: false, message: mapDbError(error?.message) };
+    logListingDbError("submitListingForReview", error);
+    return {
+      ok: false,
+      message: mapListingDbError(error?.message, error?.code),
+    };
   }
 
   return {
