@@ -1,14 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CommercialSpaceForm } from "@/components/listings/CommercialSpaceForm";
 import { ListingForm } from "@/components/listings/ListingForm";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/lib/auth/session";
+import {
+  canSellerOpenEdit,
+  isOwnerEditableStatus,
+  isPublishedEditRevision,
+} from "@/lib/listing-creation/editability";
 import { commercialDefaultsFromRow } from "@/lib/listing-creation/commercial-form-defaults";
 import { listingDefaultsFromRow } from "@/lib/listing-creation/form-defaults";
+import { ensurePublishedEditRevision, ensureRevisionImagesForEdit } from "@/lib/listing-creation/revision";
+import {
+  initialImagesForEditForm,
+  resolveEditPhotosTarget,
+} from "@/lib/listing-creation/edit-photos";
 import { listBusinessImagesForOwner } from "@/lib/business-images/actions";
 import { fetchOwnedBusinessById } from "@/lib/repositories/businesses.repository";
 import {
@@ -22,7 +32,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Edit listing",
-  description: "Edit your listing draft on Bizora.",
+  description: "Edit your listing on Bizora.",
   robots: { index: false, follow: false },
 };
 
@@ -66,12 +76,31 @@ export default async function EditListingPage({
     notFound();
   }
 
-  const isCommercial = business.listing_type === "commercial_space";
+  // Published listings are edited via a sibling revision so the live listing
+  // stays visible until admin approval.
+  if (business.status === "published") {
+    const revision = await ensurePublishedEditRevision(business.id, user.id);
+    if (!revision.ok) {
+      return (
+        <>
+          <Navbar />
+          <main className="flex flex-1 flex-col items-center justify-center px-4 py-24 text-center">
+            <h1 className="text-2xl font-bold text-foreground">
+              Unable to edit listing
+            </h1>
+            <p className="mt-3 max-w-md text-muted">{revision.message}</p>
+            <Button href="/dashboard" className="mt-8">
+              Back to dashboard
+            </Button>
+          </main>
+          <Footer />
+        </>
+      );
+    }
+    redirect(`/dashboard/listings/${revision.revisionId}/edit`);
+  }
 
-  const canEdit =
-    business.status === "draft" || business.status === "rejected";
-
-  if (!canEdit) {
+  if (!canSellerOpenEdit(business.status) || !isOwnerEditableStatus(business.status)) {
     return (
       <>
         <Navbar />
@@ -102,6 +131,33 @@ export default async function EditListingPage({
     );
   }
 
+  const isCommercial = business.listing_type === "commercial_space";
+  const isRevision = isPublishedEditRevision(business);
+  const photosTarget = resolveEditPhotosTarget(business);
+
+  // Dashboard may deep-link to a revision id. Backfill images from the
+  // published parent before the Photos section reads business_images.
+  if (photosTarget.publishedIdForBackfill) {
+    const ensured = await ensureRevisionImagesForEdit(business.id, user.id);
+    if (!ensured.ok) {
+      return (
+        <>
+          <Navbar />
+          <main className="flex flex-1 flex-col items-center justify-center px-4 py-24 text-center">
+            <h1 className="text-2xl font-bold text-foreground">
+              Unable to load photos
+            </h1>
+            <p className="mt-3 max-w-md text-muted">{ensured.message}</p>
+            <Button href="/dashboard" className="mt-8">
+              Back to dashboard
+            </Button>
+          </main>
+          <Footer />
+        </>
+      );
+    }
+  }
+
   const [
     businessCategories,
     commercialCategories,
@@ -115,11 +171,19 @@ export default async function EditListingPage({
     business.state_id
       ? fetchCitiesByState(business.state_id)
       : Promise.resolve([]),
-    listBusinessImagesForOwner(business.id),
+    listBusinessImagesForOwner(photosTarget.photosListingId),
   ]);
 
-  const initialImages =
-    imagesResult.ok && imagesResult.images ? imagesResult.images : [];
+  const initialImages = initialImagesForEditForm(imagesResult);
+
+  console.info("[Bizora] edit page photos props:", {
+    routeListingId: id,
+    photosListingId: photosTarget.photosListingId,
+    publishedIdForBackfill: photosTarget.publishedIdForBackfill,
+    isRevision: photosTarget.isRevision,
+    initialImageCount: initialImages.length,
+    initialImageIds: initialImages.map((image) => image.id),
+  });
 
   return (
     <>
@@ -140,6 +204,18 @@ export default async function EditListingPage({
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Edit listing
             </h1>
+            {isRevision && (
+              <p className="mt-2 text-sm text-muted">
+                You are editing a published listing. Changes go to review first —
+                buyers keep seeing the current live version until approval.
+              </p>
+            )}
+            {business.status === "pending" && !isRevision && (
+              <p className="mt-2 text-sm text-muted">
+                This listing is under review. Saving updates keeps it in review;
+                submit again when your changes are ready.
+              </p>
+            )}
           </div>
 
           {query.saved === "1" && (

@@ -33,6 +33,8 @@ export type AdminListingQueueItem = {
   sellerName: string;
   submittedAt: string | null;
   updatedAt: string;
+  /** When set, this pending row is an edit of a published listing. */
+  supersedesId: string | null;
 };
 
 export type AdminListingDetail = ListingDetailView & {
@@ -53,4 +55,5 @@ export type AdminListingDetail = ListingDetailView & {
   annualRevenueRaw: number | null;
   annualProfitRaw: number | null;
   ebitdaRaw: number | null;
+  supersedesId: string | null;
 };

@@ -15,6 +15,10 @@ import {
   type ParsedListingFields,
 } from "@/lib/listing-creation/validation";
 import {
+  LISTING_EDIT_REVIEW_SUBMITTED,
+  isOwnerEditableStatus,
+} from "@/lib/listing-creation/editability";
+import {
   logListingDbError,
   mapListingDbError,
 } from "@/lib/listing-creation/db-error";
@@ -205,7 +209,7 @@ export async function updateDraftListing(
 
   const { data: existing, error: loadError } = await supabase
     .from("businesses")
-    .select("id, seller_id, status, title, slug")
+    .select("id, seller_id, status, title, slug, supersedes_id")
     .eq("id", listingId)
     .eq("seller_id", user.id)
     .maybeSingle();
@@ -214,10 +218,10 @@ export async function updateDraftListing(
     return { ok: false, message: "Listing not found or you do not have access." };
   }
 
-  if (existing.status !== "draft" && existing.status !== "rejected") {
+  if (!isOwnerEditableStatus(existing.status)) {
     return {
       ok: false,
-      message: "Only draft or rejected listings can be edited.",
+      message: "Only draft, pending, or rejected listings can be edited.",
     };
   }
 
@@ -237,7 +241,7 @@ export async function updateDraftListing(
     })
     .eq("id", listingId)
     .eq("seller_id", user.id)
-    .in("status", ["draft", "rejected"])
+    .in("status", ["draft", "rejected", "pending"])
     .select("id, slug")
     .single();
 
@@ -274,7 +278,7 @@ export async function submitListingForReview(
   const { data: existing, error: loadError } = await supabase
     .from("businesses")
     .select(
-      "id, seller_id, status, title, description, category_id, state_id, district_id, city_id, locality_id, locality_name, asking_price, annual_revenue, annual_profit, ebitda, established_year, employees, reason_for_sale, slug",
+      "id, seller_id, status, title, description, category_id, state_id, district_id, city_id, locality_id, locality_name, asking_price, annual_revenue, annual_profit, ebitda, established_year, employees, reason_for_sale, slug, supersedes_id",
     )
     .eq("id", listingId)
     .eq("seller_id", user.id)
@@ -284,10 +288,10 @@ export async function submitListingForReview(
     return { ok: false, message: "Listing not found or you do not have access." };
   }
 
-  if (existing.status !== "draft" && existing.status !== "rejected") {
+  if (!isOwnerEditableStatus(existing.status)) {
     return {
       ok: false,
-      message: "Only draft or rejected listings can be submitted for review.",
+      message: "Only draft, pending, or rejected listings can be submitted for review.",
     };
   }
 
@@ -350,8 +354,8 @@ export async function submitListingForReview(
     })
     .eq("id", listingId)
     .eq("seller_id", user.id)
-    .in("status", ["draft", "rejected"])
-    .select("id, slug")
+    .in("status", ["draft", "rejected", "pending"])
+    .select("id, slug, supersedes_id")
     .single();
 
   if (error || !data) {
@@ -366,7 +370,9 @@ export async function submitListingForReview(
     ok: true,
     listingId: data.id,
     slug: data.slug,
-    message: "Listing submitted for review.",
+    message: data.supersedes_id
+      ? LISTING_EDIT_REVIEW_SUBMITTED
+      : "Listing submitted for review.",
   };
 }
 
@@ -476,6 +482,12 @@ export async function updateListingFormAction(
       listingId,
       intent,
     };
+  }
+
+  if (submitted.message === LISTING_EDIT_REVIEW_SUBMITTED) {
+    redirect(
+      `/dashboard/listings/${submitted.listingId}/preview?editReview=1`,
+    );
   }
 
   redirect(`/dashboard/listings/${submitted.listingId}/preview?submitted=1`);

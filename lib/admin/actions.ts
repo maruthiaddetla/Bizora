@@ -48,7 +48,9 @@ function revalidateListingPaths(listingId: string) {
 }
 
 /**
- * Approve a pending listing (admin only). Sets status=published.
+ * Approve a pending listing (admin only).
+ * Edit revisions (supersedes_id set) are merged onto the published parent.
+ * New listings are published on the same row.
  */
 export async function approveListing(
   listingId: string,
@@ -62,6 +64,56 @@ export async function approveListing(
   );
   if (error || !supabase || !user) {
     return { ok: false, message: error ?? GENERIC_ERROR };
+  }
+
+  const { data: pendingRow, error: loadError } = await supabase
+    .from("businesses")
+    .select("id, status, supersedes_id")
+    .eq("id", listingId)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (loadError) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Bizora] approveListing load failed:", loadError.message);
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+
+  if (!pendingRow) {
+    return {
+      ok: false,
+      message: "Only pending listings can be approved.",
+    };
+  }
+
+  if (pendingRow.supersedes_id) {
+    const { data: merged, error: rpcError } = await supabase.rpc(
+      "approve_listing_edit_revision",
+      { p_revision_id: listingId },
+    );
+
+    if (rpcError || !merged) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          "[Bizora] approve_listing_edit_revision failed:",
+          rpcError?.message,
+        );
+      }
+      return { ok: false, message: GENERIC_ERROR };
+    }
+
+    const publishedId =
+      typeof merged === "object" && merged && "id" in merged
+        ? String((merged as { id: string }).id)
+        : pendingRow.supersedes_id;
+
+    revalidateListingPaths(listingId);
+    revalidateListingPaths(publishedId);
+    return {
+      ok: true,
+      message: "Listing edits approved. The published listing has been updated.",
+    };
   }
 
   const { data, error: updateError } = await supabase

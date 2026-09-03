@@ -15,6 +15,10 @@ import {
   type ParsedCommercialFields,
 } from "@/lib/listing-creation/commercial-validation";
 import {
+  LISTING_EDIT_REVIEW_SUBMITTED,
+  isOwnerEditableStatus,
+} from "@/lib/listing-creation/editability";
+import {
   logListingDbError,
   mapCommercialListingDbError,
 } from "@/lib/listing-creation/db-error";
@@ -211,7 +215,7 @@ export async function updateCommercialDraftListing(
 
   const { data: existing, error: loadError } = await supabase
     .from("businesses")
-    .select("id, seller_id, status, title, slug, listing_type")
+    .select("id, seller_id, status, title, slug, listing_type, supersedes_id")
     .eq("id", listingId)
     .eq("seller_id", user.id)
     .maybeSingle();
@@ -224,10 +228,10 @@ export async function updateCommercialDraftListing(
     return { ok: false, message: "This listing is not a commercial space." };
   }
 
-  if (existing.status !== "draft" && existing.status !== "rejected") {
+  if (!isOwnerEditableStatus(existing.status)) {
     return {
       ok: false,
-      message: "Only draft or rejected listings can be edited.",
+      message: "Only draft, pending, or rejected listings can be edited.",
     };
   }
 
@@ -247,7 +251,7 @@ export async function updateCommercialDraftListing(
     })
     .eq("id", listingId)
     .eq("seller_id", user.id)
-    .in("status", ["draft", "rejected"])
+    .in("status", ["draft", "rejected", "pending"])
     .select("id, slug")
     .single();
 
@@ -292,10 +296,10 @@ export async function submitCommercialListingForReview(
     return { ok: false, message: "This listing is not a commercial space." };
   }
 
-  if (existing.status !== "draft" && existing.status !== "rejected") {
+  if (!isOwnerEditableStatus(existing.status)) {
     return {
       ok: false,
-      message: "Only draft or rejected listings can be submitted for review.",
+      message: "Only draft, pending, or rejected listings can be submitted for review.",
     };
   }
 
@@ -362,8 +366,8 @@ export async function submitCommercialListingForReview(
     })
     .eq("id", listingId)
     .eq("seller_id", user.id)
-    .in("status", ["draft", "rejected"])
-    .select("id, slug")
+    .in("status", ["draft", "rejected", "pending"])
+    .select("id, slug, supersedes_id")
     .single();
 
   if (error || !data) {
@@ -378,7 +382,9 @@ export async function submitCommercialListingForReview(
     ok: true,
     listingId: data.id,
     slug: data.slug,
-    message: "Listing submitted for review.",
+    message: data.supersedes_id
+      ? LISTING_EDIT_REVIEW_SUBMITTED
+      : "Listing submitted for review.",
   };
 }
 
@@ -490,6 +496,12 @@ export async function updateCommercialFormAction(
       listingId,
       intent,
     };
+  }
+
+  if (submitted.message === LISTING_EDIT_REVIEW_SUBMITTED) {
+    redirect(
+      `/dashboard/listings/${submitted.listingId}/preview?editReview=1`,
+    );
   }
 
   redirect(`/dashboard/listings/${submitted.listingId}/preview?submitted=1`);

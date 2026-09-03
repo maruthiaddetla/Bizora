@@ -278,6 +278,7 @@ export type Database = {
           business_usage: string | null;
           closed_at: string | null;
           published_at: string | null;
+          supersedes_id: string | null;
         };
         Insert: {
           id?: string;
@@ -321,6 +322,7 @@ export type Database = {
           business_usage?: string | null;
           closed_at?: string | null;
           published_at?: string | null;
+          supersedes_id?: string | null;
         };
         Update: {
           id?: string;
@@ -364,6 +366,7 @@ export type Database = {
           business_usage?: string | null;
           closed_at?: string | null;
           published_at?: string | null;
+          supersedes_id?: string | null;
         };
         Relationships: [
           {
@@ -406,6 +409,12 @@ export type Database = {
             foreignKeyName: "businesses_locality_id_fkey";
             columns: ["locality_id"];
             referencedRelation: "localities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "businesses_supersedes_id_fkey";
+            columns: ["supersedes_id"];
+            referencedRelation: "businesses";
             referencedColumns: ["id"];
           },
         ];
@@ -720,6 +729,10 @@ export type Database = {
           primary_image_url: string | null;
           closed_at: string | null;
         }[];
+      };
+      approve_listing_edit_revision: {
+        Args: { p_revision_id: string };
+        Returns: Database["public"]["Tables"]["businesses"]["Row"];
       };
     };
     Enums: Record<string, never>;

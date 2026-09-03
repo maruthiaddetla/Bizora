@@ -151,7 +151,13 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
           const canViewPublic =
             listing.status === "published" || isClosed;
           const canEdit =
-            listing.status === "draft" || listing.status === "rejected";
+            listing.status === "draft" ||
+            listing.status === "rejected" ||
+            listing.status === "pending" ||
+            listing.status === "published";
+          // Always edit via the primary listing id. For published listings the
+          // edit page creates/finds the revision and backfills photos there.
+          const editHref = `/dashboard/listings/${listing.id}/edit`;
           const showPreview =
             listing.status === "pending" ||
             listing.status === "draft" ||
@@ -209,6 +215,32 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
                     </p>
                   )}
 
+                  {listing.status === "published" &&
+                    listing.revisionStatus === "pending" && (
+                      <p className="mt-3 text-sm text-amber-800">
+                        Your changes are under review. The current published
+                        listing remains visible to buyers.
+                      </p>
+                    )}
+
+                  {listing.status === "published" &&
+                    listing.revisionStatus === "draft" && (
+                      <p className="mt-3 text-sm text-muted">
+                        You have unpublished edits in progress.
+                      </p>
+                    )}
+
+                  {listing.status === "published" &&
+                    listing.revisionStatus === "rejected" &&
+                    listing.rejectionReason && (
+                      <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-800">
+                        <span className="font-semibold">
+                          Edit changes required:{" "}
+                        </span>
+                        {listing.rejectionReason}
+                      </div>
+                    )}
+
                   {listing.status === "rejected" && listing.rejectionReason && (
                     <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-800">
                       <span className="font-semibold">Changes required: </span>
@@ -218,16 +250,13 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {canEdit && (
-                      <Button
-                        href={`/dashboard/listings/${listing.id}/edit`}
-                        size="sm"
-                      >
+                      <Button href={editHref} size="sm">
                         Edit
                       </Button>
                     )}
                     {showPreview && (
                       <Button
-                        href={`/dashboard/listings/${listing.id}/preview`}
+                        href={`/dashboard/listings/${listing.revisionId ?? listing.id}/preview`}
                         size="sm"
                         variant="secondary"
                       >

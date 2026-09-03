@@ -104,6 +104,11 @@ export function AdminListingsQueue({
                       <p className="mt-1 text-sm text-muted">
                         Seller: {listing.sellerName}
                       </p>
+                      {listing.supersedesId && (
+                        <p className="mt-1 text-sm font-medium text-amber-800">
+                          Edit of published listing
+                        </p>
+                      )}
                     </div>
                     <ListingStatusBadge status={listing.status} />
                   </div>

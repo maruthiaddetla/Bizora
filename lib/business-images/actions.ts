@@ -11,6 +11,7 @@ import type {
   BusinessImageActionResult,
   BusinessImageView,
 } from "@/lib/business-images/types";
+import { shouldRemoveStorageObject } from "@/lib/listing-creation/revision-images";
 import { requireUser } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -52,11 +53,12 @@ async function loadEditableBusiness(businessId: string, sellerId: string) {
     };
   }
 
-  if (data.status !== "draft" && data.status !== "rejected") {
+  if (data.status !== "draft" && data.status !== "rejected" && data.status !== "pending") {
     return {
       supabase,
       business: null,
-      error: "Photos can only be changed while the listing is a draft or rejected.",
+      error:
+        "Photos can only be changed while the listing is a draft, pending, or rejected.",
     };
   }
 
@@ -291,14 +293,27 @@ export async function deleteBusinessImage(
   }
 
   if (existing.storage_path) {
-    const { error: storageError } = await supabase.storage
-      .from(BUSINESS_IMAGES_BUCKET)
-      .remove([existing.storage_path]);
-    if (storageError && process.env.NODE_ENV === "development") {
-      console.warn(
-        "[Bizora] storage delete after DB delete failed:",
-        storageError.message,
-      );
+    const { count } = await supabase
+      .from("business_images")
+      .select("id", { count: "exact", head: true })
+      .eq("storage_path", existing.storage_path);
+
+    if (
+      shouldRemoveStorageObject({
+        storagePath: existing.storage_path,
+        listingId: businessId,
+        remainingReferences: count ?? 0,
+      })
+    ) {
+      const { error: storageError } = await supabase.storage
+        .from(BUSINESS_IMAGES_BUCKET)
+        .remove([existing.storage_path]);
+      if (storageError && process.env.NODE_ENV === "development") {
+        console.warn(
+          "[Bizora] storage delete after DB delete failed:",
+          storageError.message,
+        );
+      }
     }
   }
 

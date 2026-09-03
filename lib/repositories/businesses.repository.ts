@@ -554,9 +554,36 @@ export async function fetchMyBusinesses(
     };
   }
 
+  const rows = (data ?? []) as BusinessWithRelations[];
+  const revisionsByParent = new Map<
+    string,
+    {
+      id: string;
+      status: BusinessWithRelations["status"];
+      rejectionReason: string | null;
+    }
+  >();
+
+  for (const row of rows) {
+    if (row.supersedes_id) {
+      revisionsByParent.set(row.supersedes_id, {
+        id: row.id,
+        status: row.status,
+        rejectionReason: row.rejection_reason,
+      });
+    }
+  }
+
+  const primaryRows = rows.filter((row) => !row.supersedes_id);
+
   const listings = await Promise.all(
-    (data ?? []).map((row) =>
-      mapBusinessToSellerListing(row as BusinessWithRelations),
+    primaryRows.map((row) =>
+      mapBusinessToSellerListing(
+        row,
+        row.status === "published"
+          ? (revisionsByParent.get(row.id) ?? null)
+          : null,
+      ),
     ),
   );
 

@@ -176,6 +176,7 @@ export async function fetchAdminListings(
         sellerName: sellerDisplayName(row.seller),
         submittedAt: row.submitted_at,
         updatedAt: row.updated_at,
+        supersedesId: row.supersedes_id,
       };
     }),
   );
@@ -236,6 +237,7 @@ export async function fetchAdminBusinessById(id: string): Promise<{
       annualRevenueRaw: toNumber(row.annual_revenue) ?? null,
       annualProfitRaw: toNumber(row.annual_profit) ?? null,
       ebitdaRaw: toNumber(row.ebitda) ?? null,
+      supersedesId: row.supersedes_id,
     },
     error: null,
   };

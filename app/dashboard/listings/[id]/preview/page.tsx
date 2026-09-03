@@ -10,6 +10,10 @@ import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/lib/auth/session";
+import {
+  canSellerOpenEdit,
+  LISTING_EDIT_REVIEW_SUBMITTED,
+} from "@/lib/listing-creation/editability";
 import { mapBusinessToDetail } from "@/lib/repositories/businesses.mapper";
 import { fetchOwnedBusinessById } from "@/lib/repositories/businesses.repository";
 
@@ -17,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ submitted?: string }>;
+  searchParams: Promise<{ submitted?: string; editReview?: string }>;
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -64,12 +68,13 @@ export default async function OwnerListingPreviewPage({
   }
 
   const business = await mapBusinessToDetail(row);
-  const canEdit = row.status === "draft" || row.status === "rejected";
+  const canEdit = canSellerOpenEdit(row.status);
   const canViewPublic =
     row.status === "published" ||
     row.status === "sold" ||
     row.status === "leased" ||
     row.status === "withdrawn";
+  const publicListingId = row.supersedes_id ?? row.id;
 
   return (
     <>
@@ -104,13 +109,30 @@ export default async function OwnerListingPreviewPage({
                 </Button>
               )}
               {canViewPublic && (
-                <Button href={`/listings/${row.id}`} size="sm" variant="ghost">
+                <Button href={`/listings/${publicListingId}`} size="sm" variant="ghost">
                   Public page
+                </Button>
+              )}
+              {row.supersedes_id && (
+                <Button
+                  href={`/listings/${row.supersedes_id}`}
+                  size="sm"
+                  variant="ghost"
+                >
+                  View live listing
                 </Button>
               )}
             </div>
           </div>
         </div>
+
+        {query.editReview === "1" && (
+          <div className="border-b border-emerald-200 bg-emerald-50">
+            <p className="mx-auto max-w-7xl px-4 py-3 text-sm text-emerald-900 sm:px-6 lg:px-8">
+              {LISTING_EDIT_REVIEW_SUBMITTED}
+            </p>
+          </div>
+        )}
 
         {query.submitted === "1" && (
           <div className="border-b border-emerald-200 bg-emerald-50">

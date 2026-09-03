@@ -220,6 +220,11 @@ export async function mapBusinessToDetail(
 
 export async function mapBusinessToSellerListing(
   business: BusinessWithRelations,
+  revision?: {
+    id: string;
+    status: BusinessWithRelations["status"];
+    rejectionReason?: string | null;
+  } | null,
 ): Promise<SellerListingView> {
   const images = await getSortedImageUrls(business);
   const listingType = (business.listing_type ?? "business") as ListingType;
@@ -240,7 +245,10 @@ export async function mapBusinessToSellerListing(
     image: images[0],
     status: business.status,
     listingType,
-    rejectionReason: business.rejection_reason,
+    rejectionReason:
+      revision?.rejectionReason ?? business.rejection_reason ?? null,
     updatedAt: business.updated_at,
+    revisionId: revision?.id ?? null,
+    revisionStatus: revision?.status ?? null,
   };
 }

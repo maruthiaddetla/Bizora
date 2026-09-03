@@ -104,6 +104,9 @@ export type SellerListingView = {
   listingType: ListingType;
   rejectionReason: string | null;
   updatedAt: string;
+  /** Open edit revision for a published listing, if any. */
+  revisionId: string | null;
+  revisionStatus: BusinessRow["status"] | null;
 };
 
 export type SellerListingSummary = {

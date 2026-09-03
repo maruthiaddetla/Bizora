@@ -116,6 +116,18 @@ export default async function AdminListingReviewPage({ params }: PageProps) {
               <p className="mt-2 text-sm text-muted">
                 {listing.category ?? "Business"} · {listing.location}
               </p>
+              {listing.supersedesId && (
+                <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                  This is an edit of a published listing. Approving will update
+                  the live listing and keep it published.{" "}
+                  <Link
+                    href={`/listings/${listing.supersedesId}`}
+                    className="font-medium text-primary hover:text-primary-hover"
+                  >
+                    View live listing
+                  </Link>
+                </p>
+              )}
             </div>
             {listing.status === "published" && (
               <Button
