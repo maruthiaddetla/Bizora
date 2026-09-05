@@ -4,12 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authFieldClass } from "@/components/auth/PhoneInput";
-import {
-  AUTH_UNEXPECTED_ERROR,
-  mapAuthErrorMessage,
-} from "@/lib/auth/errors";
+import { AUTH_UNEXPECTED_ERROR, mapAuthErrorMessage } from "@/lib/auth/errors";
 import { completeAuthProfile } from "@/lib/auth/post-auth";
 import { getSafeNextPath } from "@/lib/auth/redirect";
+import { getAuthEmailRedirectTo } from "@/lib/site";
 import { Button } from "@/components/ui/Button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -68,7 +66,7 @@ export function EmailSignUpForm({
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`;
+      const emailRedirectTo = getAuthEmailRedirectTo(safeNext);
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
