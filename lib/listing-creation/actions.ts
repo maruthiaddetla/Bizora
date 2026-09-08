@@ -23,6 +23,7 @@ import {
   mapListingDbError,
 } from "@/lib/listing-creation/db-error";
 import { LISTING_SAVE_FAILED_PRESERVE } from "@/lib/business-images/messages";
+import { scheduleAdminListingSubmittedEmail } from "@/lib/notifications/admin-listing-email-delivery";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const GENERIC_ERROR = LISTING_SAVE_FAILED_PRESERVE;
@@ -365,6 +366,9 @@ export async function submitListingForReview(
       message: mapListingDbError(error?.message, error?.code),
     };
   }
+
+  // Email must not block or roll back a successful pending submission.
+  scheduleAdminListingSubmittedEmail(data.id);
 
   return {
     ok: true,

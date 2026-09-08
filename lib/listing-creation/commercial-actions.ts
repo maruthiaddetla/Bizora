@@ -23,6 +23,7 @@ import {
   mapCommercialListingDbError,
 } from "@/lib/listing-creation/db-error";
 import { LISTING_SAVE_FAILED_PRESERVE } from "@/lib/business-images/messages";
+import { scheduleAdminListingSubmittedEmail } from "@/lib/notifications/admin-listing-email-delivery";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   FurnishedOption,
@@ -377,6 +378,9 @@ export async function submitCommercialListingForReview(
       message: mapCommercialListingDbError(error?.message, error?.code),
     };
   }
+
+  // Email must not block or roll back a successful pending submission.
+  scheduleAdminListingSubmittedEmail(data.id);
 
   return {
     ok: true,

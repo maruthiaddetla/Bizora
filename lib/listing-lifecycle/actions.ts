@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
+import { scheduleAdminListingSubmittedEmail } from "@/lib/notifications/admin-listing-email-delivery";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { BusinessStatus } from "@/lib/supabase/database.types";
 
@@ -76,6 +77,12 @@ async function transitionListingStatus(
   }
 
   revalidateLifecyclePaths(listingId);
+
+  // Republish → pending creates listing_resubmitted in-app notifications; email admins.
+  if (newStatus === "pending") {
+    scheduleAdminListingSubmittedEmail(listingId);
+  }
+
   return { ok: true, message: successMessage };
 }
 
