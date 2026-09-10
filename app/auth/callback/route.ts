@@ -1,32 +1,74 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { completeAuthProfile } from "@/lib/auth/post-auth";
-import { getSafeNextPath } from "@/lib/auth/redirect";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  authConfigErrorRedirect,
+  authExchangeErrorRedirect,
+  createSupabaseCallbackClient,
+  exchangeAuthParamsAndRedirect,
+  isRecoveryType,
+  logAuthCallbackDiagnostic,
+  passwordResetFailureRedirect,
+  recoverySuccessPath,
+  resolveEmailConfirmNext,
+} from "@/lib/auth/auth-callback";
+import { getSiteUrl, PASSWORD_RESET_PATH } from "@/lib/site";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const next = getSafeNextPath(searchParams.get("next"), "/");
+/**
+ * Shared auth callback for email confirmation (and legacy recovery links that
+ * still include next=/auth/reset-password or type=recovery).
+ */
+export async function GET(request: NextRequest) {
+  const requestUrl = new URL(request.url);
+  const rawNext = requestUrl.searchParams.get("next");
+  const type = requestUrl.searchParams.get("type");
+  const next = resolveEmailConfirmNext(rawNext);
 
-  if (code) {
-    const supabase = await createSupabaseServerClient();
-    if (!supabase) {
-      return NextResponse.redirect(`${origin}/sign-in?error=config`);
+  const isPasswordRecovery =
+    next === PASSWORD_RESET_PATH || isRecoveryType(type);
+
+  const successPath = isPasswordRecovery ? recoverySuccessPath() : next;
+
+  const result = await exchangeAuthParamsAndRedirect(request, successPath);
+
+  logAuthCallbackDiagnostic({
+    flow: isPasswordRecovery ? "password_recovery" : "email_confirm",
+    hasCode: result.hasCode,
+    hasTokenHash: result.hasTokenHash,
+    type: result.type,
+    nextPath: successPath,
+    exchangeOk: result.ok,
+    errorCode: result.errorCode,
+  });
+
+  if (!result.hasCode && !result.hasTokenHash) {
+    // No auth params — send the user to a safe internal destination.
+    return NextResponse.redirect(
+      `${getSiteUrl().replace(/\/$/, "")}${successPath}`,
+    );
+  }
+
+  if (!result.ok || !result.response) {
+    if (result.errorCode === "misconfigured") {
+      return authConfigErrorRedirect();
     }
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) {
-      return NextResponse.redirect(`${origin}/sign-in?error=auth`);
+    if (isPasswordRecovery) {
+      return passwordResetFailureRedirect();
     }
+    return authExchangeErrorRedirect();
+  }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      await completeAuthProfile(supabase, user);
+  // Email confirmation: ensure profile exists. Recovery: skip — reset page follows.
+  if (!isPasswordRecovery) {
+    const supabase = createSupabaseCallbackClient(request, result.response);
+    if (supabase) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await completeAuthProfile(supabase, user);
+      }
     }
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  return result.response;
 }

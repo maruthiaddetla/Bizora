@@ -2,13 +2,18 @@
 
 import { useState, type FormEvent } from "react";
 import { authFieldClass } from "@/components/auth/PhoneInput";
-import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password";
+import {
+  MIN_PASSWORD_LENGTH,
+  validatePasswordPair,
+} from "@/lib/auth/password";
 import { Button } from "@/components/ui/Button";
 
 type PasswordCreateFormProps = {
   title?: string;
   subtitle?: string;
   submitLabel?: string;
+  passwordLabel?: string;
+  confirmLabel?: string;
   loading?: boolean;
   error?: string | null;
   onSubmit: (password: string) => void | Promise<void>;
@@ -18,6 +23,8 @@ export function PasswordCreateForm({
   title = "Create password",
   subtitle = "Choose a password for your Bizora account.",
   submitLabel = "Continue",
+  passwordLabel = "Password",
+  confirmLabel = "Confirm password",
   loading = false,
   error = null,
   onSubmit,
@@ -30,14 +37,9 @@ export function PasswordCreateForm({
     event.preventDefault();
     setLocalError(null);
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setLocalError(
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
-      );
-      return;
-    }
-    if (password !== confirmPassword) {
-      setLocalError("Passwords do not match.");
+    const validationError = validatePasswordPair(password, confirmPassword);
+    if (validationError) {
+      setLocalError(validationError);
       return;
     }
 
@@ -64,7 +66,7 @@ export function PasswordCreateForm({
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-foreground">
-          Password
+          {passwordLabel}
         </span>
         <input
           type="password"
@@ -81,7 +83,7 @@ export function PasswordCreateForm({
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-foreground">
-          Confirm password
+          {confirmLabel}
         </span>
         <input
           type="password"

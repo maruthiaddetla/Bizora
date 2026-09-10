@@ -4,6 +4,10 @@ import { ChevronDown, Heart, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOutAction } from "@/lib/auth/actions";
+import {
+  AUTH_SIGN_IN_PATH,
+  authSignInHref,
+} from "@/lib/auth/routes";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/Button";
 
@@ -41,13 +45,13 @@ export function NavbarClient({
 
   const businessListHref = isAuthenticated
     ? "/dashboard/listings/new/business"
-    : "/sign-in?next=/dashboard/listings/new/business";
+    : authSignInHref("/dashboard/listings/new/business");
   const commercialListHref = isAuthenticated
     ? "/dashboard/listings/new/commercial"
-    : "/sign-in?next=/dashboard/listings/new/commercial";
+    : authSignInHref("/dashboard/listings/new/commercial");
   const favouritesHref = isAuthenticated
     ? "/dashboard/favorites"
-    : "/sign-in?next=/dashboard/favorites";
+    : authSignInHref("/dashboard/favorites");
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white">
@@ -159,7 +163,7 @@ export function NavbarClient({
             </div>
           ) : (
             <Button
-              href="/sign-in"
+              href={AUTH_SIGN_IN_PATH}
               variant="secondary"
               size="sm"
               className="shrink-0 whitespace-nowrap px-3 xl:px-4"
@@ -217,7 +221,7 @@ export function NavbarClient({
             <NotificationBell unreadCount={unreadNotificationCount} />
           )}
           <Link
-            href={isAuthenticated ? "/dashboard" : "/sign-in"}
+            href={isAuthenticated ? "/dashboard" : AUTH_SIGN_IN_PATH}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface text-sm font-semibold text-navy"
             aria-label={isAuthenticated ? "Dashboard" : "Login / Register"}
             >
@@ -277,7 +281,7 @@ export function NavbarClient({
                 </form>
               </>
             ) : (
-              <Button href="/sign-in" variant="secondary" size="lg" className="w-full">
+              <Button href={AUTH_SIGN_IN_PATH} variant="secondary" size="lg" className="w-full">
                 Login / Register
               </Button>
             )}

@@ -1,5 +1,9 @@
 import Link from "next/link";
 import {
+  AUTH_SIGN_IN_PATH,
+  AUTH_SIGN_UP_PATH,
+} from "@/lib/auth/routes";
+import {
   BIZORA_CONTACT_EMAIL,
   BIZORA_CONTACT_MAILTO,
 } from "@/lib/site";
@@ -12,8 +16,8 @@ const footerSections = {
     { label: "List with Bizora", href: "/dashboard/listings/new" },
   ],
   Account: [
-    { label: "Sign In", href: "/sign-in" },
-    { label: "Register", href: "/sign-up" },
+    { label: "Sign In", href: AUTH_SIGN_IN_PATH },
+    { label: "Register", href: AUTH_SIGN_UP_PATH },
     { label: "Dashboard", href: "/dashboard" },
     { label: "My Profile", href: "/dashboard/profile" },
     { label: "Notifications", href: "/dashboard/notifications" },

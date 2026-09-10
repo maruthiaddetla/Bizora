@@ -30,7 +30,22 @@ export const AUTH_INVALID_OTP =
 export const AUTH_INVALID_PASSWORD =
   "Password must be at least 8 characters.";
 
-export const AUTH_PASSWORD_MISMATCH = "Passwords do not match.";
+export const AUTH_PASSWORD_MISMATCH = "Your passwords don't match.";
+
+/** Shown after resetPasswordForEmail — never reveals whether the email exists. */
+export const AUTH_PASSWORD_RESET_SENT =
+  "If an account exists for this email address, we've sent you a password reset link. Please check your inbox and spam folder.";
+
+export const AUTH_PASSWORD_RESET_SENT_HEADING = "Reset link sent";
+
+export const AUTH_PASSWORD_RESET_LINK_INVALID =
+  "Your password reset link is invalid or has expired. Please request a new one.";
+
+export const AUTH_PASSWORD_RESET_FAILED =
+  "We couldn't complete the password reset. Please try again.";
+
+export const AUTH_PASSWORD_UPDATED =
+  "Your password has been updated successfully.";
 
 export const AUTH_OTP_SEND_FAILED =
   "We couldn't send a verification code right now. Please try again in a moment.";

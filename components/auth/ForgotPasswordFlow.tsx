@@ -19,6 +19,7 @@ import {
   OTP_RESEND_COOLDOWN_SECONDS,
 } from "@/lib/auth/phone";
 import { getSafeNextPath } from "@/lib/auth/redirect";
+import { authSignInHref } from "@/lib/auth/routes";
 import { Button } from "@/components/ui/Button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -30,7 +31,7 @@ type ForgotPasswordFlowProps = {
 
 export function ForgotPasswordFlow({ nextPath = "/" }: ForgotPasswordFlowProps) {
   const safeNext = getSafeNextPath(nextPath, "/");
-  const signInHref = `/sign-in?next=${encodeURIComponent(safeNext)}`;
+  const signInHref = authSignInHref(safeNext);
 
   const [step, setStep] = useState<ForgotStep>("phone");
   const [localPhone, setLocalPhone] = useState("");

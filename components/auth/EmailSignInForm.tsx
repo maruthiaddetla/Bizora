@@ -10,6 +10,10 @@ import {
 } from "@/lib/auth/errors";
 import { completeAuthProfile } from "@/lib/auth/post-auth";
 import { getSafeNextPath } from "@/lib/auth/redirect";
+import {
+  authForgotPasswordEmailHref,
+  authSignUpHref,
+} from "@/lib/auth/routes";
 import { Button } from "@/components/ui/Button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -127,6 +131,15 @@ export function EmailSignInForm({
         />
       </label>
 
+      <p className="-mt-2 text-right">
+        <Link
+          href={authForgotPasswordEmailHref(safeNext)}
+          className="text-sm font-medium text-primary hover:text-primary-hover"
+        >
+          Forgot password?
+        </Link>
+      </p>
+
       <Button type="submit" size="lg" className="w-full" disabled={loading}>
         {loading ? "Signing in…" : "Sign In with Email"}
       </Button>
@@ -144,7 +157,7 @@ export function EmailSignInForm({
       <p className="text-center text-sm text-muted">
         New to Bizora?{" "}
         <Link
-          href={`/sign-up?next=${encodeURIComponent(safeNext)}`}
+          href={authSignUpHref(safeNext)}
           className="font-semibold text-primary hover:text-primary-hover"
         >
           Register free

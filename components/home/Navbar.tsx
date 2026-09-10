@@ -1,4 +1,5 @@
 import { NavbarClient } from "@/components/home/NavbarClient";
+import { authSignInHref } from "@/lib/auth/routes";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/session";
 import { countUnreadNotifications } from "@/lib/repositories/notifications.repository";
 
@@ -9,7 +10,7 @@ export async function Navbar() {
   const showAdminDashboard = profile?.role === "admin";
   const postListingHref = isAuthenticated
     ? "/dashboard/listings/new"
-    : "/sign-in?next=/dashboard/listings/new";
+    : authSignInHref("/dashboard/listings/new");
   const unreadCount =
     user != null ? await countUnreadNotifications(user.id) : 0;
 

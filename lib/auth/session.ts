@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { authSignInHref } from "@/lib/auth/routes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ProfileRow } from "@/lib/supabase/database.types";
 import type { User } from "@supabase/supabase-js";
@@ -52,7 +53,7 @@ export async function requireUser(nextPath = "/"): Promise<AuthUserContext> {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    redirect(`/sign-in?next=${encodeURIComponent(nextPath)}`);
+    redirect(authSignInHref(nextPath));
   }
 
   const {
@@ -60,7 +61,7 @@ export async function requireUser(nextPath = "/"): Promise<AuthUserContext> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/sign-in?next=${encodeURIComponent(nextPath)}`);
+    redirect(authSignInHref(nextPath));
   }
 
   const { data: profile } = await supabase
