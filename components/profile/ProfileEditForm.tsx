@@ -142,7 +142,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
               name="displayName"
               type="text"
               maxLength={MAX_PROFILE_NAME_LENGTH}
-              defaultValue={profile.displayName ?? profile.fullName ?? ""}
+              defaultValue={profile.displayName ?? ""}
               className="mt-1.5 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </label>
