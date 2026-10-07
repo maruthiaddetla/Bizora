@@ -3,15 +3,36 @@ import Link from "next/link";
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
-import { requireUser } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
+import { authSignInHref } from "@/lib/auth/routes";
 
 export const metadata: Metadata = {
-  title: "Sell a Business",
-  description: "Sell your business on Bizora and connect with genuine buyers.",
+  title: {
+    absolute: "Sell a Business in India | List on Bizora",
+  },
+  description:
+    "Sell your business or list a commercial space on Bizora. Reach genuine buyers and tenants across India with a trusted marketplace listing.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Sell a Business in India | List on Bizora",
+    description:
+      "Sell your business or list a commercial space on Bizora. Reach genuine buyers and tenants across India with a trusted marketplace listing.",
+  },
 };
 
 export default async function SellPage() {
-  await requireUser("/sell");
+  const user = await getCurrentUser();
+  const isAuthenticated = Boolean(user);
+
+  const createListingHref = isAuthenticated
+    ? "/dashboard/listings/new"
+    : authSignInHref("/dashboard/listings/new");
+  const dashboardHref = isAuthenticated
+    ? "/dashboard"
+    : authSignInHref("/dashboard");
 
   return (
     <>
@@ -28,10 +49,10 @@ export default async function SellPage() {
               submit it for review when you&apos;re ready.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button href="/dashboard/listings/new" size="md">
+              <Button href={createListingHref} size="md">
                 Create Your Listing
               </Button>
-              <Button href="/dashboard" variant="secondary" size="md">
+              <Button href={dashboardHref} variant="secondary" size="md">
                 Go to Dashboard
               </Button>
             </div>
