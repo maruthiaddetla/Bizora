@@ -14,6 +14,7 @@ import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
 import { fetchPublicSellerProfile } from "@/lib/repositories/profiles.repository";
+import { getCanonicalUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: titleBase,
     description,
+    alternates: { canonical: getCanonicalUrl(`/sellers/${id}`) },
     openGraph: {
       title: `${titleBase} | Bizora`,
       description,

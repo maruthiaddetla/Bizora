@@ -148,7 +148,7 @@ describe("admin listing submitted email template", () => {
       locationLabel: "Indiranagar, Bengaluru, Karnataka",
       priceLabel: "₹25,00,000",
       sellerName: "Asha Patel",
-      reviewUrl: "https://bizoraindia.com/admin/listings/" + LISTING_ID,
+      reviewUrl: "https://www.bizoraindia.com/admin/listings/" + LISTING_ID,
       isResubmission: false,
     });
 
@@ -200,7 +200,7 @@ describe("admin listing submitted email delivery", () => {
     notificationType = "listing_submitted";
     sendTransactionalEmail.mockReset();
     getUserById.mockReset();
-    process.env.NEXT_PUBLIC_SITE_URL = "https://bizoraindia.com";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.bizoraindia.com";
     process.env.RESEND_API_KEY = "re_test_key";
     getUserById.mockResolvedValue({
       data: { user: { email: "maruthiaddetla@gmail.com" } },

@@ -5,6 +5,7 @@ import { Navbar } from "@/components/home/Navbar";
 import { Button } from "@/components/ui/Button";
 import { getCurrentUser } from "@/lib/auth/session";
 import { authSignInHref } from "@/lib/auth/routes";
+import { getCanonicalUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: {
@@ -15,6 +16,9 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  alternates: {
+    canonical: getCanonicalUrl("/sell"),
   },
   openGraph: {
     title: "Sell a Business in India | List on Bizora",

@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ResourceArticleLayout } from "@/components/resources/ResourceArticleLayout";
+import { getCanonicalUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
     "Answers to common questions about buying and selling businesses, finding commercial spaces, and using Bizora in India.",
+  alternates: {
+    canonical: getCanonicalUrl("/resources/faq"),
+  },
   openGraph: {
     title: "Frequently Asked Questions",
     description:

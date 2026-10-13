@@ -5,6 +5,7 @@ import {
   BIZORA_LOCAL_SITE_URL,
   BIZORA_PRODUCTION_SITE_URL,
   getAuthEmailRedirectTo,
+  getCanonicalUrl,
   getPasswordResetRedirectTo,
   getSiteUrl,
   PASSWORD_RESET_CALLBACK_PATH,
@@ -17,10 +18,10 @@ afterEach(() => {
 
 describe("getSiteUrl", () => {
   it("uses NEXT_PUBLIC_SITE_URL for production", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com/");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com/");
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
-    expect(getSiteUrl()).toBe("https://bizoraindia.com");
+    expect(getSiteUrl()).toBe("https://www.bizoraindia.com");
   });
 
   it("uses localhost when explicitly configured for local development", () => {
@@ -31,7 +32,7 @@ describe("getSiteUrl", () => {
   });
 
   it("forces localhost during local nextdev even if production SITE_URL is set", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("VERCEL_ENV", "");
     expect(getSiteUrl()).toBe(BIZORA_LOCAL_SITE_URL);
@@ -46,6 +47,7 @@ describe("getSiteUrl", () => {
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
     expect(getSiteUrl()).toBe(BIZORA_PRODUCTION_SITE_URL);
+    expect(getSiteUrl()).toBe("https://www.bizoraindia.com");
     expect(getSiteUrl()).not.toContain("localhost");
   });
 
@@ -58,13 +60,35 @@ describe("getSiteUrl", () => {
   });
 });
 
+describe("getCanonicalUrl", () => {
+  it("builds www homepage and path canonicals in production", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(getCanonicalUrl("/")).toBe("https://www.bizoraindia.com/");
+    expect(getCanonicalUrl("/listings")).toBe(
+      "https://www.bizoraindia.com/listings",
+    );
+    expect(getCanonicalUrl("listings/abc")).toBe(
+      "https://www.bizoraindia.com/listings/abc",
+    );
+  });
+
+  it("uses localhost canonicals during local development", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("VERCEL_ENV", "");
+    expect(getCanonicalUrl("/sell")).toBe("http://localhost:3000/sell");
+  });
+});
+
 describe("getAuthEmailRedirectTo", () => {
   it("builds a production auth callback URL for email confirmation", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
     expect(getAuthEmailRedirectTo("/dashboard")).toBe(
-      "https://bizoraindia.com/auth/callback?next=%2Fdashboard",
+      "https://www.bizoraindia.com/auth/callback?next=%2Fdashboard",
     );
   });
 
@@ -78,29 +102,29 @@ describe("getAuthEmailRedirectTo", () => {
   });
 
   it("never embeds localhost when production site URL is configured in production", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
     const redirectTo = getAuthEmailRedirectTo("/");
-    expect(redirectTo.startsWith("https://bizoraindia.com/auth/callback")).toBe(
-      true,
-    );
+    expect(
+      redirectTo.startsWith("https://www.bizoraindia.com/auth/callback"),
+    ).toBe(true);
     expect(redirectTo).not.toContain("localhost");
   });
 });
 
 describe("getPasswordResetRedirectTo", () => {
   it("routes password recovery through dedicated recovery callback", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
     expect(getPasswordResetRedirectTo()).toBe(
-      "https://bizoraindia.com/auth/callback/reset-password",
+      "https://www.bizoraindia.com/auth/callback/reset-password",
     );
   });
 
   it("points local development reset emails at localhost callback", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("VERCEL_ENV", "");
     expect(getPasswordResetRedirectTo()).toBe(

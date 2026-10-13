@@ -26,12 +26,15 @@ import {
   resolveSearchFilters,
   serializeSearchParams,
 } from "@/lib/search/params";
+import { getCanonicalUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const LISTINGS_CANONICAL = getCanonicalUrl("/listings");
 
 export async function generateMetadata({ searchParams }: PageProps) {
   const params = await searchParams;
@@ -47,6 +50,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
       description: isCommercial
         ? `Browse commercial spaces matching "${filters.q}".`
         : `Browse published businesses for sale matching "${filters.q}".`,
+      alternates: { canonical: LISTINGS_CANONICAL },
     };
   }
 
@@ -57,6 +61,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
     description: isCommercial
       ? "Browse commercial spaces for rent and lease across India."
       : "Browse published businesses for sale across India.",
+    alternates: { canonical: LISTINGS_CANONICAL },
     openGraph: {
       title: isCommercial
         ? "Commercial Spaces — Bizora"

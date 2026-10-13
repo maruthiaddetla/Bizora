@@ -39,11 +39,11 @@ afterEach(() => {
 
 describe("password recovery redirect URL", () => {
   it("uses dedicated recovery callback path in production", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
     expect(getPasswordResetRedirectTo()).toBe(
-      `https://bizoraindia.com${PASSWORD_RESET_CALLBACK_PATH}`,
+      `https://www.bizoraindia.com${PASSWORD_RESET_CALLBACK_PATH}`,
     );
     expect(getPasswordResetRedirectTo()).not.toContain("localhost");
     expect(getPasswordResetRedirectTo()).toContain("/auth/callback/reset-password");

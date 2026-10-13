@@ -148,7 +148,7 @@ describe("enquiry seller email delivery", () => {
     deliveryRowStatus = null;
     sendTransactionalEmail.mockReset();
     getUserById.mockReset();
-    process.env.NEXT_PUBLIC_SITE_URL = "https://bizoraindia.com";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.bizoraindia.com";
     process.env.RESEND_API_KEY = "re_test_key";
     getUserById.mockResolvedValue({
       data: { user: { email: "seller@example.com" } },

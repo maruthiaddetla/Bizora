@@ -26,6 +26,7 @@ import { isCommercialSpaceDetail } from "@/lib/repositories/businesses.types";
 import { fetchPublicClosedListing } from "@/lib/repositories/closed-listings.repository";
 import { isBusinessFavorited } from "@/lib/repositories/favorites.repository";
 import { fetchPublicSellerSummary } from "@/lib/repositories/profiles.repository";
+import { getCanonicalUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
+  const canonical = getCanonicalUrl(`/listings/${id}`);
   const { business } = await fetchBusinessById(id);
 
   if (business) {
@@ -48,6 +50,7 @@ export async function generateMetadata({ params }: PageProps) {
     return {
       title: business.title,
       description,
+      alternates: { canonical },
       openGraph: {
         title: `${business.title} — Bizora`,
         description,
@@ -61,6 +64,7 @@ export async function generateMetadata({ params }: PageProps) {
       title: `${closed.listing.title} (No longer available)`,
       description: "This listing is no longer available on Bizora.",
       robots: { index: false, follow: true },
+      alternates: { canonical },
       openGraph: {
         title: `${closed.listing.title} — Bizora`,
         description: "This listing is no longer available on Bizora.",

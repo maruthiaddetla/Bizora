@@ -1,17 +1,21 @@
 /**
- * Absolute site origin for sitemap, robots, auth redirects, and Open Graph.
+ * Absolute site origin for sitemap, robots, canonical tags, auth redirects,
+ * and Open Graph.
  *
  * Priority:
  * 1. Local Next.js development → http://localhost:3000
  *    (ignores a production NEXT_PUBLIC_SITE_URL so auth emails stay local)
- * 2. NEXT_PUBLIC_SITE_URL (required for production / Vercel)
+ * 2. NEXT_PUBLIC_SITE_URL (required for production / Vercel; use www)
  * 3. VERCEL_URL (preview deployments)
- * 4. Canonical production host when running in a production environment
+ * 4. Canonical production host (https://www.bizoraindia.com) in production
  * 5. localhost — final non-production fallback
  *
  * Production must never fall back to http://localhost:3000.
+ * Apex (bizoraindia.com) redirects to www on Vercel — do not add a second
+ * host redirect in Next.js.
  */
-export const BIZORA_PRODUCTION_SITE_URL = "https://bizoraindia.com";
+/** Canonical production origin (www). Apex redirects to www on Vercel. */
+export const BIZORA_PRODUCTION_SITE_URL = "https://www.bizoraindia.com";
 export const BIZORA_LOCAL_SITE_URL = "http://localhost:3000";
 
 function isProductionRuntime(): boolean {
@@ -60,6 +64,19 @@ export function getSiteUrl(): string {
   }
 
   return BIZORA_LOCAL_SITE_URL;
+}
+
+/**
+ * Absolute canonical URL for public pages (sitemap / metadata alignment).
+ * `path` should be a site path without query string (e.g. `/listings`).
+ */
+export function getCanonicalUrl(path = "/"): string {
+  const base = getSiteUrl();
+  if (!path || path === "/") {
+    return `${base}/`;
+  }
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalized.replace(/\/$/, "")}`;
 }
 
 /**

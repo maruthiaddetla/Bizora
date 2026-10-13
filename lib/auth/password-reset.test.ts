@@ -141,12 +141,12 @@ describe("forgot-password page", () => {
 
 describe("password reset redirect URL", () => {
   it("uses production site URL and never localhost when configured", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bizoraindia.com");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.bizoraindia.com");
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv("NODE_ENV", "production");
     const redirectTo = getPasswordResetRedirectTo();
     expect(redirectTo).toBe(
-      `https://bizoraindia.com${PASSWORD_RESET_CALLBACK_PATH}`,
+      `https://www.bizoraindia.com${PASSWORD_RESET_CALLBACK_PATH}`,
     );
     expect(redirectTo).not.toContain("localhost");
   });

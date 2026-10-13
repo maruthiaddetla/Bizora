@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { ResourceArticleLayout } from "@/components/resources/ResourceArticleLayout";
 import { getResourceArticle } from "@/lib/resources/articles";
+import { getCanonicalUrl } from "@/lib/site";
 
 const meta = getResourceArticle("how-to-find-a-commercial-space-in-india")!;
 
 export const metadata: Metadata = {
   title: meta.title,
   description: meta.description,
+  alternates: {
+    canonical: getCanonicalUrl(`/resources/${meta.slug}`),
+  },
   openGraph: {
     title: meta.title,
     description: meta.description,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ExploreCategoriesSection } from "@/components/home/ExploreCategoriesSection";
 import {
@@ -19,9 +20,16 @@ import {
   fetchCommercialCategories,
 } from "@/lib/repositories/categories.repository";
 import { fetchStates } from "@/lib/repositories/locations.repository";
+import { getCanonicalUrl } from "@/lib/site";
 
 /** Fetch Supabase listing at request time (not build-time only) */
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: getCanonicalUrl("/"),
+  },
+};
 
 export default async function Home() {
   const [businessCategories, commercialCategories, states, user] =

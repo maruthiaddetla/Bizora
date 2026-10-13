@@ -4,11 +4,15 @@ import { ArrowRight, BookOpen, Building2, HelpCircle, Store } from "lucide-react
 import { Footer } from "@/components/home/Footer";
 import { Navbar } from "@/components/home/Navbar";
 import { RESOURCE_LANDING_SECTIONS } from "@/lib/resources/articles";
+import { getCanonicalUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Resources | Business Buying, Selling & Commercial Space Guides",
   description:
     "Practical guides and insights to help you buy, sell, or find the right commercial space in India. Buyer guides, seller guides, checklists, and FAQs.",
+  alternates: {
+    canonical: getCanonicalUrl("/resources"),
+  },
   openGraph: {
     title: "Resources | Business Buying, Selling & Commercial Space Guides",
     description:
