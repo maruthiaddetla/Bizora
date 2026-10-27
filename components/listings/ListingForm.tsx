@@ -17,6 +17,7 @@ import {
   type ListingLocationValue,
 } from "@/components/listings/ListingLocationFields";
 import { BusinessPhotosManager } from "@/components/listings/BusinessPhotosManager";
+import { PrivateSellerContactFields } from "@/components/listings/PrivateSellerContactFields";
 import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import { Button } from "@/components/ui/Button";
 import type { ListingFormDefaults } from "@/components/listings/ListingFormDefaults";
@@ -92,6 +93,21 @@ export function ListingForm({
     locality: defaults?.locality ?? "",
   });
   const [askingPrice, setAskingPrice] = useState(defaults?.askingPrice ?? "");
+  const [contactName, setContactName] = useState(
+    defaults?.sellerContact?.contactName ?? "",
+  );
+  const [contactMobile, setContactMobile] = useState(
+    defaults?.sellerContact?.contactMobile ?? "",
+  );
+  const [contactEmail, setContactEmail] = useState(
+    defaults?.sellerContact?.contactEmail ?? "",
+  );
+  const [contactType, setContactType] = useState<string>(
+    defaults?.sellerContact?.contactType ?? "",
+  );
+  const [sharingAuthorised, setSharingAuthorised] = useState(
+    defaults?.sellerContact?.sharingAuthorised ?? false,
+  );
   const [annualRevenue, setAnnualRevenue] = useState(
     defaults?.annualRevenue ?? "",
   );
@@ -438,6 +454,26 @@ export function ListingForm({
           <FieldError message={fieldErrors.reasonForSale} />
         </div>
       </Section>
+
+      <PrivateSellerContactFields
+        fieldErrors={fieldErrors}
+        values={{
+          contactName,
+          contactMobile,
+          contactEmail,
+          contactType,
+          sharingAuthorised,
+        }}
+        onChange={(patch) => {
+          if (patch.contactName != null) setContactName(patch.contactName);
+          if (patch.contactMobile != null) setContactMobile(patch.contactMobile);
+          if (patch.contactEmail != null) setContactEmail(patch.contactEmail);
+          if (patch.contactType != null) setContactType(patch.contactType);
+          if (patch.sharingAuthorised != null) {
+            setSharingAuthorised(patch.sharingAuthorised);
+          }
+        }}
+      />
 
       <Section
         title="Business Photos"

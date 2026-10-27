@@ -23,6 +23,7 @@ import {
   mapListingDbError,
 } from "@/lib/listing-creation/db-error";
 import { LISTING_SAVE_FAILED_PRESERVE } from "@/lib/business-images/messages";
+import { persistListingContactFromForm } from "@/lib/listing-contacts/persist";
 import { scheduleAdminListingSubmittedEmail } from "@/lib/notifications/admin-listing-email-delivery";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -405,6 +406,20 @@ export async function createListingFormAction(
         intent,
       };
     }
+    const contact = await persistListingContactFromForm(
+      result.listingId,
+      formData,
+      "draft",
+    );
+    if (!contact.ok) {
+      return {
+        ok: false,
+        message: contact.message,
+        fieldErrors: contact.fieldErrors,
+        listingId: result.listingId,
+        intent,
+      };
+    }
     redirect(`/dashboard/listings/${result.listingId}/edit?saved=1`);
   }
 
@@ -434,6 +449,21 @@ export async function createListingFormAction(
       ok: false,
       message: created.message,
       fieldErrors: created.fieldErrors,
+      intent,
+    };
+  }
+
+  const contact = await persistListingContactFromForm(
+    created.listingId,
+    formData,
+    "submit",
+  );
+  if (!contact.ok) {
+    return {
+      ok: false,
+      message: contact.message,
+      fieldErrors: contact.fieldErrors,
+      listingId: created.listingId,
       intent,
     };
   }
@@ -469,10 +499,39 @@ export async function updateListingFormAction(
         intent,
       };
     }
+    const contact = await persistListingContactFromForm(
+      listingId,
+      formData,
+      "draft",
+    );
+    if (!contact.ok) {
+      return {
+        ok: false,
+        message: contact.message,
+        fieldErrors: contact.fieldErrors,
+        listingId,
+        intent,
+      };
+    }
     return {
       ok: true,
       message: result.message ?? "Draft saved.",
       listingId: result.listingId,
+      intent,
+    };
+  }
+
+  const contact = await persistListingContactFromForm(
+    listingId,
+    formData,
+    "submit",
+  );
+  if (!contact.ok) {
+    return {
+      ok: false,
+      message: contact.message,
+      fieldErrors: contact.fieldErrors,
+      listingId,
       intent,
     };
   }

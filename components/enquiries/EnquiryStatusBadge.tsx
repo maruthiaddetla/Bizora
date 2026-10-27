@@ -5,6 +5,9 @@ const styles: Record<EnquiryStatus, string> = {
   read: "border-slate-200 bg-slate-50 text-slate-700",
   responded: "border-emerald-200 bg-emerald-50 text-emerald-800",
   closed: "border-zinc-200 bg-zinc-50 text-zinc-700",
+  contacted: "border-indigo-200 bg-indigo-50 text-indigo-800",
+  qualified: "border-violet-200 bg-violet-50 text-violet-800",
+  contact_shared: "border-teal-200 bg-teal-50 text-teal-900",
 };
 
 const labels: Record<EnquiryStatus, string> = {
@@ -12,6 +15,9 @@ const labels: Record<EnquiryStatus, string> = {
   read: "Read",
   responded: "Responded",
   closed: "Closed",
+  contacted: "Contacted",
+  qualified: "Qualified",
+  contact_shared: "Contact Shared",
 };
 
 type EnquiryStatusBadgeProps = {

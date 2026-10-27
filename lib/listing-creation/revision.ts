@@ -1,5 +1,6 @@
 "use server";
 
+import { cloneListingContact } from "@/lib/listing-contacts/repository";
 import { generateUniqueSlug } from "@/lib/listing-creation/slug";
 import {
   buildRevisionImageClones,
@@ -206,6 +207,14 @@ export async function ensurePublishedEditRevision(
     if (!backfill.ok) {
       return { ok: false, message: backfill.message };
     }
+    // Ensure revision has a copy of private contact when parent has one.
+    const contactCloned = await cloneListingContact(
+      publishedId,
+      existingRevision.id,
+    );
+    if (!contactCloned.ok) {
+      return { ok: false, message: contactCloned.message };
+    }
     return { ok: true, revisionId: existingRevision.id, created: false };
   }
 
@@ -277,6 +286,12 @@ export async function ensurePublishedEditRevision(
     // Roll back empty revision so the seller can retry cleanly.
     await supabase.from("businesses").delete().eq("id", revision.id);
     return { ok: false, message: cloned.message };
+  }
+
+  const contactCloned = await cloneListingContact(publishedId, revision.id);
+  if (!contactCloned.ok) {
+    await supabase.from("businesses").delete().eq("id", revision.id);
+    return { ok: false, message: contactCloned.message };
   }
 
   return { ok: true, revisionId: revision.id, created: true };

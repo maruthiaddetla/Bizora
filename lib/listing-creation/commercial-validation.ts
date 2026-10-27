@@ -53,7 +53,12 @@ export type CommercialFieldErrors = Partial<
     | "availableFrom"
     | "businessUsage"
     | "images"
-    | "form",
+    | "form"
+    | "contactName"
+    | "contactMobile"
+    | "contactEmail"
+    | "contactType"
+    | "sharingAuthorised",
     string
   >
 >;

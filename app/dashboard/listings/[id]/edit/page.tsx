@@ -20,6 +20,7 @@ import {
   resolveEditPhotosTarget,
 } from "@/lib/listing-creation/edit-photos";
 import { listBusinessImagesForOwner } from "@/lib/business-images/actions";
+import { fetchListingContactForOwner } from "@/lib/listing-contacts/repository";
 import { fetchOwnedBusinessById } from "@/lib/repositories/businesses.repository";
 import {
   fetchBusinessCategories,
@@ -164,6 +165,7 @@ export default async function EditListingPage({
     states,
     cities,
     imagesResult,
+    contactResult,
   ] = await Promise.all([
     fetchBusinessCategories(),
     fetchCommercialCategories(),
@@ -172,9 +174,11 @@ export default async function EditListingPage({
       ? fetchCitiesByState(business.state_id)
       : Promise.resolve([]),
     listBusinessImagesForOwner(photosTarget.photosListingId),
+    fetchListingContactForOwner(business.id),
   ]);
 
   const initialImages = initialImagesForEditForm(imagesResult);
+  const sellerContact = contactResult.contact;
 
   console.info("[Bizora] edit page photos props:", {
     routeListingId: id,
@@ -242,7 +246,10 @@ export default async function EditListingPage({
               categories={commercialCategories}
               states={states}
               initialCities={cities}
-              defaults={commercialDefaultsFromRow(business)}
+              defaults={{
+                ...commercialDefaultsFromRow(business),
+                sellerContact,
+              }}
               rejectionReason={business.rejection_reason}
               initialImages={initialImages}
             />
@@ -252,7 +259,10 @@ export default async function EditListingPage({
               categories={businessCategories}
               states={states}
               initialCities={cities}
-              defaults={listingDefaultsFromRow(business)}
+              defaults={{
+                ...listingDefaultsFromRow(business),
+                sellerContact,
+              }}
               rejectionReason={business.rejection_reason}
               initialImages={initialImages}
             />

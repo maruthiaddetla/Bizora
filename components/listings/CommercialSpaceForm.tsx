@@ -18,6 +18,7 @@ import {
   type ListingLocationValue,
 } from "@/components/listings/ListingLocationFields";
 import { BusinessPhotosManager } from "@/components/listings/BusinessPhotosManager";
+import { PrivateSellerContactFields } from "@/components/listings/PrivateSellerContactFields";
 import {
   FURNISHED_OPTIONS,
   LISTING_PURPOSES,
@@ -119,6 +120,21 @@ export function CommercialSpaceForm({
   );
   const [businessUsage, setBusinessUsage] = useState(
     defaults?.businessUsage ?? "",
+  );
+  const [contactName, setContactName] = useState(
+    defaults?.sellerContact?.contactName ?? "",
+  );
+  const [contactMobile, setContactMobile] = useState(
+    defaults?.sellerContact?.contactMobile ?? "",
+  );
+  const [contactEmail, setContactEmail] = useState(
+    defaults?.sellerContact?.contactEmail ?? "",
+  );
+  const [contactType, setContactType] = useState<string>(
+    defaults?.sellerContact?.contactType ?? "",
+  );
+  const [sharingAuthorised, setSharingAuthorised] = useState(
+    defaults?.sellerContact?.sharingAuthorised ?? false,
   );
   const [photosBusy, setPhotosBusy] = useState(false);
   const [photosGuardMessage, setPhotosGuardMessage] = useState<string | null>(
@@ -446,6 +462,26 @@ export function CommercialSpaceForm({
           <FieldError message={fieldErrors.businessUsage} />
         </div>
       </Section>
+
+      <PrivateSellerContactFields
+        fieldErrors={fieldErrors}
+        values={{
+          contactName,
+          contactMobile,
+          contactEmail,
+          contactType,
+          sharingAuthorised,
+        }}
+        onChange={(patch) => {
+          if (patch.contactName != null) setContactName(patch.contactName);
+          if (patch.contactMobile != null) setContactMobile(patch.contactMobile);
+          if (patch.contactEmail != null) setContactEmail(patch.contactEmail);
+          if (patch.contactType != null) setContactType(patch.contactType);
+          if (patch.sharingAuthorised != null) {
+            setSharingAuthorised(patch.sharingAuthorised);
+          }
+        }}
+      />
 
       <Section title="Photos">
         {mode === "create" || !defaults?.listingId ? (

@@ -4,6 +4,7 @@ import { signOutAction } from "@/lib/auth/actions";
 const links = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/listings", label: "Listings" },
+  { href: "/admin/enquiries", label: "Enquiries" },
 ];
 
 type AdminNavProps = {

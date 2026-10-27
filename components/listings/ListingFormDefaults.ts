@@ -1,3 +1,5 @@
+import type { ListingContactOwnerView } from "@/lib/listing-contacts/types";
+
 export type ListingFormDefaults = {
   listingId?: string;
   title?: string;
@@ -15,4 +17,6 @@ export type ListingFormDefaults = {
   establishedYear?: string;
   employees?: string;
   reasonForSale?: string;
+  /** Private per-listing contact — never shown on public pages. */
+  sellerContact?: ListingContactOwnerView;
 };

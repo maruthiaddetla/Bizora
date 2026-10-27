@@ -42,7 +42,12 @@ export type ListingFieldErrors = Partial<
     | "employees"
     | "reasonForSale"
     | "images"
-    | "form",
+    | "form"
+    | "contactName"
+    | "contactMobile"
+    | "contactEmail"
+    | "contactType"
+    | "sharingAuthorised",
     string
   >
 >;

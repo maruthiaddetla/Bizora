@@ -36,7 +36,19 @@ export type FurnishedOption =
 
 export type ProfileRole = "buyer" | "seller" | "broker" | "admin";
 
-export type EnquiryStatus = "new" | "read" | "responded" | "closed";
+export type EnquiryStatus =
+  | "new"
+  | "read"
+  | "responded"
+  | "closed"
+  | "contacted"
+  | "qualified"
+  | "contact_shared";
+
+export type ListingContactType =
+  | "owner"
+  | "broker_agent"
+  | "authorised_representative";
 
 export type NotificationType =
   | "listing_submitted"
@@ -456,6 +468,120 @@ export type Database = {
           },
         ];
       };
+      listing_seller_contacts: {
+        Row: {
+          business_id: string;
+          contact_name: string | null;
+          mobile_e164: string | null;
+          email: string | null;
+          contact_type: ListingContactType | null;
+          sharing_authorised: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          business_id: string;
+          contact_name?: string | null;
+          mobile_e164?: string | null;
+          email?: string | null;
+          contact_type?: ListingContactType | null;
+          sharing_authorised?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          business_id?: string;
+          contact_name?: string | null;
+          mobile_e164?: string | null;
+          email?: string | null;
+          contact_type?: ListingContactType | null;
+          sharing_authorised?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_seller_contacts_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      enquiry_admin_notes: {
+        Row: {
+          enquiry_id: string;
+          notes: string;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          enquiry_id: string;
+          notes?: string;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          enquiry_id?: string;
+          notes?: string;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "enquiry_admin_notes_enquiry_id_fkey";
+            columns: ["enquiry_id"];
+            referencedRelation: "enquiries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      enquiry_contact_shares: {
+        Row: {
+          id: string;
+          enquiry_id: string;
+          business_id: string;
+          buyer_id: string;
+          shared_by: string;
+          shared_at: string;
+          note: string | null;
+        };
+        Insert: {
+          id?: string;
+          enquiry_id: string;
+          business_id: string;
+          buyer_id: string;
+          shared_by: string;
+          shared_at?: string;
+          note?: string | null;
+        };
+        Update: {
+          id?: string;
+          enquiry_id?: string;
+          business_id?: string;
+          buyer_id?: string;
+          shared_by?: string;
+          shared_at?: string;
+          note?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "enquiry_contact_shares_enquiry_id_fkey";
+            columns: ["enquiry_id"];
+            referencedRelation: "enquiries";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "enquiry_contact_shares_business_id_fkey";
+            columns: ["business_id"];
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       enquiries: {
         Row: {
           id: string;
@@ -743,6 +869,12 @@ export type Database = {
 export type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type EnquiryRow = Database["public"]["Tables"]["enquiries"]["Row"];
+export type ListingSellerContactRow =
+  Database["public"]["Tables"]["listing_seller_contacts"]["Row"];
+export type EnquiryAdminNotesRow =
+  Database["public"]["Tables"]["enquiry_admin_notes"]["Row"];
+export type EnquiryContactShareRow =
+  Database["public"]["Tables"]["enquiry_contact_shares"]["Row"];
 export type FavoriteRow = Database["public"]["Tables"]["favorites"]["Row"];
 export type NotificationRow =
   Database["public"]["Tables"]["notifications"]["Row"];

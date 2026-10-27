@@ -1,3 +1,5 @@
+import type { ListingContactOwnerView } from "@/lib/listing-contacts/types";
+
 export type CommercialSpaceFormDefaults = {
   listingId?: string;
   title?: string;
@@ -19,4 +21,5 @@ export type CommercialSpaceFormDefaults = {
   leaseTermMonths?: string;
   availableFrom?: string;
   businessUsage?: string;
+  sellerContact?: ListingContactOwnerView;
 };
