@@ -29,4 +29,12 @@ describe("sitemap and robots SEO host", () => {
     );
     expect(source).toContain("getCanonicalUrl");
   });
+
+  it("filters sitemap businesses to published and uses updated_at for lastmod", () => {
+    const source = readFileSync(resolve(process.cwd(), "app/sitemap.ts"), "utf8");
+
+    expect(source).toContain('.eq("status", "published")');
+    expect(source).toContain("row.updated_at");
+    expect(source).toContain("/listings/${row.id}");
+  });
 });

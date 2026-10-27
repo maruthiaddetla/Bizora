@@ -45,6 +45,8 @@ function revalidateListingPaths(listingId: string) {
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/listings/${listingId}/preview`);
   revalidatePath(`/dashboard/listings/${listingId}/edit`);
+  // Membership / lastmod for published listings in the public sitemap.
+  revalidatePath("/sitemap.xml");
 }
 
 /**

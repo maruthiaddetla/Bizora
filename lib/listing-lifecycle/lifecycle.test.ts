@@ -113,4 +113,17 @@ describe("public listing query availability filter", () => {
     expect(adminActions).toContain('rpc("transition_listing_status"');
     expect(sellerActions).not.toContain('.update({');
   });
+
+  it("revalidates the public sitemap after lifecycle and admin listing changes", () => {
+    const sellerActions = readFileSync(
+      resolve(process.cwd(), "lib/listing-lifecycle/actions.ts"),
+      "utf8",
+    );
+    const adminActions = readFileSync(
+      resolve(process.cwd(), "lib/admin/actions.ts"),
+      "utf8",
+    );
+    expect(sellerActions).toContain('revalidatePath("/sitemap.xml")');
+    expect(adminActions).toContain('revalidatePath("/sitemap.xml")');
+  });
 });

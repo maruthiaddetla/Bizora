@@ -30,6 +30,8 @@ function revalidateLifecyclePaths(listingId: string) {
   revalidatePath("/admin/listings");
   revalidatePath(`/admin/listings/${listingId}`);
   revalidatePath("/");
+  // Closing / republishing changes whether the listing appears in the sitemap.
+  revalidatePath("/sitemap.xml");
 }
 
 async function transitionListingStatus(
