@@ -5,6 +5,8 @@ import type {
   ListingDetailView,
   SellerListingView,
 } from "@/lib/repositories/businesses.types";
+import { resolveListingImageDelivery } from "@/lib/business-images/public-media-policy";
+import { resolvePublicListingImageUrl } from "@/lib/business-images/public-media-url";
 import { resolveBusinessImageDisplayUrls } from "@/lib/business-images/resolve-url";
 import { LISTING_PLACEHOLDER_IMAGE } from "@/lib/constants/images";
 import { formatIndianCurrency, toNumber } from "@/lib/format/currency";
@@ -46,13 +48,46 @@ export function getSortedImageRows(business: BusinessWithRelations) {
 }
 
 /**
- * Resolve display URLs (external or signed Storage URLs).
+ * Resolve display URLs for public pages (stable media proxy) or signed URLs.
+ * Public proxy is used only for published listings; all other statuses are signed.
  * Falls back to placeholder when none resolve.
  */
 export async function getSortedImageUrls(
   business: BusinessWithRelations,
+  options?: { delivery?: "public" | "signed" },
 ): Promise<string[]> {
   const rows = getSortedImageRows(business);
+  const delivery = resolveListingImageDelivery({
+    listingStatus: business.status,
+    delivery: options?.delivery,
+  });
+
+  if (delivery === "public") {
+    const missing: typeof rows = [];
+    const urls: (string | null)[] = rows.map((row) => {
+      const publicUrl = resolvePublicListingImageUrl(row, {
+        listingStatus: business.status,
+      });
+      if (publicUrl) return publicUrl;
+      missing.push(row);
+      return null;
+    });
+
+    if (missing.length > 0) {
+      const signed = await resolveBusinessImageDisplayUrls(missing);
+      let signedIndex = 0;
+      for (let i = 0; i < urls.length; i += 1) {
+        if (urls[i] == null) {
+          urls[i] = signed[signedIndex] ?? null;
+          signedIndex += 1;
+        }
+      }
+    }
+
+    const resolved = urls.filter((url): url is string => Boolean(url));
+    return resolved.length > 0 ? resolved : [LISTING_PLACEHOLDER_IMAGE];
+  }
+
   const urls = (await resolveBusinessImageDisplayUrls(rows)).filter(
     (url): url is string => Boolean(url),
   );
@@ -106,8 +141,8 @@ function mapBusinessCardFields(
 }
 
 /**
- * Batch-map businesses to card listings with one Storage batch sign across
- * all images in the page result set.
+ * Batch-map businesses to card listings.
+ * Published → stable public proxy URLs; other statuses → signed URLs.
  */
 export async function mapBusinessesToListings(
   businesses: BusinessWithRelations[],
@@ -115,8 +150,33 @@ export async function mapBusinessesToListings(
   if (businesses.length === 0) return [];
 
   const rowGroups = businesses.map((business) => getSortedImageRows(business));
-  const flatRows = rowGroups.flat();
-  const flatUrls = await resolveBusinessImageDisplayUrls(flatRows);
+  const flatRows: Array<{
+    row: (typeof rowGroups)[number][number];
+    status: BusinessWithRelations["status"];
+  }> = [];
+  businesses.forEach((business, index) => {
+    for (const row of rowGroups[index]) {
+      flatRows.push({ row, status: business.status });
+    }
+  });
+
+  const flatUrls: (string | null)[] = flatRows.map(({ row, status }) =>
+    resolvePublicListingImageUrl(row, { listingStatus: status }),
+  );
+  const needSignIndexes: number[] = [];
+  const needSignRows: (typeof rowGroups)[number] = [];
+  flatUrls.forEach((url, index) => {
+    if (!url) {
+      needSignIndexes.push(index);
+      needSignRows.push(flatRows[index].row);
+    }
+  });
+  if (needSignRows.length > 0) {
+    const signed = await resolveBusinessImageDisplayUrls(needSignRows);
+    needSignIndexes.forEach((flatIndex, i) => {
+      flatUrls[flatIndex] = signed[i] ?? null;
+    });
+  }
 
   let offset = 0;
   return businesses.map((business, index) => {
@@ -182,8 +242,9 @@ function mapBaseDetail(
 
 export async function mapBusinessToDetail(
   business: BusinessWithRelations,
+  options?: { delivery?: "public" | "signed" },
 ): Promise<ListingDetailView> {
-  const images = await getSortedImageUrls(business);
+  const images = await getSortedImageUrls(business, options);
   const base = mapBaseDetail(business, images);
 
   if (base.listingType === "commercial_space") {
@@ -226,7 +287,8 @@ export async function mapBusinessToSellerListing(
     rejectionReason?: string | null;
   } | null,
 ): Promise<SellerListingView> {
-  const images = await getSortedImageUrls(business);
+  // Owner dashboard — always signed so draft/pending/rejected/closed never hit the public proxy.
+  const images = await getSortedImageUrls(business, { delivery: "signed" });
   const listingType = (business.listing_type ?? "business") as ListingType;
 
   const price =

@@ -155,7 +155,8 @@ export async function fetchAdminListings(
 
   const listings: AdminListingQueueItem[] = await Promise.all(
     sorted.map(async (row) => {
-      const images = await getSortedImageUrls(row);
+      // Admin queue includes drafts/pending — use signed URLs, not public proxy.
+      const images = await getSortedImageUrls(row, { delivery: "signed" });
       const listingType = row.listing_type ?? "business";
       const price =
         listingType === "commercial_space"
@@ -215,7 +216,8 @@ export async function fetchAdminBusinessById(id: string): Promise<{
   }
 
   const row = data as unknown as AdminBusinessRow;
-  const detail = await mapBusinessToDetail(row);
+  // Admin review of any status — signed URLs only (never the public media proxy).
+  const detail = await mapBusinessToDetail(row, { delivery: "signed" });
 
   return {
     listing: {

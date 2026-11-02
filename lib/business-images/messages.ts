@@ -9,6 +9,9 @@ export const PHOTO_EMPTY = "Please choose a photo to upload.";
 export const PHOTO_UPLOAD_FAILED =
   "Photo upload failed. Your listing information is safe. Please try again.";
 
+export const PHOTO_COMPRESS_FAILED =
+  "We couldn't prepare that photo for upload. Please try another image.";
+
 export const PHOTO_UPLOADS_PENDING =
   "Please wait for your photos to finish uploading.";
 

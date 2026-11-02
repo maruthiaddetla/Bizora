@@ -181,7 +181,7 @@ export function MyListingsSection({ listings }: MyListingsSectionProps) {
                     alt=""
                     fill
                     className="object-cover"
-                    sizes="(max-width: 640px) 100vw, 160px"
+                    sizes="160px"
                   />
                 </div>
 

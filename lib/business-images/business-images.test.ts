@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  PHOTO_COMPRESS_FAILED,
   PHOTO_TOO_LARGE,
   PHOTO_TYPE_INVALID,
   PHOTO_UPLOAD_FAILED,
@@ -22,6 +23,19 @@ import {
   preserveListingFormFieldsAfterFailure,
 } from "@/lib/business-images/form-safety";
 import { MAX_BUSINESS_IMAGE_BYTES } from "@/lib/business-images/constants";
+import { compressImageForUpload } from "@/lib/images/compress-image";
+
+vi.mock("@/lib/images/compress-image", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/images/compress-image")
+  >("@/lib/images/compress-image");
+  return {
+    ...actual,
+    compressImageForUpload: vi.fn(),
+  };
+});
+
+const compressMock = vi.mocked(compressImageForUpload);
 
 function jpegFile(name: string, size: number): File {
   const header = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
@@ -117,12 +131,27 @@ describe("direct client upload", () => {
     return {
       storage: {
         from: () => ({
-          upload: vi.fn().mockImplementation(async () => uploadImpl()),
+          upload: vi.fn().mockImplementation(async (_path: string, _file: File, opts: { contentType: string }) => {
+            lastUploadContentType = opts.contentType;
+            return uploadImpl();
+          }),
           remove: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       },
     };
   }
+
+  let lastUploadContentType: string | null = null;
+
+  beforeEach(() => {
+    lastUploadContentType = null;
+    compressMock.mockImplementation(async (file: File) => ({
+      ok: true as const,
+      file,
+      mime: (file.type || "image/jpeg") as "image/jpeg" | "image/png" | "image/webp",
+      compressed: true,
+    }));
+  });
 
   it("uploads successfully then registers metadata only", async () => {
     const register = vi.fn().mockResolvedValue({ ok: true, message: "Photo uploaded." });
@@ -152,6 +181,150 @@ describe("direct client upload", () => {
     expect(phases).toContain("uploading");
     expect(phases).toContain("registering");
     expect(phases).toContain("done");
+  });
+
+  it("uploads WebP with matching content type and .webp storage path", async () => {
+    const webpBytes = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+      0x00, 0x00,
+    ]);
+    const webpFile = new File([webpBytes], "shop.webp", { type: "image/webp" });
+    compressMock.mockResolvedValue({
+      ok: true,
+      file: webpFile,
+      mime: "image/webp",
+      compressed: true,
+    });
+
+    const register = vi.fn().mockResolvedValue({ ok: true });
+    const supabase = mockSupabase(() => ({ error: null }));
+    const result = await uploadListingPhotoDirect({
+      // @ts-expect-error minimal mock
+      supabase,
+      file: jpegFile("shop.jpg", 1024),
+      businessId,
+      userId,
+      currentImageCount: 0,
+      register,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.storagePath.endsWith(".webp")).toBe(true);
+    expect(lastUploadContentType).toBe("image/webp");
+    expect(register.mock.calls[0][0].mime).toBe("image/webp");
+  });
+
+  it("never uploads the original when compression fails", async () => {
+    compressMock.mockResolvedValue({
+      ok: false,
+      message: PHOTO_COMPRESS_FAILED,
+      reason: "failed",
+    });
+    const register = vi.fn();
+    const upload = vi.fn();
+    const supabase = {
+      storage: {
+        from: () => ({
+          upload,
+          remove: vi.fn(),
+        }),
+      },
+    };
+
+    const result = await uploadListingPhotoDirect({
+      // @ts-expect-error minimal mock
+      supabase,
+      file: jpegFile("fail.jpg", 512),
+      businessId,
+      userId,
+      currentImageCount: 0,
+      register,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.message).toBe(PHOTO_COMPRESS_FAILED);
+    expect(upload).not.toHaveBeenCalled();
+    expect(register).not.toHaveBeenCalled();
+  });
+
+  it("never uploads the original when compression is unsupported", async () => {
+    compressMock.mockResolvedValue({
+      ok: false,
+      message: "Image compression is not supported in this browser.",
+      reason: "unsupported",
+    });
+    const upload = vi.fn();
+    const supabase = {
+      storage: { from: () => ({ upload, remove: vi.fn() }) },
+    };
+
+    const result = await uploadListingPhotoDirect({
+      // @ts-expect-error minimal mock
+      supabase,
+      file: jpegFile("x.jpg", 512),
+      businessId,
+      userId,
+      currentImageCount: 0,
+      register: vi.fn(),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it("rejects empty compressed output before storage upload", async () => {
+    compressMock.mockResolvedValue({
+      ok: true,
+      file: new File([], "empty.webp", { type: "image/webp" }),
+      mime: "image/webp",
+      compressed: true,
+    });
+    const upload = vi.fn();
+    const supabase = {
+      storage: { from: () => ({ upload, remove: vi.fn() }) },
+    };
+
+    const result = await uploadListingPhotoDirect({
+      // @ts-expect-error minimal mock
+      supabase,
+      file: jpegFile("x.jpg", 512),
+      businessId,
+      userId,
+      currentImageCount: 0,
+      register: vi.fn(),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it("rejects compressed output over the maximum file size", async () => {
+    const oversized = jpegFile("big.jpg", MAX_BUSINESS_IMAGE_BYTES + 10);
+    compressMock.mockResolvedValue({
+      ok: true,
+      file: oversized,
+      mime: "image/jpeg",
+      compressed: true,
+    });
+    const upload = vi.fn();
+    const supabase = {
+      storage: { from: () => ({ upload, remove: vi.fn() }) },
+    };
+
+    const result = await uploadListingPhotoDirect({
+      // @ts-expect-error minimal mock
+      supabase,
+      file: jpegFile("ok.jpg", 512),
+      businessId,
+      userId,
+      currentImageCount: 0,
+      register: vi.fn(),
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.message).toBe(PHOTO_TOO_LARGE);
+    expect(upload).not.toHaveBeenCalled();
   });
 
   it("surfaces a safe failure message when storage upload fails", async () => {
@@ -258,6 +431,30 @@ describe("direct client upload", () => {
       allow: true,
       message: null,
     });
+  });
+});
+
+describe("existing image path compatibility", () => {
+  const userId = "11111111-1111-1111-1111-111111111111";
+  const businessId = "22222222-2222-2222-2222-222222222222";
+  const imageId = "33333333-3333-3333-3333-333333333333";
+
+  it("continues to accept previously uploaded JPEG, PNG and WebP paths", () => {
+    for (const extension of ["jpg", "png", "webp"] as const) {
+      const path = buildBusinessImageStoragePath({
+        userId,
+        businessId,
+        imageId,
+        extension,
+      });
+      const parsed = parseBusinessImageStoragePath(path, {
+        userId,
+        businessId,
+        imageId,
+      });
+      expect(parsed).not.toBeNull();
+      expect(parsed?.extension).toBe(extension);
+    }
   });
 });
 

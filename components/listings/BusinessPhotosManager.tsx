@@ -416,7 +416,6 @@ export function BusinessPhotosManager({
                   fill
                   className="object-cover"
                   sizes="(max-width: 640px) 50vw, 200px"
-                  unoptimized
                 />
                 {image.isPrimary && (
                   <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-amber-500 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">

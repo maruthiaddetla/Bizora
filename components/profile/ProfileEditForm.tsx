@@ -39,9 +39,41 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
     if (!fileList?.[0]) return;
     setAvatarError(null);
     setAvatarMessage(null);
-    const fd = new FormData();
-    fd.set("avatar", fileList[0]);
+    const original = fileList[0];
     startAvatar(async () => {
+      const { compressImageForUpload } = await import(
+        "@/lib/images/compress-image"
+      );
+      const { MAX_PROFILE_AVATAR_BYTES } = await import(
+        "@/lib/profile/constants"
+      );
+
+      const compressed = await compressImageForUpload(original, {
+        maxEdgePx: 800,
+        maxBytes: MAX_PROFILE_AVATAR_BYTES,
+        fileName: "avatar",
+      });
+
+      // Never silently upload the original when compression fails or is unavailable.
+      if (!compressed.ok) {
+        setAvatarError(compressed.message);
+        return;
+      }
+
+      if (
+        compressed.file.size <= 0 ||
+        compressed.file.size > MAX_PROFILE_AVATAR_BYTES
+      ) {
+        setAvatarError(
+          compressed.file.size <= 0
+            ? "Image compression failed. Please try another photo."
+            : "Avatar must be 5 MB or smaller.",
+        );
+        return;
+      }
+
+      const fd = new FormData();
+      fd.set("avatar", compressed.file);
       const result = await uploadMyAvatar(fd);
       if (!result.ok) {
         setAvatarError(result.message);
@@ -71,7 +103,8 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
       <section className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold text-foreground">Avatar</h2>
         <p className="mt-1 text-sm text-muted">
-          JPEG, PNG, or WebP up to 5 MB. Shown on your public seller profile.
+          JPEG, PNG, or WebP up to 5 MB. Photos are resized before upload.
+          Shown on your public seller profile.
         </p>
         <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative h-20 w-20 overflow-hidden rounded-full bg-surface ring-2 ring-border">

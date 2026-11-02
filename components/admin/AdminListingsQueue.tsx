@@ -86,7 +86,6 @@ export function AdminListingsQueue({
                     fill
                     className="object-cover"
                     sizes="(max-width: 640px) 100vw, 160px"
-                    unoptimized
                   />
                 </div>
                 <div className="min-w-0 flex-1">

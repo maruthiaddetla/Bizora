@@ -85,7 +85,7 @@ export function FavoritesSection({ favorites }: FavoritesSectionProps) {
                   alt=""
                   fill
                   className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 160px"
+                  sizes="160px"
                 />
               </Link>
 

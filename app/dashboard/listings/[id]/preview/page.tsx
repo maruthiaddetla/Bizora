@@ -67,7 +67,8 @@ export default async function OwnerListingPreviewPage({
     notFound();
   }
 
-  const business = await mapBusinessToDetail(row);
+  // Owner preview must use signed URLs (draft/pending/rejected/closed are not publicly cacheable).
+  const business = await mapBusinessToDetail(row, { delivery: "signed" });
   const canEdit = canSellerOpenEdit(row.status);
   const canViewPublic =
     row.status === "published" ||

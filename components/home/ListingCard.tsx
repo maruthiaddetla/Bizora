@@ -127,7 +127,7 @@ export function ListingCard({
               alt={listing.title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 320px"
               onError={() => setImageSrc(LISTING_PLACEHOLDER_IMAGE)}
             />
           </div>

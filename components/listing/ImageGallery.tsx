@@ -67,7 +67,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
           <GalleryImage
             src={galleryImages[0]}
             alt={`${title} — photo 1`}
-            sizes="100vw"
+            sizes="(max-width: 768px) 100vw, 900px"
             priority
           />
         </div>
@@ -86,7 +86,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
               <GalleryImage
                 src={galleryImages[0]}
                 alt={`${title} — photo 1`}
-                sizes="50vw"
+                sizes="(max-width: 1024px) 50vw, 600px"
                 priority
               />
             </button>
@@ -104,7 +104,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                 <GalleryImage
                   src={src}
                   alt={`${title} — photo ${i + 2}`}
-                  sizes="25vw"
+                  sizes="(max-width: 1024px) 25vw, 280px"
                 />
               </button>
             ))}
@@ -184,7 +184,7 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
                 key={activeIndex}
                 src={galleryImages[activeIndex] ?? LISTING_PLACEHOLDER_IMAGE}
                 alt={`${title} — photo ${activeIndex + 1}`}
-                sizes="100vw"
+                sizes="(max-width: 768px) 100vw, 1200px"
                 fit="contain"
               />
             </div>

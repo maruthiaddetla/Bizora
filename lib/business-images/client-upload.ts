@@ -1,9 +1,13 @@
 import {
   BUSINESS_IMAGES_BUCKET,
+  BUSINESS_IMAGE_UPLOAD_MAX_EDGE_PX,
+  MAX_BUSINESS_IMAGE_BYTES,
   MAX_BUSINESS_IMAGES,
 } from "@/lib/business-images/constants";
 import {
+  PHOTO_COMPRESS_FAILED,
   PHOTO_REGISTER_FAILED,
+  PHOTO_TOO_LARGE,
   PHOTO_UPLOAD_FAILED,
 } from "@/lib/business-images/messages";
 import {
@@ -11,6 +15,7 @@ import {
   extensionForBusinessImageMime,
 } from "@/lib/business-images/storage-path";
 import { validateBusinessImageFile } from "@/lib/business-images/validate-file";
+import { compressImageForUpload } from "@/lib/images/compress-image";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ClientUploadPhase =
@@ -86,17 +91,59 @@ export async function uploadListingPhotoDirect(params: {
     return { ok: false, localId, message };
   }
 
-  const validation = await validateBusinessImageFile(params.file, params.file.type);
+  const precheck = await validateBusinessImageFile(
+    params.file,
+    params.file.type,
+  );
+  if (!precheck.ok) {
+    emit({ phase: "failed", progress: 0, error: precheck.message });
+    return { ok: false, localId, message: precheck.message };
+  }
+
+  // Resize/compress before Storage — never upload the original when compression fails.
+  const compressed = await compressImageForUpload(params.file, {
+    maxEdgePx: BUSINESS_IMAGE_UPLOAD_MAX_EDGE_PX,
+    maxBytes: MAX_BUSINESS_IMAGE_BYTES,
+    fileName: params.file.name,
+  });
+
+  if (!compressed.ok) {
+    emit({
+      phase: "failed",
+      progress: 5,
+      error: compressed.message || PHOTO_COMPRESS_FAILED,
+    });
+    return {
+      ok: false,
+      localId,
+      message: compressed.message || PHOTO_COMPRESS_FAILED,
+    };
+  }
+
+  const uploadFile = compressed.file;
+  if (uploadFile.size <= 0 || uploadFile.size > MAX_BUSINESS_IMAGE_BYTES) {
+    const message =
+      uploadFile.size <= 0 ? PHOTO_COMPRESS_FAILED : PHOTO_TOO_LARGE;
+    emit({ phase: "failed", progress: 5, error: message });
+    return { ok: false, localId, message };
+  }
+
+  const validation = await validateBusinessImageFile(
+    uploadFile,
+    compressed.mime,
+  );
   if (!validation.ok) {
-    emit({ phase: "failed", progress: 0, error: validation.message });
+    emit({ phase: "failed", progress: 5, error: validation.message });
     return { ok: false, localId, message: validation.message };
   }
 
+  // Storage path extension and contentType must match compressed MIME (e.g. .webp).
+  const mime = validation.mime;
   const imageId =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : newLocalId();
-  const extension = extensionForBusinessImageMime(validation.mime);
+  const extension = extensionForBusinessImageMime(mime);
   const storagePath = buildBusinessImageStoragePath({
     userId: params.userId,
     businessId: params.businessId,
@@ -114,8 +161,8 @@ export async function uploadListingPhotoDirect(params: {
 
   const { error: uploadError } = await params.supabase.storage
     .from(BUSINESS_IMAGES_BUCKET)
-    .upload(storagePath, params.file, {
-      contentType: validation.mime,
+    .upload(storagePath, uploadFile, {
+      contentType: mime,
       upsert: false,
     });
 
@@ -134,7 +181,7 @@ export async function uploadListingPhotoDirect(params: {
       businessId: params.businessId,
       imageId,
       storagePath,
-      mime: validation.mime,
+      mime,
     });
 
     if (!registered.ok) {

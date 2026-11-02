@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
+  buildAvatarStoragePath,
+  staleAvatarObjectPaths,
+} from "@/lib/profile/avatar-storage";
+import {
   ALLOWED_PROFILE_AVATAR_MIME_TYPES,
   MAX_PROFILE_AVATAR_BYTES,
   PROFILE_AVATARS_BUCKET,
@@ -61,12 +65,6 @@ export async function updateMyProfileFormAction(
   });
 }
 
-function mimeToExt(mime: AllowedProfileAvatarMime): string {
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return "jpg";
-}
-
 export async function uploadMyAvatar(
   formData: FormData,
 ): Promise<ProfileActionResult> {
@@ -97,19 +95,10 @@ export async function uploadMyAvatar(
     };
   }
 
-  const ext = mimeToExt(mime);
-  const path = `${user.id}/avatar.${ext}`;
+  const path = buildAvatarStoragePath(user.id, mime);
 
-  // Remove prior avatar variants for this user
-  const { data: existing } = await supabase.storage
-    .from(PROFILE_AVATARS_BUCKET)
-    .list(user.id);
-  if (existing && existing.length > 0) {
-    await supabase.storage
-      .from(PROFILE_AVATARS_BUCKET)
-      .remove(existing.map((f) => `${user.id}/${f.name}`));
-  }
-
+  // Upload the new avatar first (upsert). Do not delete prior files until this succeeds
+  // so a failed replacement cannot leave the seller without an avatar.
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error: uploadError } = await supabase.storage
     .from(PROFILE_AVATARS_BUCKET)
@@ -123,6 +112,21 @@ export async function uploadMyAvatar(
       console.warn("[Bizora] avatar upload failed:", uploadError.message);
     }
     return { ok: false, message: "We couldn't upload that image. Please try again." };
+  }
+
+  // After successful upload, remove other extension variants (e.g. old .jpg after .webp).
+  const { data: existing } = await supabase.storage
+    .from(PROFILE_AVATARS_BUCKET)
+    .list(user.id);
+  if (existing && existing.length > 0) {
+    const stale = staleAvatarObjectPaths(
+      user.id,
+      path,
+      existing.map((f) => f.name),
+    );
+    if (stale.length > 0) {
+      await supabase.storage.from(PROFILE_AVATARS_BUCKET).remove(stale);
+    }
   }
 
   const pathResult = await updateMyAvatarPath(user.id, path);
